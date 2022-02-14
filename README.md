@@ -4,10 +4,11 @@
 ## What is FMIExport.jl?
 FMIExport.jl is a free-to-use software library for the Julia programming language which allows for the export of FMUs ([fmi-standard.org](http://fmi-standard.org/)) from any Julia-Code. FMIExport.jl is completely integrated into [FMI.jl](https://github.com/ThummeTo/FMI.jl).
 
-[![](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/Test.yml/badge.svg)]() 
+[![CI Testing](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/Test.yml/badge.svg)](https://github.com/ThummeTo/FMIExport.jl/actions)
+[![Coverage](https://codecov.io/gh/ThummeTo/FMIExport.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/ThummeTo/FMIExport.jl)
 
 ## How can I use FMIExport.jl?
-1. open a Julia-Command-Window, activate your prefered environment
+1. open a Julia-Command-Window, activate your preferred environment
 1. goto package manager using ```]```
 1. type ```add https://github.com/JuliaLang/PackageCompiler.jl#kms/fix-windows-library-filename``` (there is currently an issue with the release v2.0.4 of PackageCompiler that will be fixed soon and make this step obsolete)
 1. type ```add FMIExport```
