@@ -1,3 +1,4 @@
+![FMI.jl Logo](https://github.com/ThummeTo/FMI.jl/blob/main/logo/dark/fmijl_logo_640_320.png "FMI.jl Logo")
 # FMIExport.jl
 
 ## What is FMIExport.jl?
@@ -8,7 +9,7 @@ FMIExport.jl is a free-to-use software library for the Julia programming languag
 ## How can I use FMIExport.jl?
 1. open a Julia-Command-Window, activate your prefered environment
 1. goto package manager using ```]```
-1. type ```add https://github.com/JuliaLang/PackageCompiler.jl#kms/fix-windows-library-filename``` (there is currently an issue with the release v2.0.4 of PackageCompiler that will be fixed soon)
+1. type ```add https://github.com/JuliaLang/PackageCompiler.jl#kms/fix-windows-library-filename``` (there is currently an issue with the release v2.0.4 of PackageCompiler that will be fixed soon and make this step obsolete)
 1. type ```add FMIExport```
 
 ## What FMI.jl-Library should I use?
