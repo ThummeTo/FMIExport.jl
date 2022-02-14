@@ -1,0 +1,24 @@
+name = "FMIExport"
+uuid = "31b88311-cab6-44ed-ba9c-fe5a9abbd67a"
+authors = ["TT <tobias.thummerer@informatik.uni-augsburg.de>", "LM <lars.mikelsons@informatik.uni-augsburg.de>"]
+version = "0.1.0"
+
+[deps]
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+EzXML = "8f5d6c58-4d21-5cfd-889c-e3ad7ee6a615"
+FMICore = "8af89139-c281-408e-bce2-3005eb87462f"
+UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
+
+[compat]
+Dates = "^1.6.5"
+EzXML = "1.1.0"
+FMICore = "0.6.0"
+UUIDs = "^1.6.5"
+julia = "1.6"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+FMIBuild = "226f0e26-6dd6-4589-ada7-1d32f6e1d800"
+
+[targets]
+test = ["FMIBuild", "Test"]
