@@ -74,7 +74,7 @@ FMU_FCT_EVENT = function(t, x, ẋ, u, p)
     return z
 end
 
-using FMIExport
+#using FMIExport
 
 # this function is called, as soon as the DLL is loaded and Julia is initialized 
 # must return a FMU2-instance to work with
