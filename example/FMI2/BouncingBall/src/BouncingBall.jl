@@ -106,7 +106,9 @@ end
 ### FMIBUILD_NO_EXPORT_BEGIN ###
 # The line above is a start-marker for excluded code for the FMU compilation process!
 
-fmu_save_path = joinpath(dirname(@__FILE__), "..", "..", "..", "..", "tmp", "BouncingBall.fmu") 
+tmpDir = mktempdir(; prefix="fmibuildjl_test_", cleanup=false)
+@info "Saving test files at: $(tmpDir)"
+fmu_save_path = joinpath(tmpDir, "BouncingBall.fmu")  
 
 fmu = FMIBUILD_CONSTRUCTOR()
 using FMIBuild: fmi2Save        # <= this must be excluded during export, because FMIBuild cannot execute itself (but it is able to build)
