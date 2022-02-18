@@ -108,11 +108,11 @@ end
 
 tmpDir = mktempdir(; prefix="fmibuildjl_test_", cleanup=false)
 @info "Saving example files at: $(tmpDir)"
-fmu_save_path = joinpath(tmpDir, "BouncingBall.fmu"; cleanup=false)  
+fmu_save_path = joinpath(tmpDir, "BouncingBall.fmu")  
 
 fmu = FMIBUILD_CONSTRUCTOR()
 using FMIBuild: fmi2Save        # <= this must be excluded during export, because FMIBuild cannot execute itself (but it is able to build)
-fmi2Save(fmu, fmu_save_path)    # <= this must be excluded during export, because fmi2Save would start an infinte build loop with itself 
+fmi2Save(fmu, fmu_save_path; cleanup=false)    # <= this must be excluded during export, because fmi2Save would start an infinte build loop with itself 
 
 ### some tests ###
 # using FMI
