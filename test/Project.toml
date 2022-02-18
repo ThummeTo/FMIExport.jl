@@ -1,4 +1,4 @@
-name = "Test"
+name = "FMIExportTest"
 uuid = "a60229a6-2119-4702-9088-6d2bb886a221"
 authors = ["TT <tobias.thummerer@informatik.uni-augsburg.de>"]
 version = "0.1.0"
