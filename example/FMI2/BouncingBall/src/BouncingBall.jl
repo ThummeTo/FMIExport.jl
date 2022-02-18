@@ -107,7 +107,7 @@ end
 # The line above is a start-marker for excluded code for the FMU compilation process!
 
 tmpDir = mktempdir(; prefix="fmibuildjl_test_", cleanup=false)
-@info "Saving test files at: $(tmpDir)"
+@info "Saving example files at: $(tmpDir)"
 fmu_save_path = joinpath(tmpDir, "BouncingBall.fmu")  
 
 fmu = FMIBUILD_CONSTRUCTOR()
