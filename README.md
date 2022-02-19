@@ -22,7 +22,7 @@ To keep dependencies nice and clean, the original package *FMI.jl* had been spli
 - [*FMIFlux.jl*](https://github.com/ThummeTo/FMIFlux.jl): Machine Learning with FMUs (differentiation over FMUs)
 
 ## What Platforms are supported?
-*FMIExport.jl* is tested (and testing) under Julia Versions *1.6.5 LTS* and *latest* on Windows *latest* and Ubuntu *latest*. `x64` architectures are tested. Mac and x86-architectures might work, but are not tested.
+*FMIExport.jl* is tested (and testing) under Julia Versions *1.6.5 LTS* and *latest* on Windows *latest*. `x64` architectures are tested. Ubuntu is under development and near completion.
 
 ## How to cite?
 Tobias Thummerer, Lars Mikelsons and Josef Kircher. 2021. **NeuralFMU: towards structural integration of FMUs into neural networks.** Martin Sjölund, Lena Buffoni, Adrian Pop and Lennart Ochel (Ed.). Proceedings of 14th Modelica Conference 2021, Linköping, Sweden, September 20-24, 2021. Linköping University Electronic Press, Linköping (Linköping Electronic Conference Proceedings ; 181), 297-306. [DOI: 10.3384/ecp21181297](https://doi.org/10.3384/ecp21181297)
