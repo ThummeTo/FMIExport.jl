@@ -8,6 +8,7 @@ FMIExport.jl is a free-to-use software library for the Julia programming languag
 [![Coverage](https://codecov.io/gh/ThummeTo/FMIExport.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/ThummeTo/FMIExport.jl)
 
 ## How can I use FMIExport.jl?
+FMIExport.jl is part of [FMI.jl](https://github.com/ThummeTo/FMI.jl). However, if you only need the export functionality without anything around and want to keep the dependencies as small as possible, FMIExport.jl might be the right way to go. You can install it via:
 1. open a Julia-Command-Window, activate your preferred environment
 1. goto package manager using ```]```
 1. type ```add FMIExport```
