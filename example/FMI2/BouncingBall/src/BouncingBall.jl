@@ -74,7 +74,7 @@ FMU_FCT_EVENT = function(t, x, ẋ, u, p)
     return z
 end
 
-using FMIExport
+#using FMIExport
 
 # this function is called, as soon as the DLL is loaded and Julia is initialized 
 # must return a FMU2-instance to work with
@@ -106,18 +106,20 @@ end
 ### FMIBUILD_NO_EXPORT_BEGIN ###
 # The line above is a start-marker for excluded code for the FMU compilation process!
 
-fmu_save_path = joinpath(dirname(@__FILE__), "..", "..", "..", "..", "tmp", "BouncingBall.fmu") 
+tmpDir = mktempdir(; prefix="fmibuildjl_test_", cleanup=false) # "$(@__DIR__)"
+@info "Saving example files at: $(tmpDir)"
+fmu_save_path = joinpath(tmpDir, "BouncingBall.fmu")  
 
 fmu = FMIBUILD_CONSTRUCTOR()
 using FMIBuild: fmi2Save        # <= this must be excluded during export, because FMIBuild cannot execute itself (but it is able to build)
 fmi2Save(fmu, fmu_save_path)    # <= this must be excluded during export, because fmi2Save would start an infinte build loop with itself 
 
-# some tests
-using FMI
-comp = fmi2Instantiate!(fmu; loggingOn=true)
-solution = fmiSimulateME(comp, 0.0, 10.0; dtmax=0.1)
-fmiPlot(fmu, solution)
-fmi2FreeInstance!(comp)
+### some tests ###
+# using FMI
+# comp = fmiInstantiate!(fmu; loggingOn=true)
+# solution = fmiSimulateME(comp, 0.0, 10.0; dtmax=0.1)
+# fmiPlot(fmu, solution)
+# fmiFreeInstance!(comp)
 
 # The following line is a end-marker for excluded code for the FMU compilation process!
 ### FMIBUILD_NO_EXPORT_END ###
