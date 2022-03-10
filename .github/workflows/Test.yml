@@ -21,14 +21,14 @@ jobs:
 
       # Set up Julia
       - name: "Set up Julia"
-        uses: julia-actions/setup-julia@latest
+        uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.julia-version }}
           arch: ${{ matrix.julia-arch }}
 
       # Set up cache
       - name: "Set up cache"
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         env:
           cache-name: cache-artifacts
         with:
@@ -41,7 +41,7 @@ jobs:
 
       # Build package
       - name: "Build package"
-        uses: julia-actions/julia-buildpkg@latest
+        uses: julia-actions/julia-buildpkg@v1
 
       # Run the tests
       - name: "Run tests"
@@ -53,6 +53,6 @@ jobs:
 
       # Run codecov
       - name: "Run CodeCov"
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
         with:
           file: lcov.info
