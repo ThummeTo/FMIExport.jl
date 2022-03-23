@@ -3,6 +3,8 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
+using FMIExport 
+
 FMU_FCT_INIT = function()
     m = 1.0         # ball mass
     r = 0.0         # ball radius
@@ -74,11 +76,9 @@ FMU_FCT_EVENT = function(t, x, ẋ, u, p)
     return z
 end
 
-#using FMIExport
-
 # this function is called, as soon as the DLL is loaded and Julia is initialized 
 # must return a FMU2-instance to work with
-FMIBUILD_CONSTRUCTOR = function()
+FMIBUILD_CONSTRUCTOR = function(resPath="")
     fmu = fmi2CreateSimple(initializationFct=FMU_FCT_INIT,
                         evaluationFct=FMU_FCT_EVALUATE,
                         outputFct=FMU_FCT_OUTPUT,
@@ -106,7 +106,7 @@ end
 ### FMIBUILD_NO_EXPORT_BEGIN ###
 # The line above is a start-marker for excluded code for the FMU compilation process!
 
-tmpDir = mktempdir(; prefix="fmibuildjl_test_", cleanup=false) # "$(@__DIR__)"
+tmpDir = mktempdir(; prefix="fmibuildjl_test_", cleanup=false) 
 @info "Saving example files at: $(tmpDir)"
 fmu_save_path = joinpath(tmpDir, "BouncingBall.fmu")  
 
@@ -123,5 +123,3 @@ fmi2Save(fmu, fmu_save_path)    # <= this must be excluded during export, becaus
 
 # The following line is a end-marker for excluded code for the FMU compilation process!
 ### FMIBUILD_NO_EXPORT_END ###
-
-
