@@ -1,20 +1,45 @@
-![FMI.jl Logo](https://github.com/ThummeTo/FMI.jl/blob/main/logo/dark/fmijl_logo_640_320.png "FMI.jl Logo")
+![FMI.jl Logo](https://github.com/ThummeTo/FMI.jl/blob/main/logo/dark/fmijl_logo_640_320.png?raw=true "FMI.jl Logo")
 # FMIExport.jl
 
 ## What is FMIExport.jl?
 [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl) is a free-to-use software library for the Julia programming language which allows for the export of FMUs ([fmi-standard.org](http://fmi-standard.org/)) from any Julia-Code. [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl) is completely integrated into [*FMI.jl*](https://github.com/ThummeTo/FMI.jl).
 
-[![CI Testing](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/Test.yml/badge.svg)](https://github.com/ThummeTo/FMIExport.jl/actions)
+[![Dev Docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://ThummeTo.github.io/FMIExport.jl/dev) 
+[![Run Tests](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/Test.yml/badge.svg)](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/Test.yml)
+[![Run Examples](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/Example.yml/badge.svg)](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/Example.yml)
+[![Build Docs](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/Documentation.yml/badge.svg)](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/Documentation.yml)
 [![Coverage](https://codecov.io/gh/ThummeTo/FMIExport.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/ThummeTo/FMIExport.jl)
+[![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
 
 ## How can I use FMIExport.jl?
-[*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl) is part of [*FMI.jl*](https://github.com/ThummeTo/FMI.jl). However, if you only need the export functionality without anything around and want to keep the dependencies as small as possible, [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl) might be the right way to go. You can install it via:
-1. open a Julia-Command-Window, activate your preferred environment
-1. goto package manager using ```]```
-1. type ```add FMIExport```
+
+1\. Open a Julia-REPL, activate your preferred environment.
+
+2\. Go to Package-Manager (if not already) and install [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl):
+```julia-repl
+julia> ]
+
+(@v1.6) pkg> add FMIExport
+```
+
+(3)\. If you want to check that everything works correctly, you can run the tests bundled with [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl):
+```julia-repl
+julia> ]
+
+(@v1.6) pkg> test FMIExport
+```
+
+(4)\. Additionally, you can check the version of [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl) that you have installed with the ```status``` command.
+```julia-repl
+julia> ]
+
+(@v1.6) pkg> status FMIExport
+```
+
+5\. Have a look inside the [examples folder](https://github.com/ThummeTo/FMIExport.jl/tree/examples/examples) in the examples branch or the [examples section](https://thummeto.github.io/FMIExport.jl/dev/examples/overview/) of the documentation. All examples are available as Julia-Script (*.jl*), Jupyter-Notebook (*.ipynb*) and Markdown (*.md*).
 
 ## What FMI.jl-Library should I use?
-![FMI.jl Family](https://github.com/ThummeTo/FMI.jl/blob/main/docs/src/assets/FMI_JL_family.png "FMI.jl Family")
+![FMI.jl Logo](https://github.com/ThummeTo/FMI.jl/blob/main/docs/src/assets/FMI_JL_family.png?raw=true "FMI.jl Family")
 To keep dependencies nice and clean, the original package [*FMI.jl*](https://github.com/ThummeTo/FMI.jl) had been split into new packages:
 - [*FMI.jl*](https://github.com/ThummeTo/FMI.jl): High level loading, manipulating, saving or building entire FMUs from scratch
 - [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl): Importing FMUs into Julia
