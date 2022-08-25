@@ -3,8 +3,26 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-using Test
 using FMIExport
+using Test
 
-include("model_description.jl")
-include("export_simple.jl")
+
+function runtests()
+    # @testset "Simple export" begin
+    #     include("export_simple.jl")
+    # end
+
+    @testset "Model Description" begin
+        include("model_description.jl")
+    end
+
+end
+
+@testset "FMIExport.jl" begin
+    if Sys.iswindows() || Sys.islinux()
+        @info "Automated testing is supported on Windows/Linux."
+        runtests()
+    elseif Sys.isapple()
+        @warn "Test-sets are currrently using Windows- and Linux-FMUs, automated testing for macOS is currently not supported."
+    end
+end
