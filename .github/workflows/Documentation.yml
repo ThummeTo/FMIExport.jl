@@ -51,7 +51,8 @@ jobs:
           SRC_FOLDER_PATH: 'examples/FMI2'
         run: |
           git fetch
-          git --work-tree=./docs/src checkout ${SRC_BRANCH/} -- $SRC_FOLDER_PATH/*.md $SRC_FOLDER_PATH/*.svg
+          git --work-tree=./docs/src checkout ${SRC_BRANCH/} -- $SRC_FOLDER_PATH/**.md
+          # git --work-tree=./docs/src checkout ${SRC_BRANCH/} -- $SRC_FOLDER_PATH/**.md $SRC_FOLDER_PATH/**.svg
           cp ./README.md ./docs/src/index.md
 
       - name: "Set up Julia"
