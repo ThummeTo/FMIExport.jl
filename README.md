@@ -13,26 +13,20 @@
 
 ## How can I use FMIExport.jl?
 
-1\. Open a Julia-REPL, activate your preferred environment.
+1\. Open a Julia-REPL, switch to package mode using `]`, activate your preferred environment.
 
-2\. Go to Package-Manager (if not already) and install [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl):
+2\. Install [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl):
 ```julia-repl
-julia> ]
-
 (@v1.6) pkg> add FMIExport
 ```
 
 (3)\. If you want to check that everything works correctly, you can run the tests bundled with [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl):
 ```julia-repl
-julia> ]
-
 (@v1.6) pkg> test FMIExport
 ```
 
 (4)\. Additionally, you can check the version of [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl) that you have installed with the ```status``` command.
 ```julia-repl
-julia> ]
-
 (@v1.6) pkg> status FMIExport
 ```
 
