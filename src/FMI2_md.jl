@@ -158,11 +158,8 @@ function fmi2ModelDescriptionAddModelVariable(md::fmi2ModelDescription, name::St
         valueReference = fmi2ValueReference(length(md.modelVariables)+1)
     end
 
-    sv = fmi2ScalarVariable(name, valueReference)
+    sv = fmi2ScalarVariable(name, valueReference, causality, variability, initial)
     sv.description = description
-    sv.causality = causality
-    sv.variability = variability
-    sv.initial = initial
     sv.canHandleMultipleSetPerTimeInstant = canHandleMultipleSetPerTimeInstant
     sv._Real = _Real
     sv._Integer = _Integer
