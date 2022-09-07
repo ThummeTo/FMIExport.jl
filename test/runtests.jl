@@ -8,10 +8,6 @@ using Test
 
 
 function runtests()
-    # @testset "Simple export" begin
-    #     include("export_simple.jl")
-    # end
-
     @testset "Model Description" begin
         include("model_description.jl")
     end
