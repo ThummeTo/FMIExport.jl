@@ -188,10 +188,10 @@ end
 """ 
 ToDo
 """
-function fmi2Create(instanceName::String="", type=fmi2TypeModelExchange)
+function fmi2Create(modelName::String="", type=fmi2TypeModelExchange)
     fmu = FMU2()
     
-    fmu.instanceName = instanceName
+    fmu.modelName = modelName
     fmu.type = type
     fmu.modelDescription = fmi2CreateModelDescription()
     fmu.fmuResourceLocation = pwd()
