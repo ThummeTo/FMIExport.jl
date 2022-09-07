@@ -48,9 +48,9 @@ jobs:
           list-files: shell
           filters: |
             all:
-              - '**.ipynb'
+              - 'examples/FMI2/**.ipynb'
             changed:
-              - added|modified: '**.ipynb'
+              - added|modified: 'examples/FMI2/**.ipynb'
           base: 'examples'
           ref: 'examples'
                         
