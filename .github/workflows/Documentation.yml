@@ -48,7 +48,7 @@ jobs:
       - name: "Copy examples, readme"
         env:
           SRC_BRANCH: 'origin/examples'
-          SRC_FOLDER_PATH: 'examples/FMI2'
+          SRC_FOLDER_PATH: 'examples/'
         run: |
           git fetch
           git --work-tree=./docs/src checkout ${SRC_BRANCH/} -- $SRC_FOLDER_PATH/**.md
