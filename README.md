@@ -25,7 +25,10 @@ To keep dependencies nice and clean, the original package [*FMI.jl*](https://git
 - [*FMIZoo.jl*](https://github.com/ThummeTo/FMIZoo.jl): A collection of testing and example FMUs
 
 ## What Platforms are supported?
-*FMIExport.jl* is tested (and testing) under Julia Versions *1.6.5 LTS* and *latest* on Windows *latest*. `x64` architectures are tested. Ubuntu is under development and near completion.
+[*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl) is tested (and testing) under Julia Versions *1.6.5 LTS* and *latest* on Windows *latest*. `x64` architectures are tested. Ubuntu is under development and near completion.
+
+## Known limitations
+- Currently it is not possible to hold more than one sysimg in a Julia session, so it is not possible to load FMUs generated with [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl) into [*FMI.jl*](https://github.com/ThummeTo/FMI.jl) using `fmiLoad(...)`. However, FMUs created with `fmiCreate` can be used in [*FMI.jl*](https://github.com/ThummeTo/FMI.jl) without the need to export and re-import it, the FMU behaves like any other FMU loaded via `fmiLoad`.
 
 ## How to cite?
 Tobias Thummerer, Lars Mikelsons and Josef Kircher. 2021. **NeuralFMU: towards structural integration of FMUs into neural networks.** Martin Sjölund, Lena Buffoni, Adrian Pop and Lennart Ochel (Ed.). Proceedings of 14th Modelica Conference 2021, Linköping, Sweden, September 20-24, 2021. Linköping University Electronic Press, Linköping (Linköping Electronic Conference Proceedings ; 181), 297-306. [DOI: 10.3384/ecp21181297](https://doi.org/10.3384/ecp21181297)
