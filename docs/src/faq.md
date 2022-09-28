@@ -1,6 +1,6 @@
 
 # FAQ
 
-This list some common errors:
+This list contains some common errors:
 
 ## ToDo
