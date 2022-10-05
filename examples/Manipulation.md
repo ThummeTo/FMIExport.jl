@@ -1,11 +1,55 @@
+# Create a Manipulation FMU
+Tutorial by Johannes Stoljar, Tobias Thummerer
+
+## License
+
+
+```julia
 # Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher, Johannes Stoljar
 # Licensed under the MIT license.
 # See LICENSE (https://github.com/thummeto/FMIExport.jl/blob/main/LICENSE) file in the project root for details.
+```
 
+## Motivation
+This Julia Package *FMIExport.jl* is motivated by the export of simulation models in Julia. Here the FMI specification is implemented. FMI (*Functional Mock-up Interface*) is a free standard ([fmi-standard.org](http://fmi-standard.org/)) that defines a container and an interface to exchange dynamic models using a combination of XML files, binaries and C code zipped into a single file. The user is able to create own FMUs (*Functional Mock-up Units*).
+
+## Introduction to the example
+ToDo
+
+
+## Target group
+The example is primarily intended for users who work in the field of simulations. The example wants to show how simple it is to export FMUs in Julia.
+
+
+## Other formats
+Besides, this [Jupyter Notebook](https://github.com/thummeto/FMIExport.jl/blob/examples/examples/FMI2/BouncingBall/src/BouncingBall.ipynb) there is also a [Julia file](https://github.com/thummeto/FMIExport.jl/blob/examples/examples/FMI2/BouncingBall/src/BouncingBall.jl) with the same name, which contains only the code cells and for the documentation there is a [Markdown file](https://github.com/thummeto/FMI.jl/blob/examples/examples/FMI2/BouncingBall/src/BouncingBall.md) corresponding to the notebook.  
+
+
+## Getting started
+
+### Installation prerequisites
+|     | Description                       | Command                   | Alternative                                    |   
+|:----|:----------------------------------|:--------------------------|:-----------------------------------------------|
+| 1.  | Enter Package Manager via         | ]                         |                                                |
+| 2.  | Install FMI via                   | add FMI                   | add " https://github.com/ThummeTo/FMI.jl "     |
+| 2.  | Install FMIExport via             | add FMIExport             | add " https://github.com/ThummeTo/FMIExport.jl " |
+| 2.  | Install FMICore via               | add FMICore               | add " https://github.com/ThummeTo/FMICore.jl " |
+
+## Code section
+
+To run the example, the previously installed packages must be included. 
+
+
+```julia
 using FMI
 using FMIExport
 using FMICore
+```
 
+### ToDo
+
+
+```julia
 originalGetReal = nothing # function pointer to the original fmi2GetReal c-function
 
 # custom function for fmi2GetReal!(fmi2Component, Union{Array{fmi2ValueReference}, Ptr{fmi2ValueReference}}, Csize_t, value::Union{Array{fmi2Real}, Ptr{fmi2Real}}::fmi2Status
@@ -69,3 +113,26 @@ fmu = FMIBUILD_CONSTRUCTOR(dirname(sourceFMU))
 # The following line is a end-marker for excluded code for the FMU compilation process!
 ### FMIBUILD_NO_EXPORT_END ###
 
+```
+
+    ┌ Info: Saving example files at: /tmp/fmibuildjl_test_9HMXEL
+    └ @ Main In[3]:53
+    ┌ Info: fmi2Unzip(...): Successfully unzipped 153 files at `/tmp/fmijl_4BJ2KK/SpringDamperPendulum1D`.
+    └ @ FMIImport /home/runner/.julia/packages/FMIImport/1Yngw/src/FMI2_ext.jl:90
+    ┌ Info: fmi2Load(...): FMU resources location is `file:////tmp/fmijl_4BJ2KK/SpringDamperPendulum1D/resources`
+    └ @ FMIImport /home/runner/.julia/packages/FMIImport/1Yngw/src/FMI2_ext.jl:221
+    ┌ Info: fmi2Load(...): FMU supports both CS and ME, using CS as default if nothing specified.
+    └ @ FMIImport /home/runner/.julia/packages/FMIImport/1Yngw/src/FMI2_ext.jl:224
+
+
+
+
+
+    Model name:        SpringDamperPendulum1D
+    Type:              1
+
+
+
+### Summary
+
+ToDo

@@ -1,9 +1,53 @@
+# Create a Bouncing Ball FMU
+Tutorial by Johannes Stoljar, Tobias Thummerer
+
+## License
+
+
+```julia
 # Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher, Johannes Stoljar
 # Licensed under the MIT license.
 # See LICENSE (https://github.com/thummeto/FMIExport.jl/blob/main/LICENSE) file in the project root for details.
+```
 
+## Motivation
+This Julia Package *FMIExport.jl* is motivated by the export of simulation models in Julia. Here the FMI specification is implemented. FMI (*Functional Mock-up Interface*) is a free standard ([fmi-standard.org](http://fmi-standard.org/)) that defines a container and an interface to exchange dynamic models using a combination of XML files, binaries and C code zipped into a single file. The user is able to create own FMUs (*Functional Mock-up Units*).
+
+## Introduction to the example
+ToDo
+
+
+## Target group
+The example is primarily intended for users who work in the field of simulations. The example wants to show how simple it is to export FMUs in Julia.
+
+
+## Other formats
+Besides, this [Jupyter Notebook](https://github.com/thummeto/FMIExport.jl/blob/examples/examples/FMI2/BouncingBall/src/BouncingBall.ipynb) there is also a [Julia file](https://github.com/thummeto/FMIExport.jl/blob/examples/examples/FMI2/BouncingBall/src/BouncingBall.jl) with the same name, which contains only the code cells and for the documentation there is a [Markdown file](https://github.com/thummeto/FMI.jl/blob/examples/examples/FMI2/BouncingBall/src/BouncingBall.md) corresponding to the notebook.  
+
+
+## Getting started
+
+### Installation prerequisites
+|     | Description                       | Command                   | Alternative                                    |   
+|:----|:----------------------------------|:--------------------------|:-----------------------------------------------|
+| 1.  | Enter Package Manager via         | ]                         |                                                |
+| 2.  | Install FMIExport via             | add FMIExport             | add " https://github.com/ThummeTo/FMIExport.jl " |
+
+## Code section
+
+To run the example, the previously installed packages must be included. 
+
+
+```julia
 using FMIExport 
+```
 
+### Define the Model
+
+In the following section the behavior of the FMU is defined by defining the functions for initialization, evaluation, output and event.
+
+
+```julia
 FMU_FCT_INIT = function()
     m = 1.0         # ball mass
     r = 0.0         # ball radius
@@ -74,7 +118,21 @@ FMU_FCT_EVENT = function(t, x, ẋ, u, p)
 
     return z
 end
+```
 
+
+
+
+    #7 (generic function with 1 method)
+
+
+
+### FMU Constructor
+
+This function is called, as soon as the DLL is loaded and Julia is initialized. The function must return a FMU2-instance to work with.
+
+
+```julia
 FMIBUILD_CONSTRUCTOR = function(resPath=".")
     fmu = fmi2CreateSimple(initializationFct=FMU_FCT_INIT,
                         evaluationFct=FMU_FCT_EVALUATE,
@@ -120,3 +178,20 @@ fmu = FMIBUILD_CONSTRUCTOR()
 
 # The following line is a end-marker for excluded code for the FMU compilation process!
 ### FMIBUILD_NO_EXPORT_END ###
+```
+
+    ┌ Info: Saving example files at: /tmp/fmibuildjl_test_DpMkmy
+    └ @ Main In[4]:30
+
+
+
+
+
+    Model name:        
+    Type:              0
+
+
+
+### Summary
+
+Based on this tutorial it can be seen that creating an FMU is very easy.
