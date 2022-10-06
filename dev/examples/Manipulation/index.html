@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Manipulation · FMIExport.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Introduction</a></li><li><a class="tocitem" href="../../features/">Features</a></li><li><a class="tocitem" href="../../faq/">FAQ</a></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox" checked/><label class="tocitem" for="menuitem-4"><span class="docs-label">Examples</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../overview/">Overview</a></li><li><a class="tocitem" href="../BouncingBall/">BouncingBall</a></li><li class="is-active"><a class="tocitem" href>Manipulation</a><ul class="internal"><li><a class="tocitem" href="#License"><span>License</span></a></li><li><a class="tocitem" href="#Motivation"><span>Motivation</span></a></li><li><a class="tocitem" href="#Introduction-to-the-example"><span>Introduction to the example</span></a></li><li><a class="tocitem" href="#Target-group"><span>Target group</span></a></li><li><a class="tocitem" href="#Other-formats"><span>Other formats</span></a></li><li><a class="tocitem" href="#Getting-started"><span>Getting started</span></a></li><li><a class="tocitem" href="#Code-section"><span>Code section</span></a></li></ul></li></ul></li><li><a class="tocitem" href="../../library/">Library Functions</a></li><li><a class="tocitem" href="../../related/">Related Publication</a></li><li><a class="tocitem" href="../../contents/">Contents</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Manipulation</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Manipulation</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Create-a-Manipulation-FMU"><a class="docs-heading-anchor" href="#Create-a-Manipulation-FMU">Create a Manipulation FMU</a><a id="Create-a-Manipulation-FMU-1"></a><a class="docs-heading-anchor-permalink" href="#Create-a-Manipulation-FMU" title="Permalink"></a></h1><p>Tutorial by Johannes Stoljar, Tobias Thummerer</p><h2 id="License"><a class="docs-heading-anchor" href="#License">License</a><a id="License-1"></a><a class="docs-heading-anchor-permalink" href="#License" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher, Johannes Stoljar
+# Licensed under the MIT license.
+# See LICENSE (https://github.com/thummeto/FMIExport.jl/blob/main/LICENSE) file in the project root for details.</code></pre><h2 id="Motivation"><a class="docs-heading-anchor" href="#Motivation">Motivation</a><a id="Motivation-1"></a><a class="docs-heading-anchor-permalink" href="#Motivation" title="Permalink"></a></h2><p>This Julia Package <em>FMIExport.jl</em> is motivated by the export of simulation models in Julia. Here the FMI specification is implemented. FMI (<em>Functional Mock-up Interface</em>) is a free standard (<a href="http://fmi-standard.org/">fmi-standard.org</a>) that defines a container and an interface to exchange dynamic models using a combination of XML files, binaries and C code zipped into a single file. The user is able to create own FMUs (<em>Functional Mock-up Units</em>).</p><h2 id="Introduction-to-the-example"><a class="docs-heading-anchor" href="#Introduction-to-the-example">Introduction to the example</a><a id="Introduction-to-the-example-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction-to-the-example" title="Permalink"></a></h2><p>ToDo</p><h2 id="Target-group"><a class="docs-heading-anchor" href="#Target-group">Target group</a><a id="Target-group-1"></a><a class="docs-heading-anchor-permalink" href="#Target-group" title="Permalink"></a></h2><p>The example is primarily intended for users who work in the field of simulations. The example wants to show how simple it is to export FMUs in Julia.</p><h2 id="Other-formats"><a class="docs-heading-anchor" href="#Other-formats">Other formats</a><a id="Other-formats-1"></a><a class="docs-heading-anchor-permalink" href="#Other-formats" title="Permalink"></a></h2><p>Besides, this <a href="https://github.com/thummeto/FMIExport.jl/blob/examples/examples/FMI2/BouncingBall/src/BouncingBall.ipynb">Jupyter Notebook</a> there is also a <a href="https://github.com/thummeto/FMIExport.jl/blob/examples/examples/FMI2/BouncingBall/src/BouncingBall.jl">Julia file</a> with the same name, which contains only the code cells and for the documentation there is a <a href="https://github.com/thummeto/FMI.jl/blob/examples/examples/FMI2/BouncingBall/src/BouncingBall.md">Markdown file</a> corresponding to the notebook.  </p><h2 id="Getting-started"><a class="docs-heading-anchor" href="#Getting-started">Getting started</a><a id="Getting-started-1"></a><a class="docs-heading-anchor-permalink" href="#Getting-started" title="Permalink"></a></h2><h3 id="Installation-prerequisites"><a class="docs-heading-anchor" href="#Installation-prerequisites">Installation prerequisites</a><a id="Installation-prerequisites-1"></a><a class="docs-heading-anchor-permalink" href="#Installation-prerequisites" title="Permalink"></a></h3><table><tr><th style="text-align: left"></th><th style="text-align: left">Description</th><th style="text-align: left">Command</th><th style="text-align: left">Alternative</th></tr><tr><td style="text-align: left">1.</td><td style="text-align: left">Enter Package Manager via</td><td style="text-align: left">]</td><td style="text-align: left"></td></tr><tr><td style="text-align: left">2.</td><td style="text-align: left">Install FMI via</td><td style="text-align: left">add FMI</td><td style="text-align: left">add &quot; https://github.com/ThummeTo/FMI.jl &quot;</td></tr><tr><td style="text-align: left">2.</td><td style="text-align: left">Install FMIExport via</td><td style="text-align: left">add FMIExport</td><td style="text-align: left">add &quot; https://github.com/ThummeTo/FMIExport.jl &quot;</td></tr><tr><td style="text-align: left">2.</td><td style="text-align: left">Install FMICore via</td><td style="text-align: left">add FMICore</td><td style="text-align: left">add &quot; https://github.com/ThummeTo/FMICore.jl &quot;</td></tr></table><h2 id="Code-section"><a class="docs-heading-anchor" href="#Code-section">Code section</a><a id="Code-section-1"></a><a class="docs-heading-anchor-permalink" href="#Code-section" title="Permalink"></a></h2><p>To run the example, the previously installed packages must be included. </p><pre><code class="language-julia hljs">using FMI
+using FMIExport
+using FMICore</code></pre><h3 id="ToDo"><a class="docs-heading-anchor" href="#ToDo">ToDo</a><a id="ToDo-1"></a><a class="docs-heading-anchor-permalink" href="#ToDo" title="Permalink"></a></h3><pre><code class="language-julia hljs">originalGetReal = nothing # function pointer to the original fmi2GetReal c-function
+
+# custom function for fmi2GetReal!(fmi2Component, Union{Array{fmi2ValueReference}, Ptr{fmi2ValueReference}}, Csize_t, value::Union{Array{fmi2Real}, Ptr{fmi2Real}}::fmi2Status
+# for information on how the FMI2-functions are structured, have a look inside FMICore.jl/src/FMI2_c.jl or the FMI2.0.3-specification on fmi-standard.org
+function myGetReal!(c::fmi2Component, vr::Union{Array{fmi2ValueReference}, Ptr{fmi2ValueReference}}, nvr::Csize_t, value::Union{Array{fmi2Real}, Ptr{fmi2Real}})
+    global originalGetReal
+    
+    # first, we do what the original function does
+    status = fmi2GetReal!(originalGetReal, c, vr, nvr, value)
+
+    # if we have a pointer to an array, we must interprete it as array to access elements
+    if isa(value, Ptr{fmi2Real})
+        value = unsafe_wrap(Array{fmi2Real}, value, nvr, own=false)
+    end
+    if isa(vr, Ptr{fmi2Real})
+        vr = unsafe_wrap(Array{fmi2Real}, vr, nvr, own=false)
+    end
+
+    # now, we multiply the position sensor output by two (just for fun!)
+    for i in 1:nvr 
+        if vr[i] == 335544320 # value reference for &quot;positionSensor.s&quot;
+            value[i] *= 2.0 
+        end
+    end 
+
+    # ... and we return the original status
+    return status
+end
+
+# this function is called, as soon as the DLL is loaded and Julia is initialized 
+# must return a FMU2-instance to work with
+FMIBUILD_CONSTRUCTOR = function(resPath)
+    global originalGetReal
+
+    # loads an existing FMU inside the FMU
+    fmu = fmiLoad(joinpath(resPath, &quot;SpringDamperPendulum1D.fmu&quot;))
+
+    # save, where the original `fmi2GetReal` function was stored, so we can access it in our new function
+    originalGetReal = fmu.cGetReal
+
+    # now we overwrite the original function
+    fmiSetFctGetReal(fmu, myGetReal!)
+
+    return fmu
+end
+
+### FMIBUILD_NO_EXPORT_BEGIN ###
+# The line above is a start-marker for excluded code for the FMU compilation process!
+
+import FMIZoo
+
+tmpDir = mktempdir(; prefix=&quot;fmibuildjl_test_&quot;, cleanup=false) 
+@info &quot;Saving example files at: $(tmpDir)&quot;
+fmu_save_path = joinpath(tmpDir, &quot;Manipulation.fmu&quot;)  
+
+sourceFMU = FMIZoo.get_model_filename(&quot;SpringDamperPendulum1D&quot;, &quot;Dymola&quot;, &quot;2022x&quot;)
+fmu = FMIBUILD_CONSTRUCTOR(dirname(sourceFMU))
+# import FMIBuild:fmi2Save        # &lt;= this must be excluded during export, because FMIBuild cannot execute itself (but it is able to build)
+# fmi2Save(fmu, fmu_save_path; resources=Dict(sourceFMU=&gt;&quot;SpringDamperPendulum1D.fmu&quot;))    # &lt;= this must be excluded during export, because fmi2Save would start an infinte build loop with itself 
+
+# The following line is a end-marker for excluded code for the FMU compilation process!
+### FMIBUILD_NO_EXPORT_END ###
+</code></pre><pre><code class="nohighlight hljs">┌ Info: Saving example files at: /tmp/fmibuildjl_test_jmOfQ7
+└ @ Main In[3]:53
+┌ Info: fmi2Unzip(...): Successfully unzipped 153 files at `/tmp/fmijl_EKHp14/SpringDamperPendulum1D`.
+└ @ FMIImport /home/runner/.julia/packages/FMIImport/1Yngw/src/FMI2_ext.jl:90
+┌ Info: fmi2Load(...): FMU resources location is `file:////tmp/fmijl_EKHp14/SpringDamperPendulum1D/resources`
+└ @ FMIImport /home/runner/.julia/packages/FMIImport/1Yngw/src/FMI2_ext.jl:221
+┌ Info: fmi2Load(...): FMU supports both CS and ME, using CS as default if nothing specified.
+└ @ FMIImport /home/runner/.julia/packages/FMIImport/1Yngw/src/FMI2_ext.jl:224
+
+
+
+
+
+Model name:        SpringDamperPendulum1D
+Type:              1</code></pre><h3 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h3><p>ToDo</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../BouncingBall/">« BouncingBall</a><a class="docs-footer-nextpage" href="../../library/">Library Functions »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Thursday 6 October 2022 09:25">Thursday 6 October 2022</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
