@@ -1,8 +1,0 @@
-name = "BouncingBall"
-uuid = "a60229a6-2119-4702-9088-6d2bb886a221"
-authors = ["TT <tobias.thummerer@informatik.uni-augsburg.de>"]
-version = "0.1.0"
-
-[deps]
-FMIBuild = "226f0e26-6dd6-4589-ada7-1d32f6e1d800"
-FMIExport = "31b88311-cab6-44ed-ba9c-fe5a9abbd67a"

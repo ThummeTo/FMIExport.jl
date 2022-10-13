@@ -1,0 +1,71 @@
+name: Documentation
+
+on:
+  workflow_run:
+    workflows: ["Run Examples"]
+    types:
+      - completed
+  push:
+    branches: 
+      - main
+    paths:
+      - 'docs/**'
+      - 'README.md'
+    tags: 
+      - '*'
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    outputs:
+      flag_filter: ${{ steps.filter.outputs.test_workflow }}
+    steps:
+      - name: "Check out repository"
+        uses: actions/checkout@v3
+
+      - name: "Set path filter"
+        uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          list-files: shell
+          base: 'main'
+          filters: |
+            test_workflow:
+              - 'src/**'
+              - 'test/**'
+              - '.github/**'
+
+  build:
+    needs: trigger
+    runs-on: ubuntu-latest
+    if: ${{ !(needs.trigger.outputs.flag_filter == 'true' && github.event_name == 'push')  && github.event.workflow_run.conclusion == 'success'}}
+    steps:
+      - name: "Check out repository"
+        uses: actions/checkout@v3
+        with:
+          ref: main
+
+      - name: "Copy examples, readme"
+        env:
+          SRC_BRANCH: 'origin/examples'
+          SRC_FOLDER_PATH: 'examples/'
+        run: |
+          git fetch
+          git --work-tree=./docs/src checkout ${SRC_BRANCH/} -- $SRC_FOLDER_PATH/**.md
+          # git --work-tree=./docs/src checkout ${SRC_BRANCH/} -- $SRC_FOLDER_PATH/**.md $SRC_FOLDER_PATH/**.svg
+          cp ./README.md ./docs/src/index.md
+
+      - name: "Set up Julia"
+        uses: julia-actions/setup-julia@v1
+        with:
+          version: '1.6'
+          arch: x64
+
+      - name: "Install dependencies"
+        run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+
+      - name: "Build and deploy"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }} # For authentication with SSH deploy key
+        run: julia --project=docs/ docs/make.jl
