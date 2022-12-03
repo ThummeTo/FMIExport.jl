@@ -20,7 +20,7 @@
 (@v1.6) pkg> add FMIExport
 ```
 
-(3)\. If you want to check that everything works correctly, you can run the tests bundled with [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl):
+3\. If you want to check that everything works correctly, you can run the tests bundled with [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl):
 ```julia-repl
 (@v1.6) pkg> test FMIExport
 ```
