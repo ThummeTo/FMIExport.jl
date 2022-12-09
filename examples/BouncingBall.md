@@ -180,7 +180,7 @@ fmu = FMIBUILD_CONSTRUCTOR()
 ### FMIBUILD_NO_EXPORT_END ###
 ```
 
-    ┌ Info: Saving example files at: /tmp/fmibuildjl_test_ZXyHfW
+    ┌ Info: Saving example files at: /tmp/fmibuildjl_test_L9TWza
     └ @ Main In[4]:30
 
 

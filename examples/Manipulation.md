@@ -115,7 +115,7 @@ fmu = FMIBUILD_CONSTRUCTOR(dirname(sourceFMU))
 
 ```
 
-    ┌ Info: Saving example files at: /tmp/fmibuildjl_test_Pfj9cq
+    ┌ Info: Saving example files at: /tmp/fmibuildjl_test_Oeprec
     └ @ Main In[3]:53
 
 
