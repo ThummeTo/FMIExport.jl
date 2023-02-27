@@ -21,6 +21,6 @@ var = fmi2ModelDescriptionAddRealStateAndDerivative(md, "mass.v")
 @test var[2].valueReference == 4
 
 var = fmi2ModelDescriptionAddRealOutput(md, "mass.f")
-@test typeof(var) ==fmi2ScalarVariable
+@test typeof(var) == fmi2ScalarVariable
 @test var.name == "mass.f"
 @test var.valueReference == 5
