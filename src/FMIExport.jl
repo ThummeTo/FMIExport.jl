@@ -5,10 +5,11 @@
 
 module FMIExport
 
+using FMICore
 using FMICore: FMU2, FMU2Component, fmi2ModelDescription, fmi2ValueReference, fmi2Component, fmi2ComponentEnvironment, fmi2Status, fmi2EventInfo
 using FMICore: fmi2Causality, fmi2CausalityOutput, fmi2CausalityInput
-using FMICore: fmi2ScalarVariable, fmi2Variability, fmi2Initial, FMI2_MODEL_DESCRIPTION_VARIABLE
-using FMICore: fmi2ModelDescriptionReal, fmi2ModelDescriptionInteger, fmi2ModelDescriptionBoolean, fmi2ModelDescriptionString, fmi2ModelDescriptionEnumeration
+using FMICore: fmi2ScalarVariable, fmi2Variability, fmi2Initial, FMI2_SCALAR_VARIABLE_ATTRIBUTE_STRUCT
+using FMICore: fmi2RealAttributesExt, fmi2IntegerAttributesExt, fmi2BooleanAttributesExt, fmi2StringAttributesExt, fmi2EnumerationAttributesExt
 using FMICore: fmi2VariableDependency, fmi2Unknown, fmi2DependencyKind
 using FMICore: fmi2VariableNamingConventionStructured
 using FMICore: fmi2CausalityToString, fmi2VariabilityToString, fmi2InitialToString
@@ -42,8 +43,6 @@ export fmi2SetFctGetDerivatives, fmi2SetFctGetEventIndicators, fmi2SetFctGetCont
 
 include("FMI2_simple.jl")
 export fmi2CreateSimple 
-
-# export fmi2ComponentStruct
 
 function fmi2SetFctGetTypesPlatform(fmu::FMU2, fun)
     c_fun = @cfunction($fun, fmi2String, ())
