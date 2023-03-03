@@ -7,7 +7,7 @@ module FMIExport
 
 using FMICore: FMU2, FMU2Component, fmi2ModelDescription, fmi2ValueReference, fmi2Component, fmi2ComponentEnvironment, fmi2Status, fmi2EventInfo
 using FMICore: fmi2Causality, fmi2CausalityOutput, fmi2CausalityInput
-using FMICore: fmi2ScalarVariable, fmi2Variability, fmi2Initial
+using FMICore: fmi2ScalarVariable, fmi2Variability, fmi2Initial, FMI2_MODEL_DESCRIPTION_VARIABLE
 using FMICore: fmi2ModelDescriptionReal, fmi2ModelDescriptionInteger, fmi2ModelDescriptionBoolean, fmi2ModelDescriptionString, fmi2ModelDescriptionEnumeration
 using FMICore: fmi2VariableDependency, fmi2Unknown, fmi2DependencyKind
 using FMICore: fmi2VariableNamingConventionStructured
