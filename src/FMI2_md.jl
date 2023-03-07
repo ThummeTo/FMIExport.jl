@@ -42,9 +42,9 @@ function fmi2ModelDescriptionAddRealState(md::fmi2ModelDescription, name::String
     start::Union{Real, Nothing}=nothing,
     kwargs...)
 
-    _Real = fmi2ModelDescriptionReal()
+    _Real = fmi2RealAttributesExt()
     _Real.start = start
-    sv =  fmi2ModelDescriptionAddModelVariable(md, name; _Real=_Real, kwargs...)
+    sv =  fmi2ModelDescriptionAddModelVariable(md, name; attribute=_Real, kwargs...)
 
     push!(md.stateValueReferences, sv.valueReference)
     push!(md.stringValueReferences, sv.name => sv.valueReference)
@@ -57,11 +57,11 @@ function fmi2ModelDescriptionAddRealDerivative(md::fmi2ModelDescription, name::S
     derivative::Union{UInt, Nothing}=nothing,
     kwargs...)
 
-    _Real = fmi2ModelDescriptionReal()
+    _Real = fmi2RealAttributesExt()
     _Real.start = start
     _Real.derivative = derivative
 
-    sv = fmi2ModelDescriptionAddModelVariable(md, name; _Real=_Real, kwargs...)
+    sv = fmi2ModelDescriptionAddModelVariable(md, name; attribute=_Real, kwargs...)
     index = fmi2GetIndexOfScalarVariable(md, sv)
 
     fmi2ModelDescriptionAddModelStructureDerivatives(md, index)
@@ -88,10 +88,10 @@ function fmi2ModelDescriptionAddRealInput(md::fmi2ModelDescription, name::String
     start::Union{Real, Nothing}=nothing,
     kwargs...)
 
-    _Real = fmi2ModelDescriptionReal()
+    _Real = fmi2RealAttributesExt()
     _Real.start = start
 
-    sv = fmi2ModelDescriptionAddModelVariable(md, name; _Real=_Real, causality=fmi2CausalityInput, kwargs...)
+    sv = fmi2ModelDescriptionAddModelVariable(md, name; attribute=_Real, causality=fmi2CausalityInput, kwargs...)
 
     push!(md.inputValueReferences, sv.valueReference)
     push!(md.stringValueReferences, sv.name => sv.valueReference)
@@ -103,10 +103,10 @@ function fmi2ModelDescriptionAddRealOutput(md::fmi2ModelDescription, name::Strin
     start::Union{Real, Nothing}=nothing,
     kwargs...)
 
-    _Real = fmi2ModelDescriptionReal()
+    _Real = fmi2RealAttributesExt()
     _Real.start = start
 
-    sv = fmi2ModelDescriptionAddModelVariable(md, name; _Real=_Real, causality=fmi2CausalityOutput, kwargs...)
+    sv = fmi2ModelDescriptionAddModelVariable(md, name; attribute=_Real, causality=fmi2CausalityOutput, kwargs...)
     index = fmi2GetIndexOfScalarVariable(md, sv)
 
     fmi2ModelDescriptionAddModelStructureOutputs(md, index)
@@ -120,10 +120,10 @@ function fmi2ModelDescriptionAddRealParameter(md::fmi2ModelDescription, name::St
     start::Union{Real, Nothing}=nothing,
     kwargs...)
 
-    _Real = fmi2ModelDescriptionReal()
+    _Real = fmi2RealAttributesExt()
     _Real.start = start
     
-    sv = fmi2ModelDescriptionAddModelVariable(md, name; _Real=_Real, kwargs...)
+    sv = fmi2ModelDescriptionAddModelVariable(md, name; attribute=_Real, kwargs...)
 
     push!(md.parameterValueReferences, sv.valueReference)
     push!(md.stringValueReferences, sv.name => sv.valueReference)
@@ -148,11 +148,7 @@ function fmi2ModelDescriptionAddModelVariable(md::fmi2ModelDescription, name::St
     variability::Union{fmi2Variability, Nothing}=nothing,
     initial::Union{fmi2Initial, Nothing}=nothing,
     canHandleMultipleSetPerTimeInstant::Union{Bool, Nothing}=nothing,
-    _Real::Union{fmi2ModelDescriptionReal, Nothing}=nothing,
-    _Integer::Union{fmi2ModelDescriptionInteger, Nothing}=nothing,
-    _Boolean::Union{fmi2ModelDescriptionBoolean, Nothing}=nothing,
-    _String::Union{fmi2ModelDescriptionString, Nothing}=nothing,
-    _Enumeration::Union{fmi2ModelDescriptionEnumeration, Nothing}=nothing)
+    attribute::Union{FMI2_SCALAR_VARIABLE_ATTRIBUTE_STRUCT, Nothing}=nothing)
 
     if valueReference === :auto 
         valueReference = fmi2ValueReference(length(md.modelVariables)+1)
@@ -161,11 +157,7 @@ function fmi2ModelDescriptionAddModelVariable(md::fmi2ModelDescription, name::St
     sv = fmi2ScalarVariable(name, valueReference, causality, variability, initial)
     sv.description = description
     sv.canHandleMultipleSetPerTimeInstant = canHandleMultipleSetPerTimeInstant
-    sv._Real = _Real
-    sv._Integer = _Integer
-    sv._Boolean = _Boolean
-    sv._String = _String
-    sv._Enumeration = _Enumeration
+    sv.attribute = attribute
 
     push!(md.modelVariables, sv)
     return sv

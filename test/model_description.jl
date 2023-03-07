@@ -2,8 +2,7 @@
 # Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
-using FMICore: fmi2ScalarVariable
-
+using FMIExport.FMICore: fmi2ScalarVariable
 
 md = fmi2CreateModelDescription()
 var = fmi2ModelDescriptionAddRealStateAndDerivative(md, "mass.s")
@@ -21,6 +20,6 @@ var = fmi2ModelDescriptionAddRealStateAndDerivative(md, "mass.v")
 @test var[2].valueReference == 4
 
 var = fmi2ModelDescriptionAddRealOutput(md, "mass.f")
-@test typeof(var) ==fmi2ScalarVariable
+@test typeof(var) == fmi2ScalarVariable
 @test var.name == "mass.f"
 @test var.valueReference == 5
