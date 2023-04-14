@@ -2,5 +2,12 @@
 julia = "1.6"
 
 [deps]
+Conda = "8f4d0f93-b110-5947-807f-2305c1781a2d"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+FMI = "14a09403-18e3-468f-ad8a-74f8dda2d9ac"
 FMIBuild = "226f0e26-6dd6-4589-ada7-1d32f6e1d800"
+FMIZoo = "724179cf-c260-40a9-bd27-cccc6fe2f195"
+PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
+
+[compat]
+FMIZoo = ">=0.3.0"

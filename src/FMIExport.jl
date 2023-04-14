@@ -24,22 +24,27 @@ include("FMI2_md.jl")
 export fmi2CreateModelDescription
 export fmi2ModelDescriptionAddEvent
 export fmi2GetIndexOfScalarVariable
-export fmi2ModelDescriptionAddRealStateAndDerivative
+export fmi2ModelDescriptionAddRealStateAndDerivative, fmi2ModelDescriptionAddIntegerDiscreteState
 export fmi2ModelDescriptionAddRealState, fmi2ModelDescriptionAddRealDerivative, fmi2ModelDescriptionAddRealInput, fmi2ModelDescriptionAddRealOutput, fmi2ModelDescriptionAddRealParameter, fmi2ModelDescriptionAddEventIndicator
 export fmi2ModelDescriptionAddModelVariable, fmi2ModelDescriptionAddModelStructureOutputs, fmi2ModelDescriptionAddModelStructureDerivatives, fmi2ModelDescriptionAddModelStructureInitialUnknowns
 
-export fmi2Create
+export fmi2Create, fmi2CreateEmbedded
+export fmi2AddIntegerDiscreteState
 export fmi2AddRealStateAndDerivative, fmi2AddStateAndDerivative 
 export fmi2AddRealOutput, fmi2AddOutput 
 export fmi2AddRealInput, fmi2AddInput 
 export fmi2AddRealParameter, fmi2AddParameter, fmi2AddEventIndicator
 
 export fmi2SetFctGetTypesPlatform, fmi2SetFctGetVersion
-export fmi2SetFctInstantiate, fmi2SetFctFreeInstance, fmi2SetFctSetDebugLogging, fmi2SetFctSetupExperiment, fmi2SetEnterInitializationMode, fmi2SetFctExitInitializationMode
+export fmi2SetFctInstantiate, fmi2SetFctFreeInstance, fmi2SetFctSetDebugLogging, fmi2SetFctSetupExperiment, fmi2SetFctEnterInitializationMode, fmi2SetFctExitInitializationMode
 export fmi2SetFctTerminate, fmi2SetFctReset
 export fmi2SetFctGetReal, fmi2SetFctGetInteger, fmi2SetFctGetBoolean, fmi2SetFctGetString, fmi2SetFctSetReal, fmi2SetFctSetInteger, fmi2SetFctSetBoolean, fmi2SetFctSetString
 export fmi2SetFctSetTime, fmi2SetFctSetContinuousStates, fmi2SetFctEnterEventMode, fmi2SetFctNewDiscreteStates, fmi2SetFctEnterContinuousTimeMode, fmi2SetFctCompletedIntegratorStep
 export fmi2SetFctGetDerivatives, fmi2SetFctGetEventIndicators, fmi2SetFctGetContinuousStates, fmi2SetFctGetNominalsOfContinuousStates
+
+export fmi2ModelDescriptionAddModelExchange
+
+include("ANN.jl")
 
 include("FMI2_simple.jl")
 export fmi2CreateSimple 
@@ -74,7 +79,7 @@ function fmi2SetFctSetupExperiment(fmu::FMU2, fun)
     fmu.cSetupExperiment = c_fun.ptr
 end
 
-function fmi2SetEnterInitializationMode(fmu::FMU2, fun)
+function fmi2SetFctEnterInitializationMode(fmu::FMU2, fun)
     c_fun = @cfunction($fun, fmi2Status, (fmi2Component,))
     fmu.cEnterInitializationMode = c_fun.ptr
 end
@@ -187,37 +192,59 @@ end
 """ 
 ToDo
 """
-function fmi2Create(modelName::String="", type=fmi2TypeModelExchange)
+function fmi2Create(modelName::String=""; type=fmi2TypeModelExchange)
     fmu = FMU2()
     
     fmu.modelName = modelName
     fmu.type = type
     fmu.modelDescription = fmi2CreateModelDescription()
     fmu.fmuResourceLocation = pwd()
-    #fmu.callbackFunctions  
-    #fmu.visible = false 
-    #fmu.loggingOn = false
+    
+    return fmu
+end
+
+""" 
+ToDo
+"""
+function fmi2CreateEmbedded(fmu::FMU; type=fmi2TypeModelExchange)
+    global FMIBUILD_FMU
+
+    FMIBUILD_FMU = fmu
+
+    # store function pointers to embedded FMU
+    fmu.cFunctionPtrs["EMBEDDED_fmi2Instantiate"] = fmu.cInstantiate
+    fmu.cFunctionPtrs["EMBEDDED_fmi2FreeInstance"] = fmu.cFreeInstance
+    
+    # a special instantiation function for embedded FMUs (enables FMI.jl interface)
+    fmi2SetFctInstantiate(fmu, embedded_fmi2Instantiate) 
+    
+    # a special function for simple instance release (enables FMI.jl interface)
+    fmi2SetFctFreeInstance(fmu, embedded_fmi2FreeInstance) 
 
     return fmu
 end
 
-function fmi2AddRealStateAndDerivative(fmu, stateName; stateDescr, derivativeDescr)
-    fmi2ModelDescriptionAddRealStateAndDerivative(fmu.modelDescription, stateName; stateDescr=stateDescr, derivativeDescr=derivativeDescr)
+function fmi2AddRealStateAndDerivative(fmu, stateName; kwargs...)
+    fmi2ModelDescriptionAddRealStateAndDerivative(fmu.modelDescription, stateName; kwargs...)
 end
 fmi2AddStateAndDerivative = fmi2AddRealStateAndDerivative
 
-function fmi2AddRealOutput(fmu, name; description)
-    fmi2ModelDescriptionAddRealOutput(fmu.modelDescription, name; description=description)
+function fmi2AddIntegerDiscreteState(fmu, stateName; kwargs...)
+    fmi2ModelDescriptionAddIntegerDiscreteState(fmu.modelDescription, stateName; kwargs...)
+end
+
+function fmi2AddRealOutput(fmu, name; kwargs...)
+    fmi2ModelDescriptionAddRealOutput(fmu.modelDescription, name; kwargs...)
 end
 fmi2AddOutput = fmi2AddRealOutput
 
-function fmi2AddRealInput(fmu, name; description)
-    fmi2ModelDescriptionAddRealInput(fmu.modelDescription, name; description=description)
+function fmi2AddRealInput(fmu, name; kwargs...)
+    fmi2ModelDescriptionAddRealInput(fmu.modelDescription, name; kwargs...)
 end
 fmi2AddInput = fmi2AddRealInput
 
-function fmi2AddRealParameter(fmu, name; description)
-    fmi2ModelDescriptionAddRealParameter(fmu.modelDescription, name; description=description)
+function fmi2AddRealParameter(fmu, name; kwargs...)
+    fmi2ModelDescriptionAddRealParameter(fmu.modelDescription, name; kwargs...)
 end
 fmi2AddParameter = fmi2AddRealParameter
 

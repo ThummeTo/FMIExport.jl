@@ -19,7 +19,7 @@ function fmi2CreateModelDescription()
 end
 
 function fmi2ModelDescriptionAddModelExchange(md::fmi2ModelDescription, modelIdentifier::String)
-    if md.modelExchange == nothing 
+    if isnothing(md.modelExchange)
         md.modelExchange = fmi2ModelDescriptionModelExchange()
     end
     md.modelExchange.modelIdentifier = modelIdentifier
@@ -126,6 +126,21 @@ function fmi2ModelDescriptionAddRealParameter(md::fmi2ModelDescription, name::St
     sv = fmi2ModelDescriptionAddModelVariable(md, name; attribute=_Real, kwargs...)
 
     push!(md.parameterValueReferences, sv.valueReference)
+    push!(md.stringValueReferences, sv.name => sv.valueReference)
+
+    return sv
+end
+
+function fmi2ModelDescriptionAddIntegerDiscreteState(md::fmi2ModelDescription, name::String; 
+    start::Union{Real, Nothing}=nothing,
+    kwargs...)
+
+    _Integer = fmi2IntegerAttributesExt()
+    _Integer.start = start
+    
+    sv = fmi2ModelDescriptionAddModelVariable(md, name; attribute=_Integer, kwargs...)
+
+    push!(md.discreteStateValueReferences, sv.valueReference)
     push!(md.stringValueReferences, sv.name => sv.valueReference)
 
     return sv

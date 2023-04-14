@@ -12,11 +12,15 @@ function runtests()
     end
 
     @testset "Bouncing Ball" begin
-        include(joinpath(@__DIR__, "FMI2", "BouncingBall", "src", "BouncingBall.jl"))
+        include("bouncing_ball.jl")
+    end
 
-        @test isfile(fmu_save_path)
-        
-        # ToDo: simulate FMU in e.g. Python / FMPy
+    @testset "FMU Manipulation" begin
+        include("manipulation.jl")
+    end
+
+    @testset "NeuralFMU" begin
+        include("neuralFMU.jl")
     end
 end
 

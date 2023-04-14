@@ -3,80 +3,95 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
+import FMICore: fmi2ComponentStateEventMode, fmi2ComponentStateInstantiated, fmi2ComponentStateContinuousTimeMode
+import FMICore: logInfo, logWarning, logError
+
 FMU_NUM_STATES = 0
 # FMU_NUM_DERIVATIVES = FMU_NUM_STATES
+FMU_NUM_DISCRETE_STATES = 0
 FMU_NUM_OUTPUTS = 0
 FMU_NUM_INPUTS = 0
 FMU_NUM_EVENTS = 0
 FMU_NUM_PARAMETERS = 0
 
-FMU_FCT_INIT = function() return ([],[],[],[],[]) end
-FMU_FCT_EVALUATE = function(t, x, ẋ, u, p) return ([], [], []) end
-FMU_FCT_OUTPUT = function(t, x, ẋ, u, p) return [] end
-FMU_FCT_EVENT = function(t, x, ẋ, u, p) return [] end
+FMU_FCT_INIT = function() return ([], [], [], [], [], []) end
+FMU_FCT_EVALUATE = function(t, xc, ẋc, xd, u, p, eventMode) return ([], [], [], []) end
+FMU_FCT_OUTPUT = function(t, xc, ẋc, xd, u, p) return [] end
+FMU_FCT_EVENT = function(t, xc, ẋc, xd, u, p) return [] end
 
 ##############
 
-function logInfo(_component::fmi2Component, status::fmi2Status, message)
-    component = dereferenceComponent(_component)
-    if component != nothing
-        if component.loggingOn == fmi2True
-            ccall(component.callbackFunctions.logger, Cvoid, (fmi2ComponentEnvironment, fmi2String, fmi2Status, fmi2String, fmi2String), component.callbackFunctions.componentEnvironment, component.instanceName, status, "info", message * "\n")
-        end
-    end
-end
-
-function logWarning(_component::fmi2Component, status::fmi2Status, message)
-    component = dereferenceComponent(_component)
-    if component != nothing
-        ccall(component.callbackFunctions.logger, Cvoid, (fmi2ComponentEnvironment, fmi2String, fmi2Status, fmi2String, fmi2String), component.callbackFunctions.componentEnvironment, component.instanceName, status, "warning", message * "\n")
-    end
-end
-
-function logError(_component::fmi2Component, status::fmi2Status, message)
-    component = dereferenceComponent(_component)
-    if component != nothing
-        ccall(component.callbackFunctions.logger, Cvoid, (fmi2ComponentEnvironment, fmi2String, fmi2Status, fmi2String, fmi2String), component.callbackFunctions.componentEnvironment, component.instanceName, status, "error", message * "\n")
-    end
-end
-
-function dereferenceComponent(addr::fmi2Component)
+function dereferenceInstance(address::fmi2Component)
     global FMIBUILD_FMU
     for component in FMIBUILD_FMU.components
-        if addr == component.compAddr
+        if component.compAddr == address
             return component
         end
     end
 
-    @warn "Unknown fmi2Component at $(addr)."
+    @warn "Unknown instance at $(address)."
     return nothing
 end
 
-function reset(_component::fmi2Component)
-    component = dereferenceComponent(_component)
-
-    (component.t, x, ẋ, u, p) = FMU_FCT_INIT()
-    component.z = FMU_FCT_EVENT(component.t, x, ẋ, u, p)
-    y = FMU_FCT_OUTPUT(component.t, x, ẋ, u, p)
-
-    applyValues(component.compAddr, x, ẋ, u, y, p)
+function logInfo(_component::fmi2Component, message, status::fmi2Status=fmi2StatusOK)
+    component = dereferenceInstance(_component)
+    logInfo(component, message, status)
 end
 
-function evaluate(_component::fmi2Component)
-    component = dereferenceComponent(_component)
+function logWarning(_component::fmi2Component, message, status::fmi2Status=fmi2StatusWarning)
+    component = dereferenceInstance(_component)
+    logWarning(component, message, status)
+end
 
-    x, ẋ, u, y, p = extractValues(_component)
+function logError(_component::fmi2Component, message, status::fmi2Status=fmi2StatusError)
+    component = dereferenceInstance(_component)
+    logError(component, message, status)
+end
 
-    x, ẋ, p = FMU_FCT_EVALUATE(component.t, x, ẋ, u, p)
-    y       = FMU_FCT_OUTPUT(  component.t, x, ẋ, u, p)
-    z_new   = FMU_FCT_EVENT(   component.t, x, ẋ, u, p)
+##############
 
-    applyValues(_component, x, ẋ, u, y, p)
+function reset(_component::fmi2Component)
+    component = dereferenceInstance(_component)
+
+    component.t, xc, ẋc, xd, u, p = FMU_FCT_INIT()
+    component.z = FMU_FCT_EVENT(component.t, xc, ẋc, xd, u, p)
+    y = FMU_FCT_OUTPUT(component.t, xc, ẋc, xd, u, p)
+
+    applyValues(component.compAddr, xc, ẋc, xd, u, y, p)
+end
+
+function evaluate(_component::fmi2Component, eventMode=false)
+    component = dereferenceInstance(_component)
+
+    xc, ẋc, xd, u, y, p = extractValues(_component)
+
+    #eventMode = (component.state == fmi2ComponentStateEventMode)
+
+    tmp_xc, ẋc, tmp_xd, p = FMU_FCT_EVALUATE(component.t, xc, ẋc, xd, u, p, eventMode)
+
+    if eventMode # overwrite state vector allowed
+        component.eventInfo.valuesOfContinuousStatesChanged = (xc != tmp_xc ? fmi2True : fmi2False)
+        component.eventInfo.newDiscreteStatesNeeded = (xd != tmp_xd ? fmi2True : fmi2False)
+        
+        xc = tmp_xc 
+        xd = tmp_xd 
+    else
+        if xc != tmp_xc
+            logError(_component, "FMU_FCT_EVALUATE changes the systems continuous state while not being in event-mode, this is not allowed!")
+        end
+        if xd != tmp_xd
+            logError(_component, "FMU_FCT_EVALUATE changes the systems discrete state while not being in event-mode, this is not allowed!")
+        end
+    end
+
+    y       = FMU_FCT_OUTPUT(  component.t, xc, ẋc, xd, u, p)
+    z_new   = FMU_FCT_EVENT(   component.t, xc, ẋc, xd, u, p)
+
+    applyValues(_component, xc, ẋc, xd, u, y, p)
 
     # event triggering
 
     if (component.z_prev != nothing) && (sign.(z_new) != sign.(component.z_prev))
-        component.continuousStatesChanged = fmi2True 
         component.z_prev = z_new
         component.z      = z_new
     else 
@@ -85,47 +100,53 @@ function evaluate(_component::fmi2Component)
     end
 end
 
-function applyValues(_component::fmi2Component, x, ẋ, u, y, p)
-    component = dereferenceComponent(_component)
+function applyValues(_component::fmi2Component, xc, ẋc, xd, u, y, p)
+    component = dereferenceInstance(_component)
 
     for i in 1:length(FMIBUILD_FMU.modelDescription.stateValueReferences)
         vr = FMIBUILD_FMU.modelDescription.stateValueReferences[i]
-        component.realValues[vr] = x[i]
+        component.values[vr] = xc[i]
     end
 
     for i in 1:length(FMIBUILD_FMU.modelDescription.derivativeValueReferences)
         vr = FMIBUILD_FMU.modelDescription.derivativeValueReferences[i]
-        component.realValues[vr] = ẋ[i]
+        component.values[vr] = ẋc[i]
+    end
+
+    for i in 1:length(FMIBUILD_FMU.modelDescription.discreteStateValueReferences)
+        vr = FMIBUILD_FMU.modelDescription.discreteStateValueReferences[i]
+        component.values[vr] = xd[i]
     end
 
     for i in 1:length(FMIBUILD_FMU.modelDescription.inputValueReferences)
         vr = FMIBUILD_FMU.modelDescription.inputValueReferences[i]
-        component.realValues[vr] = u[i]
+        component.values[vr] = u[i]
     end
 
     for i in 1:length(FMIBUILD_FMU.modelDescription.outputValueReferences)
         vr = FMIBUILD_FMU.modelDescription.outputValueReferences[i]
-        component.realValues[vr] = y[i]
+        component.values[vr] = y[i]
     end
 
     for i in 1:length(FMIBUILD_FMU.modelDescription.parameterValueReferences)
         vr = FMIBUILD_FMU.modelDescription.parameterValueReferences[i]
-        component.realValues[vr] = p[i]
+        component.values[vr] = p[i]
     end
 
     nothing
 end
 
 function extractValues(_component::fmi2Component)
-    component = dereferenceComponent(_component)
+    component = dereferenceInstance(_component)
 
-    xs = collect(component.realValues[vr] for vr in component.fmu.modelDescription.stateValueReferences)
-    ẋs = collect(component.realValues[vr] for vr in component.fmu.modelDescription.derivativeValueReferences)
-    us = collect(component.realValues[vr] for vr in component.fmu.modelDescription.inputValueReferences)
-    ys = collect(component.realValues[vr] for vr in component.fmu.modelDescription.outputValueReferences)
-    ps = collect(component.realValues[vr] for vr in component.fmu.modelDescription.parameterValueReferences)
+    xcs = collect(component.values[vr] for vr in component.fmu.modelDescription.stateValueReferences)
+    ẋcs = collect(component.values[vr] for vr in component.fmu.modelDescription.derivativeValueReferences)
+    xds = collect(component.values[vr] for vr in component.fmu.modelDescription.discreteStateValueReferences)
+    us = collect(component.values[vr] for vr in component.fmu.modelDescription.inputValueReferences)
+    ys = collect(component.values[vr] for vr in component.fmu.modelDescription.outputValueReferences)
+    ps = collect(component.values[vr] for vr in component.fmu.modelDescription.parameterValueReferences)
 
-    return xs, ẋs, us, ys, ps 
+    return xcs, ẋcs, xds, us, ys, ps 
 end
 
 const STRING_TYPES_PLATFORM_DEFAULT = "default"
@@ -153,28 +174,45 @@ function simple_fmi2Instantiate(instanceName::fmi2String,
                                         
     global FMIBUILD_FMU
                                  
-    component = FMU2Component()
+    component = FMU2Component(FMIBUILD_FMU)
     component.loggingOn = loggingOn
     component.callbackFunctions = unsafe_load(functions)
     component.instanceName = unsafe_string(instanceName)
 
     component.compAddr = pointer_from_objref(component)
-    component.fmu = FMIBUILD_FMU
     push!(FMIBUILD_FMU.components, component)
 
     reset(component.compAddr)
 
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2Instantiate: New fmi2Component at $(component.compAddr)")
+    return component.compAddr
+end
+
+function embedded_fmi2Instantiate(instanceName::fmi2String,
+    fmuType::fmi2Type,
+    fmuGUID::fmi2String,
+    fmuResourceLocation::fmi2String,
+    functions::Ptr{fmi2CallbackFunctions},
+    visible::fmi2Boolean,
+    loggingOn::fmi2Boolean)
+
+    global FMIBUILD_FMU
+                                 
+    component = FMU2Component(FMIBUILD_FMU)
+    component.loggingOn = loggingOn
+    component.callbackFunctions = unsafe_load(functions)
+    component.instanceName = unsafe_string(instanceName)
+
+    component.compAddr = FMICore.fmi2Instantiate(FMIBUILD_FMU.cFunctionPtrs["EMBEDDED_fmi2Instantiate"], instanceName, fmuType, fmuGUID, fmuResourceLocation, functions, visible, loggingOn)
+    push!(FMIBUILD_FMU.components, component)
 
     return component.compAddr
 end
 
 function simple_fmi2FreeInstance(_component::fmi2Component)
-    component = dereferenceComponent(_component)
+    component = dereferenceInstance(_component)
 
     if component != nothing
-        logInfo(component.compAddr, fmi2StatusOK, "fmi2FreeInstance")
-    
+
         global FMIBUILD_FMU
         for i in 1:length(FMIBUILD_FMU.components)
             if FMIBUILD_FMU.components[i].compAddr == component.compAddr
@@ -182,16 +220,35 @@ function simple_fmi2FreeInstance(_component::fmi2Component)
                 break
             end
         end
-        logInfo(component.compAddr, fmi2StatusOK, "fmi2FreeInstance: Freed fmi2Component at $(component.compAddr).")
+       
+    end
+
+    nothing
+end
+
+function embedded_fmi2FreeInstance(_component::fmi2Component)
+
+    component = dereferenceInstance(_component)
+
+    if component != nothing
+
+        global FMIBUILD_FMU
+        for i in 1:length(FMIBUILD_FMU.components)
+            if FMIBUILD_FMU.components[i].compAddr == component.compAddr
+                FMICore.fmi2FreeInstance!(FMIBUILD_FMU.cFunctionPtrs["EMBEDDED_fmi2FreeInstance"], component.compAddr)
+                deleteat!(FMIBUILD_FMU.components, i)
+                break
+            end
+        end
+       
     end
 
     nothing
 end
 
 function simple_fmi2SetDebugLogging(_component::fmi2Component, loggingOn::fmi2Boolean, nCategories::Csize_t, categories::Ptr{fmi2String}) 
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2SetDebugLogging")
-
+    component = dereferenceInstance(_component)
+   
     component.loggingOn = loggingOn
     # ToDo: categories (arguments)
 
@@ -199,54 +256,48 @@ function simple_fmi2SetDebugLogging(_component::fmi2Component, loggingOn::fmi2Bo
 end
 
 function simple_fmi2SetupExperiment(_component::fmi2Component, toleranceDefined::fmi2Boolean, tolerance::fmi2Real, startTime::fmi2Real, stopTimeDefined::fmi2Boolean, stopTime::fmi2Real) 
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2SetupExperiment")
-
+    component = dereferenceInstance(_component)
+   
     # ToDo
 
     return fmi2StatusOK
 end
 
 function simple_fmi2EnterInitializationMode(_component::fmi2Component) 
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2EnterInitializationMode")
-
-    # ToDo
+    component = dereferenceInstance(_component)
+    
+    component.state = fmi2ComponentStateInitializationMode
 
     return fmi2StatusOK
 end
 
 function simple_fmi2ExitInitializationMode(_component::fmi2Component) 
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2ExitInitializationMode")
-
-    # ToDo
+    component = dereferenceInstance(_component)
+    
+    component.state = fmi2ComponentStateEventMode
 
     return fmi2StatusOK
 end
 
 function simple_fmi2Terminate(_component::fmi2Component)
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2Terminate")
-
+    component = dereferenceInstance(_component)
+   
     # ToDo
 
     return fmi2StatusOK
 end
 
 function simple_fmi2Reset(_component::fmi2Component)
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2Reset")
-
+    component = dereferenceInstance(_component)
+   
     reset(_component)
 
     return fmi2StatusOK
 end
 
 function simple_fmi2GetReal(_component::fmi2Component, _vr::Ptr{fmi2ValueReference}, nvr::Csize_t, _value::Ptr{fmi2Real}) 
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2GetReal")
-
+    component = dereferenceInstance(_component)
+    
     value = unsafe_wrap(Array{fmi2Real}, _value, nvr)
     vr = unsafe_wrap(Array{fmi2ValueReference}, _vr, nvr)
 
@@ -256,9 +307,9 @@ function simple_fmi2GetReal(_component::fmi2Component, _vr::Ptr{fmi2ValueReferen
         valueRef = vr[i]
 
         try
-            value[i] = component.realValues[valueRef]
+            value[i] = component.values[valueRef]
         catch e
-            logError(component.compAddr, fmi2StatusError, "fmi2SetReal: Unknown value reference $(valueRef).\n")
+            logError(component.compAddr, "fmi2SetReal: Unknown value reference $(valueRef).")
             return fmi2StatusError
         end
     end
@@ -267,36 +318,32 @@ function simple_fmi2GetReal(_component::fmi2Component, _vr::Ptr{fmi2ValueReferen
 end
 
 function simple_fmi2GetInteger(_component::fmi2Component, _vr::Ptr{fmi2ValueReference}, nvr::Csize_t, _value::Ptr{fmi2Integer})
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2GetInteger")
-
+    component = dereferenceInstance(_component)
+   
     # ToDo
 
     return fmi2StatusOK
 end
 
 function simple_fmi2GetBoolean(_component::fmi2Component, _vr::Ptr{fmi2ValueReference}, nvr::Csize_t, _value::Ptr{fmi2Boolean})
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2GetBoolean")
-
+    component = dereferenceInstance(_component)
+    
     # ToDo
 
     return fmi2StatusOK
 end
 
 function simple_fmi2GetString(_component::fmi2Component, _vr::Ptr{fmi2ValueReference}, nvr::Csize_t, _value::Ptr{fmi2String})
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2GetString")
-
+    component = dereferenceInstance(_component)
+   
     # ToDo
 
     return fmi2StatusOK
 end
 
 function simple_fmi2SetReal(_component::fmi2Component, _vr::Ptr{fmi2ValueReference}, nvr::Csize_t, _value::Ptr{fmi2Real})
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2SetReal")
-
+    component = dereferenceInstance(_component)
+   
     value = unsafe_wrap(Array{fmi2Real}, _value, nvr)
     vr = unsafe_wrap(Array{fmi2ValueReference}, _vr, nvr)
 
@@ -304,9 +351,9 @@ function simple_fmi2SetReal(_component::fmi2Component, _vr::Ptr{fmi2ValueReferen
         valueRef = vr[i]
 
         try
-            component.realValues[valueRef] = value[i]
+            component.values[valueRef] = value[i]
         catch e
-            logError(component.compAddr, fmi2StatusError, "fmi2SetReal: Unknown value reference $(valueRef).\n")
+            logError(component.compAddr, "fmi2SetReal: Unknown value reference $(valueRef).")
             return fmi2StatusError
         end
     end
@@ -317,36 +364,32 @@ function simple_fmi2SetReal(_component::fmi2Component, _vr::Ptr{fmi2ValueReferen
 end
 
 function simple_fmi2SetInteger(_component::fmi2Component, _vr::Ptr{fmi2ValueReference}, nvr::Csize_t, _value::Ptr{fmi2Integer})
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2SetInteger")
-
+    component = dereferenceInstance(_component)
+   
     # ToDo
 
     return fmi2StatusOK
 end
 
 function simple_fmi2SetBoolean(_component::fmi2Component, _vr::Ptr{fmi2ValueReference}, nvr::Csize_t, _value::Ptr{fmi2Boolean})
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2SetBoolean")
-
+    component = dereferenceInstance(_component)
+    
     # ToDo
 
     return fmi2StatusOK
 end
 
 function simple_fmi2SetString(_component::fmi2Component, _vr::Ptr{fmi2ValueReference}, nvr::Csize_t, _value::Ptr{fmi2String})
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2SetString")
-
+    component = dereferenceInstance(_component)
+    
     # ToDo
 
     return fmi2StatusOK
 end
 
 function simple_fmi2SetTime(_component::fmi2Component, time::fmi2Real)
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2SetTime")
-
+    component = dereferenceInstance(_component)
+    
     component.t = time
 
     evaluate(_component)
@@ -355,18 +398,17 @@ function simple_fmi2SetTime(_component::fmi2Component, time::fmi2Real)
 end
 
 function simple_fmi2SetContinuousStates(_component::fmi2Component, _x::Ptr{fmi2Real}, nx::Csize_t) 
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2SetContinuousStates")
-
+    component = dereferenceInstance(_component)
+   
     if nx != length(component.fmu.modelDescription.stateValueReferences)
-        logWarning(component.compAddr, fmi2StatusWarning, "fmi2SetContinuousStates: Model has $(length(component.fmu.modelDescription.stateValueReferences)) states, but `nx`=$(nx).")
+        logWarning(component.compAddr, "fmi2SetContinuousStates: Model has $(length(component.fmu.modelDescription.stateValueReferences)) states, but `nx`=$(nx).")
     end
 
     x = unsafe_wrap(Array{fmi2Real}, _x, nx)
     
     for i in 1:nx
         vr = component.fmu.modelDescription.stateValueReferences[i]
-        component.realValues[vr] = x[i]
+        component.values[vr] = x[i]
     end
 
     evaluate(_component)
@@ -375,75 +417,69 @@ function simple_fmi2SetContinuousStates(_component::fmi2Component, _x::Ptr{fmi2R
 end
 
 function simple_fmi2EnterEventMode(_component::fmi2Component)
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2EnterEventMode")
-
-    # ToDo
+    component = dereferenceInstance(_component)
+   
+    component.state = fmi2ComponentStateEventMode
 
     return fmi2StatusOK
 end
 
 function simple_fmi2NewDiscreteStates(_component::fmi2Component, _fmi2eventInfo::Ptr{fmi2EventInfo})
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2NewDiscreteStates")
+    component = dereferenceInstance(_component)
+   
+    evaluate(_component, true)
 
     # ToDo: This is not efficient (copy struct and overwrite), direct memory access would be much nicer!
     eventInfo = unsafe_load(_fmi2eventInfo)
-    eventInfo.newDiscreteStatesNeeded = fmi2False
+    eventInfo.newDiscreteStatesNeeded = component.eventInfo.newDiscreteStatesNeeded
     eventInfo.terminateSimulation = fmi2False
     eventInfo.nominalsOfContinuousStatesChanged = fmi2False
-    eventInfo.valuesOfContinuousStatesChanged = component.continuousStatesChanged
+    eventInfo.valuesOfContinuousStatesChanged = component.eventInfo.valuesOfContinuousStatesChanged
     eventInfo.nextEventTimeDefined = fmi2False
     eventInfo.nextEventTime = 0.0
     unsafe_store!(_fmi2eventInfo, eventInfo);
-
-    component.continuousStatesChanged = fmi2False
     
     return fmi2StatusOK
 end
 
 function simple_fmi2EnterContinuousTimeMode(_component::fmi2Component)
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2EnterContinuousTimeMode")
-
-    # ToDo
+    component = dereferenceInstance(_component)
+   
+    component.state = fmi2ComponentStateContinuousTimeMode
 
     return fmi2StatusOK
 end
 
 function simple_fmi2CompletedIntegratorStep(_component::fmi2Component, noSetFMUStatePriorToCurrentPoint::fmi2Boolean, enterEventMode::Ptr{fmi2Boolean}, terminateSimulation::Ptr{fmi2Boolean}) 
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2CompletedIntegratorStep")
-
+    component = dereferenceInstance(_component)
+    
     # ToDo
 
     return fmi2StatusOK
 end
 
 function simple_fmi2GetDerivatives(_component::fmi2Component, _derivatives::Ptr{fmi2Real}, nx::Csize_t)
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2GetDerivatives")
-
+    component = dereferenceInstance(_component)
+    
     if nx != length(component.fmu.modelDescription.derivativeValueReferences)
-        logWarning(component.compAddr, fmi2StatusWarning, "fmi2GetDerivatives: Model has $(length(component.fmu.modelDescription.derivativeValueReferences)) states, but `nx`=$(nx).")
+        logWarning(component.compAddr, "fmi2GetDerivatives: Model has $(length(component.fmu.modelDescription.derivativeValueReferences)) states, but `nx`=$(nx).")
     end
 
     derivatives = unsafe_wrap(Array{fmi2Real}, _derivatives, nx)
     
     for i in 1:nx
         vr = component.fmu.modelDescription.derivativeValueReferences[i]
-        derivatives[i] = component.realValues[vr]
+        derivatives[i] = component.values[vr]
     end
 
     return fmi2StatusOK
 end
 
 function simple_fmi2GetEventIndicators(_component::fmi2Component, _eventIndicators::Ptr{fmi2Real}, ni::Csize_t)
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2GetEventIndicators")
+    component = dereferenceInstance(_component)
 
     if ni != length(component.fmu.modelDescription.numberOfEventIndicators)
-        logWarning(component.compAddr, fmi2StatusWarning, "fmi2GetEventIndicators: Model has $(length(component.eventIndicators)) states, but `ni`=$(ni).")
+        logWarning(component.compAddr, "fmi2GetEventIndicators: Model has $(length(component.eventIndicators)) states, but `ni`=$(ni).")
     end
 
     eventIndicators = unsafe_wrap(Array{fmi2Real}, _eventIndicators, ni)
@@ -452,50 +488,50 @@ function simple_fmi2GetEventIndicators(_component::fmi2Component, _eventIndicato
         eventIndicators[i] = component.z[i]
     end
 
-    return fmi2StatusOK
+    status = fmi2StatusOK
+
+    return status
 end
 
 function simple_fmi2GetContinuousStates(_component::fmi2Component, _x::Ptr{fmi2Real}, nx::Csize_t)
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2GetContinuousStates")
-
+    component = dereferenceInstance(_component)
+   
     if nx != length(component.fmu.modelDescription.stateValueReferences)
-        logWarning(component.compAddr, fmi2StatusWarning, "fmi2GetContinuousStates: Model has $(length(component.fmu.modelDescription.stateValueReferences)) states, but `nx`=$(nx).")
+        logWarning(component.compAddr, "fmi2GetContinuousStates: Model has $(length(component.fmu.modelDescription.stateValueReferences)) states, but `nx`=$(nx).")
     end
 
     x = unsafe_wrap(Array{fmi2Real}, _x, nx)
     
     for i in 1:nx
         vr = component.fmu.modelDescription.stateValueReferences[i]
-        x[i] = component.realValues[vr]
+        x[i] = component.values[vr]
     end
 
     return fmi2StatusOK
 end
 
 function simple_fmi2GetNominalsOfContinuousStates(_component::fmi2Component, _x_nominal::Ptr{fmi2Real}, nx::Csize_t) 
-    component = dereferenceComponent(_component)
-    logInfo(component.compAddr, fmi2StatusOK, "fmi2GetNominalsOfContinuousStates")
-
+    component = dereferenceInstance(_component)
+    
     if nx != length(component.fmu.modelDescription.stateValueReferences)
-        logWarning(component.compAddr, fmi2StatusWarning, "fmi2GetNominalsOfContinuousStates: Model has $(length(component.fmu.modelDescription.stateValueReferences)) states, but `nx`=$(nx).")
+        logWarning(component.compAddr, "fmi2GetNominalsOfContinuousStates: Model has $(length(component.fmu.modelDescription.stateValueReferences)) states, but `nx`=$(nx).")
     end
 
     x_nominal = unsafe_wrap(Array{fmi2Real}, _x_nominal, nx)
     
     for i in 1:nx
         vr = component.fmu.modelDescription.stateValueReferences[i]
-        x_nominal[i] = component.realValues[vr]
+        x_nominal[i] = component.values[vr]
     end
 
     return fmi2StatusOK
 end
 
 """ 
-    initializationFct           # () -> (t, x, ẋ, u, p)
-    evaluationFct               # (t, x, ẋ, u, p) -> (x, ẋ, p)
-    outputFct                   # (t, x, ẋ, u, p) -> y
-    eventFct                    # (t, x, ẋ, u, p) -> e
+    initializationFct           # () -> (t, xc, ẋc, xd, u, p)
+    evaluationFct               # (t, xc, ẋc, xd, u, p, event) -> (xc, ẋc, xd, p)
+    outputFct                   # (t, xc, ẋc, xd, u, p) -> y
+    eventFct                    # (t, xc, ẋc, xd, u, p) -> e
 """
 function fmi2CreateSimple(;
     initializationFct=nothing,
@@ -511,6 +547,7 @@ function fmi2CreateSimple(;
     global FMU_FCT_EVENT 
 
     global FMU_NUM_STATES
+    global FMU_NUM_DISCRETE_STATES
     global FMU_NUM_OUTPUTS
     global FMU_NUM_INPUTS
     global FMU_NUM_EVENTS 
@@ -523,11 +560,12 @@ function fmi2CreateSimple(;
     FMU_FCT_OUTPUT = outputFct
     FMU_FCT_EVENT = eventFct
 
-    t, x, ẋ, u, p = FMU_FCT_INIT()
-    y = FMU_FCT_OUTPUT(t, x, ẋ, u, p)
-    e = FMU_FCT_EVENT(t, x, ẋ, u, p)
+    t, xc, ẋc, xd, u, p = FMU_FCT_INIT()
+    y = FMU_FCT_OUTPUT(t, xc, ẋc, xd, u, p)
+    e = FMU_FCT_EVENT(t, xc, ẋc, xd, u, p)
 
-    FMU_NUM_STATES = length(x)
+    FMU_NUM_STATES = length(xc)
+    FMU_NUM_DISCRETE_STATES = length(xd)
     FMU_NUM_OUTPUTS = length(y)
     FMU_NUM_INPUTS = length(u)
     FMU_NUM_EVENTS = length(e)
@@ -536,11 +574,10 @@ function fmi2CreateSimple(;
     fmi2SetFctGetVersion(FMIBUILD_FMU,                     simple_fmi2GetVersion)
     fmi2SetFctGetTypesPlatform(FMIBUILD_FMU,               simple_fmi2GetTypesPlatform)
     fmi2SetFctInstantiate(FMIBUILD_FMU,                    simple_fmi2Instantiate)
-    #FMIBUILD_FMU.cInstantiate = @cfunction(simple_fmi2Instantiate, fmi2Component, (fmi2String, fmi2Type, fmi2String, fmi2String, Ptr{fmi2CallbackFunctions}, fmi2Boolean, fmi2Boolean))
     fmi2SetFctFreeInstance(FMIBUILD_FMU,                   simple_fmi2FreeInstance)
     fmi2SetFctSetDebugLogging(FMIBUILD_FMU,                simple_fmi2SetDebugLogging)
     fmi2SetFctSetupExperiment(FMIBUILD_FMU,                simple_fmi2SetupExperiment)
-    fmi2SetEnterInitializationMode(FMIBUILD_FMU,           simple_fmi2EnterInitializationMode)
+    fmi2SetFctEnterInitializationMode(FMIBUILD_FMU,        simple_fmi2EnterInitializationMode)
     fmi2SetFctExitInitializationMode(FMIBUILD_FMU,         simple_fmi2ExitInitializationMode)
     fmi2SetFctTerminate(FMIBUILD_FMU,                      simple_fmi2Terminate)
     fmi2SetFctReset(FMIBUILD_FMU,                          simple_fmi2Reset)
