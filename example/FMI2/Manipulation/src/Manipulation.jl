@@ -82,11 +82,11 @@ import FMIBuild:fmi2Save        # <= this must be excluded during export, becaus
 fmi2Save(fmu, fmu_save_path; resources=Dict(sourceFMU=>"SpringDamperPendulum1D.fmu"))    # <= this must be excluded during export, because fmi2Save would start an infinte build loop with itself 
 
 # some tests
-using FMI
-fmu.executionConfig.loggingOn = true
-solution = fmiSimulateME(fmu, (0.0, 5.0); dtmax=0.1, recordValues=[fmi2ValueReference(335544320)])
-using Plots
-fmiPlot(solution)
+# using FMI
+# fmu.executionConfig.loggingOn = true
+# solution = fmiSimulateME(fmu, (0.0, 5.0); dtmax=0.1, recordValues=[fmi2ValueReference(335544320)])
+# using Plots
+# fmiPlot(solution)
 
 # The following line is a end-marker for excluded code for the FMU compilation process!
 ### FMIBUILD_NO_EXPORT_END ###
