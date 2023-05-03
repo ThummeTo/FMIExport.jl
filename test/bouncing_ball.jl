@@ -10,14 +10,14 @@ include(joinpath(@__DIR__, "..", "example", "FMI2", "BouncingBall", "src", "Boun
 @test isfile(fmu_save_path)
 
 # Simulate FMU in Python / FMPy
-# @info "Installing `fmpy`..."
-# using Conda
-# Conda.add("fmpy"; channel="conda-forge")
+@info "Installing `fmpy`..."
+using Conda
+Conda.add("fmpy"; channel="conda-forge")
 
-# @info "Simulating with `fmpy`..."
-# using PyCall
-# fmpy = pyimport("fmpy")
-# fmpy.dump(fmu_save_path)
+@info "Simulating with `fmpy`..."
+using PyCall
+fmpy = pyimport("fmpy")
+fmpy.dump(fmu_save_path)
 
 # ToDo: Unfortunately, this errors ... (but it runs in python shell)
 # solution_FMPy = fmpy.simulate_fmu(filename=fmu_save_path,
