@@ -15,14 +15,13 @@ function runtests()
         include("bouncing_ball.jl")
     end
 
-    # CI Fails with more than one testing compilation (probably disc memory), test running locally
-    # @testset "FMU Manipulation" begin
-    #     include("manipulation.jl")
-    # end
+    @testset "FMU Manipulation" begin
+        include("manipulation.jl")
+    end
 
-    # @testset "NeuralFMU" begin
-    #     include("neuralFMU.jl")
-    # end
+    @testset "NeuralFMU" begin
+        include("neuralFMU.jl")
+    end
 end
 
 @testset "FMIExport.jl" begin
