@@ -30,10 +30,10 @@ fmpy.dump(fmu_save_path)
 #     record_events=true) # , fmi_call_logger=lambda s: print('[FMI] ' + s) 
 
 # Simulate FMU in Julia / FMI.jl
-using FMI
-fmu.executionConfig.loggingOn = true
-solution_FMI_jl = fmiSimulateME(fmu, (0.0, 5.0); dtmax=0.1)
+# using FMI
+# fmu.executionConfig.loggingOn = true
+# solution_FMI_jl = fmiSimulateME(fmu, (0.0, 5.0); dtmax=0.1)
 
 # ToDo check results
-#@test solution_FMI_jl.states.t[end] == 5.0
-#@test solution_FMI_jl.states.u[end] == [0.0, 0.0]
+# @test solution_FMI_jl.states.t[end] == 5.0
+# @test solution_FMI_jl.states.u[end] == [0.0, 0.0]

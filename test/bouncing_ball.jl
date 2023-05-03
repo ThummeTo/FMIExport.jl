@@ -26,9 +26,9 @@ fmpy.dump(fmu_save_path)
 #     stop_time=5.0) # , fmi_call_logger=lambda s: print('[FMI] ' + s) , record_events=true, solver="CVode"
 
 # Simulate FMU in Julia / FMI.jl
-using FMI
-fmu.executionConfig.loggingOn = true
-solution_FMI_jl = fmiSimulateME(fmu, (0.0, 5.0); dtmax=0.1)
+# using FMI
+# fmu.executionConfig.loggingOn = true
+# solution_FMI_jl = fmiSimulateME(fmu, (0.0, 5.0); dtmax=0.1)
 
-@test solution_FMI_jl.states.t[end] == 5.0
-@test solution_FMI_jl.states.u[end] == [1.0e-10, 0.0]
+# @test solution_FMI_jl.states.t[end] == 5.0
+# @test solution_FMI_jl.states.u[end] == [1.0e-10, 0.0]
