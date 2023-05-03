@@ -17,12 +17,12 @@
 
 2\. Install [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl):
 ```julia-repl
-(@v1.6) pkg> add FMIExport
+(@v1.x) pkg> add FMIExport
 ```
 
 3\. If you want to check that everything works correctly, you can run the tests bundled with [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl):
 ```julia-repl
-(@v1.6) pkg> test FMIExport
+(@v1.x) pkg> test FMIExport
 ```
 
 4\. Have a look inside the [examples folder](https://github.com/ThummeTo/FMIExport.jl/tree/examples/examples) in the examples branch or the [examples section](https://thummeto.github.io/FMIExport.jl/dev/examples/overview/) of the documentation. All examples are available as Julia-Script (*.jl*), Jupyter-Notebook (*.ipynb*) and Markdown (*.md*).
