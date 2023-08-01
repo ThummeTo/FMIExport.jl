@@ -5,7 +5,8 @@
 [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl) is a free-to-use software library for the Julia programming language which allows for the export of FMUs ([fmi-standard.org](http://fmi-standard.org/)) from any Julia-Code. [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl) is completely integrated into [*FMI.jl*](https://github.com/ThummeTo/FMI.jl).
 
 [![Dev Docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://ThummeTo.github.io/FMIExport.jl/dev) 
-[![Run Tests](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/Test.yml/badge.svg)](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/Test.yml)
+[![Test (latest)](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/TestLatest.yml/badge.svg)](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/TestLatest.yml)
+[![Test (LTS)](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/TestLTS.yml/badge.svg)](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/TestLTS.yml)
 [![Run Examples](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/Example.yml/badge.svg)](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/Example.yml)
 [![Build Docs](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/Documentation.yml/badge.svg)](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/Documentation.yml)
 [![Run PkgEval](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/Eval.yml/badge.svg)](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/Eval.yml)
@@ -18,12 +19,12 @@
 
 2\. Install [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl):
 ```julia-repl
-(@v1.x) pkg> add FMIExport
+(@v1) pkg> add FMIExport
 ```
 
 3\. If you want to check that everything works correctly, you can run the tests bundled with [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl):
 ```julia-repl
-(@v1.x) pkg> test FMIExport
+(@v1) pkg> test FMIExport
 ```
 
 4\. Have a look inside the [examples folder](https://github.com/ThummeTo/FMIExport.jl/tree/examples/examples) in the examples branch or the [examples section](https://thummeto.github.io/FMIExport.jl/dev/examples/overview/) of the documentation. All examples are available as Julia-Script (*.jl*), Jupyter-Notebook (*.ipynb*) and Markdown (*.md*).
