@@ -16,13 +16,13 @@ function runtests()
     end
 
     @testset "FMU Manipulation" begin
-        include("manipulation.jl")
+        @warn "This test is currently excluded because of insufficient ressources in GitHub-Actions."
+        #include("manipulation.jl")
     end
 
-    # This test is currently excluded because of insufficient ressources in GitHub-Actions
-    # @testset "NeuralFMU" begin
-    #     include("neuralFMU.jl")
-    # end
+    @testset "NeuralFMU" begin
+        include("neuralFMU.jl")
+    end
 end
 
 @testset "FMIExport.jl" begin
