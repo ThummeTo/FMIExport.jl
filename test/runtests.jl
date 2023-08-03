@@ -19,9 +19,10 @@ function runtests()
         include("manipulation.jl")
     end
 
-    @testset "NeuralFMU" begin
-        include("neuralFMU.jl")
-    end
+    # This test is currently excluded because of insufficient ressources in GitHub-Actions
+    # @testset "NeuralFMU" begin
+    #     include("neuralFMU.jl")
+    # end
 end
 
 @testset "FMIExport.jl" begin
