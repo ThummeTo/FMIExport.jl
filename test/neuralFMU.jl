@@ -4,7 +4,7 @@
 #
 
 # export FMU script
-include(joinpath(@__DIR__, "..", "example", "FMI2", "NeuralFMU", "src", "NeuralFMU.jl"))
+include(joinpath(@__DIR__, "..", "examples", "FMI2", "NeuralFMU", "src", "NeuralFMU.jl"))
 
 # check if FMU exists now
 @test isfile(fmu_save_path)
