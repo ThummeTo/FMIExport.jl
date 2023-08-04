@@ -1,8 +1,8 @@
-name: Run Examples
+name: Examples v1 (latest)
 
 on:
   workflow_run:
-    workflows: ["Run Tests"]
+    workflows: ["Test v1 (latest)"]
     types:
       - completed
   push:
@@ -18,9 +18,9 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        julia-version: ['1.6']
+        julia-version: ['1.9']
         julia-arch: [x64]
-        os: [windows-latest, ubuntu-latest]
+        os: [windows-latest]
         experimental: [false]
 
     steps:
@@ -57,14 +57,14 @@ jobs:
       - name: "Execute and synchronize changed files"    
         if: ${{ github.event_name == 'push' && steps.filter.outputs.changed == 'true' }}
         run: |
-          jupyter nbconvert --ExecutePreprocessor.kernel_name="julia-1.6" --to notebook --inplace --execute ${{ steps.filter.outputs.changed_files }}
+          jupyter nbconvert --ExecutePreprocessor.kernel_name="julia-1.9" --to notebook --inplace --execute ${{ steps.filter.outputs.changed_files }}
           jupyter nbconvert --to script ${{ steps.filter.outputs.changed_files }}
           jupyter nbconvert --to markdown ${{ steps.filter.outputs.changed_files }}
       
       - name: "Execute and synchronize all files"
         if: ${{ github.event_name == 'workflow_run' && steps.filter.outputs.all == 'true'}}
         run: |
-          jupyter nbconvert --ExecutePreprocessor.kernel_name="julia-1.6" --to notebook --inplace --execute ${{ steps.filter.outputs.all_files }}
+          jupyter nbconvert --ExecutePreprocessor.kernel_name="julia-1.9" --to notebook --inplace --execute ${{ steps.filter.outputs.all_files }}
           jupyter nbconvert --to script ${{ steps.filter.outputs.all_files }}
           jupyter nbconvert --to markdown ${{ steps.filter.outputs.all_files }}
       
