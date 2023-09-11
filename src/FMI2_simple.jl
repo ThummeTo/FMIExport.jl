@@ -33,21 +33,6 @@ function dereferenceInstance(address::fmi2Component)
     return nothing
 end
 
-function logInfo(_component::fmi2Component, message, status::fmi2Status=fmi2StatusOK)
-    component = dereferenceInstance(_component)
-    logInfo(component, message, status)
-end
-
-function logWarning(_component::fmi2Component, message, status::fmi2Status=fmi2StatusWarning)
-    component = dereferenceInstance(_component)
-    logWarning(component, message, status)
-end
-
-function logError(_component::fmi2Component, message, status::fmi2Status=fmi2StatusError)
-    component = dereferenceInstance(_component)
-    logError(component, message, status)
-end
-
 ##############
 
 function reset(_component::fmi2Component)
@@ -77,10 +62,10 @@ function evaluate(_component::fmi2Component, eventMode=false)
         xd = tmp_xd 
     else
         if xc != tmp_xc
-            logError(_component, "FMU_FCT_EVALUATE changes the systems continuous state while not being in event-mode, this is not allowed!")
+            logError(component, "FMU_FCT_EVALUATE changes the systems continuous state while not being in event-mode, this is not allowed!")
         end
         if xd != tmp_xd
-            logError(_component, "FMU_FCT_EVALUATE changes the systems discrete state while not being in event-mode, this is not allowed!")
+            logError(component, "FMU_FCT_EVALUATE changes the systems discrete state while not being in event-mode, this is not allowed!")
         end
     end
 
@@ -309,7 +294,7 @@ function simple_fmi2GetReal(_component::fmi2Component, _vr::Ptr{fmi2ValueReferen
         try
             value[i] = component.values[valueRef]
         catch e
-            logError(component.compAddr, "fmi2SetReal: Unknown value reference $(valueRef).")
+            logError(component, "fmi2SetReal: Unknown value reference $(valueRef).")
             return fmi2StatusError
         end
     end
@@ -353,7 +338,7 @@ function simple_fmi2SetReal(_component::fmi2Component, _vr::Ptr{fmi2ValueReferen
         try
             component.values[valueRef] = value[i]
         catch e
-            logError(component.compAddr, "fmi2SetReal: Unknown value reference $(valueRef).")
+            logError(component, "fmi2SetReal: Unknown value reference $(valueRef).")
             return fmi2StatusError
         end
     end
@@ -401,7 +386,7 @@ function simple_fmi2SetContinuousStates(_component::fmi2Component, _x::Ptr{fmi2R
     component = dereferenceInstance(_component)
    
     if nx != length(component.fmu.modelDescription.stateValueReferences)
-        logWarning(component.compAddr, "fmi2SetContinuousStates: Model has $(length(component.fmu.modelDescription.stateValueReferences)) states, but `nx`=$(nx).")
+        logWarning(component, "fmi2SetContinuousStates: Model has $(length(component.fmu.modelDescription.stateValueReferences)) states, but `nx`=$(nx).")
     end
 
     x = unsafe_wrap(Array{fmi2Real}, _x, nx)
@@ -462,7 +447,7 @@ function simple_fmi2GetDerivatives(_component::fmi2Component, _derivatives::Ptr{
     component = dereferenceInstance(_component)
     
     if nx != length(component.fmu.modelDescription.derivativeValueReferences)
-        logWarning(component.compAddr, "fmi2GetDerivatives: Model has $(length(component.fmu.modelDescription.derivativeValueReferences)) states, but `nx`=$(nx).")
+        logWarning(component, "fmi2GetDerivatives: Model has $(length(component.fmu.modelDescription.derivativeValueReferences)) states, but `nx`=$(nx).")
     end
 
     derivatives = unsafe_wrap(Array{fmi2Real}, _derivatives, nx)
@@ -479,7 +464,7 @@ function simple_fmi2GetEventIndicators(_component::fmi2Component, _eventIndicato
     component = dereferenceInstance(_component)
 
     if ni != length(component.fmu.modelDescription.numberOfEventIndicators)
-        logWarning(component.compAddr, "fmi2GetEventIndicators: Model has $(length(component.eventIndicators)) states, but `ni`=$(ni).")
+        logWarning(component, "fmi2GetEventIndicators: Model has $(length(component.eventIndicators)) states, but `ni`=$(ni).")
     end
 
     eventIndicators = unsafe_wrap(Array{fmi2Real}, _eventIndicators, ni)
@@ -497,7 +482,7 @@ function simple_fmi2GetContinuousStates(_component::fmi2Component, _x::Ptr{fmi2R
     component = dereferenceInstance(_component)
    
     if nx != length(component.fmu.modelDescription.stateValueReferences)
-        logWarning(component.compAddr, "fmi2GetContinuousStates: Model has $(length(component.fmu.modelDescription.stateValueReferences)) states, but `nx`=$(nx).")
+        logWarning(component, "fmi2GetContinuousStates: Model has $(length(component.fmu.modelDescription.stateValueReferences)) states, but `nx`=$(nx).")
     end
 
     x = unsafe_wrap(Array{fmi2Real}, _x, nx)
@@ -514,7 +499,7 @@ function simple_fmi2GetNominalsOfContinuousStates(_component::fmi2Component, _x_
     component = dereferenceInstance(_component)
     
     if nx != length(component.fmu.modelDescription.stateValueReferences)
-        logWarning(component.compAddr, "fmi2GetNominalsOfContinuousStates: Model has $(length(component.fmu.modelDescription.stateValueReferences)) states, but `nx`=$(nx).")
+        logWarning(component, "fmi2GetNominalsOfContinuousStates: Model has $(length(component.fmu.modelDescription.stateValueReferences)) states, but `nx`=$(nx).")
     end
 
     x_nominal = unsafe_wrap(Array{fmi2Real}, _x_nominal, nx)
