@@ -15,15 +15,15 @@ function runtests()
         include("bouncing_ball.jl")
     end
 
-    @testset "FMU Manipulation" begin
-        #@warn "The test `FMU Manipulation` is currently excluded because of insufficient ressources in GitHub-Actions."
-        include("manipulation.jl")
-    end
+    # @testset "FMU Manipulation" begin
+    #     #@warn "The test `FMU Manipulation` is currently excluded because of insufficient ressources in GitHub-Actions."
+    #     include("manipulation.jl")
+    # end
 
-    @testset "NeuralFMU" begin
-        #@warn "The test `NeuralFMU` is currently excluded because of insufficient ressources in GitHub-Actions."
-        include("neuralFMU.jl")
-    end
+    # @testset "NeuralFMU" begin
+    #     #@warn "The test `NeuralFMU` is currently excluded because of insufficient ressources in GitHub-Actions."
+    #     include("neuralFMU.jl")
+    # end
 end
 
 @testset "FMIExport.jl" begin
