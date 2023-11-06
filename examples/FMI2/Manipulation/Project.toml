@@ -11,5 +11,4 @@ FMIZoo = "724179cf-c260-40a9-bd27-cccc6fe2f195"
 
 [compat]
 FMIBuild = "0.2.0"
-FMIExport = "0.3.0"
 julia = "1.6"
