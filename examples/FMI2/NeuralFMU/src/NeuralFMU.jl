@@ -367,7 +367,7 @@ fmu_save_path = joinpath(tmpDir, "NeuralFMU.fmu")
 sourceFMU = FMIZoo.get_model_filename("SpringDamperPendulum1D", "Dymola", "2022x")
 fmu = FMIBUILD_CONSTRUCTOR(dirname(sourceFMU))
 import FMIBuild:fmi2Save        # <= this must be excluded during export, because FMIBuild cannot execute itself (but it is able to build)
-fmi2Save(fmu, fmu_save_path; compress=true, resources=Dict(sourceFMU=>"SpringDamperPendulum1D.fmu"))    # <= this must be excluded during export, because fmi2Save would start an infinte build loop with itself 
+fmi2Save(fmu, fmu_save_path; compress=false, debug=true, resources=Dict(sourceFMU=>"SpringDamperPendulum1D.fmu"))    # <= this must be excluded during export, because fmi2Save would start an infinte build loop with itself 
 
 ### some tests ###
 # using FMI

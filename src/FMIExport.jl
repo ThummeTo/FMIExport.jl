@@ -13,7 +13,7 @@ using FMICore: fmi2RealAttributesExt, fmi2IntegerAttributesExt, fmi2BooleanAttri
 using FMICore: fmi2VariableDependency, fmi2Unknown, fmi2DependencyKind
 using FMICore: fmi2VariableNamingConventionStructured
 using FMICore: fmi2CausalityToString, fmi2VariabilityToString, fmi2InitialToString
-using FMICore: fmi2String, fmi2Boolean, fmi2Integer, fmi2Real, fmi2Enum
+using FMICore: fmi2String, fmi2Boolean, fmi2Integer, fmi2Real
 using FMICore: fmi2Type, fmi2TypeModelExchange, fmi2TypeCoSimulation
 using FMICore: fmi2CallbackFunctions
 using FMICore: fmi2StatusOK, fmi2StatusWarning, fmi2StatusError

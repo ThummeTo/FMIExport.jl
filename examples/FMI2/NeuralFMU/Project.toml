@@ -10,6 +10,5 @@ FMIImport = "9fcbc62e-52a0-44e9-a616-1359a0008194"
 FMIZoo = "724179cf-c260-40a9-bd27-cccc6fe2f195"
 
 [compat]
-FMIBuild = "0.1.15"
-FMIExport = "0.2.0"
+FMIBuild = "0.2.0"
 julia = "1.6"
