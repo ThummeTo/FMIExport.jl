@@ -27,7 +27,7 @@
 (@v1) pkg> test FMIExport
 ```
 
-4\. Have a look inside the [examples folder](https://github.com/ThummeTo/FMIExport.jl/tree/examples/examples) in the examples branch or the [examples section](https://thummeto.github.io/FMIExport.jl/dev/examples/overview/) of the documentation. All examples are available as Julia-Script (*.jl*), Jupyter-Notebook (*.ipynb*) and Markdown (*.md*).
+4\. Have a look inside the [examples folder](https://github.com/ThummeTo/FMIExport.jl/tree/main/examples/FMI2).
 
 ## What FMI.jl-Library should I use?
 ![FMI.jl Logo](https://github.com/ThummeTo/FMI.jl/blob/main/docs/src/assets/FMI_JL_family.png?raw=true "FMI.jl Family")
