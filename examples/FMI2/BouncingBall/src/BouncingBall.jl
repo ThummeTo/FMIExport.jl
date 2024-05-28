@@ -134,8 +134,8 @@ tmpDir = mktempdir(; prefix="fmibuildjl_test_", cleanup=false)
 fmu_save_path = joinpath(tmpDir, "BouncingBall.fmu")  
 
 fmu = FMIBUILD_CONSTRUCTOR()
-using FMIBuild: fmi2Save                    # <= this must be excluded during export, because FMIBuild cannot execute itself (but it is able to build)
-fmi2Save(fmu, fmu_save_path; debug=true)    # <= this must be excluded during export, because fmi2Save would start an infinte build loop with itself (debug=true allows debug messages, but is slow during execution!)
+using FMIBuild: saveFMU                    # <= this must be excluded during export, because FMIBuild cannot execute itself (but it is able to build)
+saveFMU(fmu, fmu_save_path; debug=true)    # <= this must be excluded during export, because fmi2Save would start an infinte build loop with itself (debug=true allows debug messages, but is slow during execution!)
 
 ### some tests ###
 # using FMI

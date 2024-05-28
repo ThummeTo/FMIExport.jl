@@ -3,8 +3,8 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-import FMICore: fmi2ComponentStateEventMode, fmi2ComponentStateInstantiated, fmi2ComponentStateContinuousTimeMode
-import FMICore: logInfo, logWarning, logError
+#import FMICore: fmi2ComponentStateEventMode, fmi2ComponentStateInstantiated, fmi2ComponentStateContinuousTimeMode
+#import FMICore: logInfo, logWarning, logError
 
 FMU_NUM_STATES = 0
 # FMU_NUM_DERIVATIVES = FMU_NUM_STATES

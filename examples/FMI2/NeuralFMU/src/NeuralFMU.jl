@@ -9,7 +9,7 @@ using FMIExport: fmi2CreateEmbedded
 using FMIExport: fmi2AddRealParameter
 using FMIExport.FMICore: fmi2Real, fmi2Component, fmi2StatusOK, fmi2ValueReference
 using FMIExport.FMICore: fmi2CausalityParameter, fmi2VariabilityTunable, fmi2InitialExact
-using FMIImport: fmi2Load
+using FMIImport: loadFMU
 import FMIExport
 
 fmu = nothing
@@ -141,7 +141,7 @@ function updateDerivatives(_component::fmi2Component, ndx::Csize_t)
 
     if !DERIVATIVES_VALID
         # first, we do what the original function does
-        status = FMIExport.FMICore.fmi2GetDerivatives!(originalGetDerivatives, _component, DERIVATIVES, ndx)
+        status = FMIExport.FMIBase.FMICore.fmi2GetDerivatives!(originalGetDerivatives, _component, DERIVATIVES, ndx)
 
         if status != fmi2StatusOK
             logError(_component, "fmi2GetDerivatives failed!")
@@ -305,7 +305,7 @@ FMIBUILD_CONSTRUCTOR = function(resPath)
     global fmu, ANN_PARAMETERS
 
     # loads an existing FMU
-    fmu = fmi2Load(joinpath(resPath, "SpringDamperPendulum1D.fmu"))
+    fmu = loadFMU(joinpath(resPath, "SpringDamperPendulum1D.fmu"))
 
     # create a FMU that embedds the existing FMU
     fmu = fmi2CreateEmbedded(fmu)
@@ -366,8 +366,8 @@ fmu_save_path = joinpath(tmpDir, "NeuralFMU.fmu")
 
 sourceFMU = FMIZoo.get_model_filename("SpringDamperPendulum1D", "Dymola", "2022x")
 fmu = FMIBUILD_CONSTRUCTOR(dirname(sourceFMU))
-import FMIBuild:fmi2Save        # <= this must be excluded during export, because FMIBuild cannot execute itself (but it is able to build)
-fmi2Save(fmu, fmu_save_path; compress=false, debug=true, resources=Dict(sourceFMU=>"SpringDamperPendulum1D.fmu"))    # <= this must be excluded during export, because fmi2Save would start an infinte build loop with itself 
+import FMIBuild:saveFMU        # <= this must be excluded during export, because FMIBuild cannot execute itself (but it is able to build)
+saveFMU(fmu, fmu_save_path; compress=false, debug=true, resources=Dict(sourceFMU=>"SpringDamperPendulum1D.fmu"))    # <= this must be excluded during export, because fmi2Save would start an infinte build loop with itself 
 
 ### some tests ###
 # using FMI
