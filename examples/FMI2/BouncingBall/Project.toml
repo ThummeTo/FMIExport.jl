@@ -4,9 +4,7 @@ authors = ["TT <tobias.thummerer@informatik.uni-augsburg.de>"]
 version = "0.1.0"
 
 [deps]
-FMIBase = "900ee838-d029-460e-b485-d98a826ceef2"
 FMIBuild = "226f0e26-6dd6-4589-ada7-1d32f6e1d800"
-FMICore = "8af89139-c281-408e-bce2-3005eb87462f"
 FMIExport = "31b88311-cab6-44ed-ba9c-fe5a9abbd67a"
 
 [compat]

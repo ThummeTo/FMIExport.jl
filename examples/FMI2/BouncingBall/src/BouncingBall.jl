@@ -4,7 +4,7 @@
 #
 
 using FMIExport
-using FMIExport.FMICore: fmi2True, fmi2False 
+using FMIExport.FMIBase.FMICore: fmi2True, fmi2False 
 
 FMU_FCT_INIT = function()
     m = 1.0         # ball mass

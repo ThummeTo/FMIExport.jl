@@ -24,7 +24,7 @@ FMU_FCT_EVENT = function(t, xc, ẋc, xd, u, p) return [] end
 function dereferenceInstance(address::fmi2Component)
     global FMIBUILD_FMU
     for component in FMIBUILD_FMU.components
-        if component.compAddr == address
+        if component.addr == address
             return component
         end
     end
@@ -42,7 +42,7 @@ function reset(_component::fmi2Component)
     component.z = FMU_FCT_EVENT(component.t, xc, ẋc, xd, u, p)
     y = FMU_FCT_OUTPUT(component.t, xc, ẋc, xd, u, p)
 
-    applyValues(component.compAddr, xc, ẋc, xd, u, y, p)
+    applyValues(component.addr, xc, ẋc, xd, u, y, p)
 end
 
 function evaluate(_component::fmi2Component, eventMode=false)
@@ -160,16 +160,16 @@ function simple_fmi2Instantiate(instanceName::fmi2String,
     global FMIBUILD_FMU
                                  
     component = FMU2Component(FMIBUILD_FMU)
-    component.loggingOn = loggingOn
+    component.loggingOn = (loggingOn == fmi2True)
     component.callbackFunctions = unsafe_load(functions)
     component.instanceName = unsafe_string(instanceName)
 
-    component.compAddr = pointer_from_objref(component)
+    component.addr = pointer_from_objref(component)
     push!(FMIBUILD_FMU.components, component)
 
-    reset(component.compAddr)
+    reset(component.addr)
 
-    return component.compAddr
+    return component.addr
 end
 
 function embedded_fmi2Instantiate(instanceName::fmi2String,
@@ -187,10 +187,10 @@ function embedded_fmi2Instantiate(instanceName::fmi2String,
     component.callbackFunctions = unsafe_load(functions)
     component.instanceName = unsafe_string(instanceName)
 
-    component.compAddr = FMICore.fmi2Instantiate(FMIBUILD_FMU.cFunctionPtrs["EMBEDDED_fmi2Instantiate"], instanceName, fmuType, fmuGUID, fmuResourceLocation, functions, visible, loggingOn)
+    component.addr = FMICore.fmi2Instantiate(FMIBUILD_FMU.cFunctionPtrs["EMBEDDED_fmi2Instantiate"], instanceName, fmuType, fmuGUID, fmuResourceLocation, functions, visible, loggingOn)
     push!(FMIBUILD_FMU.components, component)
 
-    return component.compAddr
+    return component.addr
 end
 
 function simple_fmi2FreeInstance(_component::fmi2Component)
@@ -200,7 +200,7 @@ function simple_fmi2FreeInstance(_component::fmi2Component)
 
         global FMIBUILD_FMU
         for i in 1:length(FMIBUILD_FMU.components)
-            if FMIBUILD_FMU.components[i].compAddr == component.compAddr
+            if FMIBUILD_FMU.components[i].addr == component.addr
                 deleteat!(FMIBUILD_FMU.components, i)
                 break
             end
@@ -219,8 +219,8 @@ function embedded_fmi2FreeInstance(_component::fmi2Component)
 
         global FMIBUILD_FMU
         for i in 1:length(FMIBUILD_FMU.components)
-            if FMIBUILD_FMU.components[i].compAddr == component.compAddr
-                FMICore.fmi2FreeInstance!(FMIBUILD_FMU.cFunctionPtrs["EMBEDDED_fmi2FreeInstance"], component.compAddr)
+            if FMIBUILD_FMU.components[i].addr == component.addr
+                FMICore.fmi2FreeInstance!(FMIBUILD_FMU.cFunctionPtrs["EMBEDDED_fmi2FreeInstance"], component.addr)
                 deleteat!(FMIBUILD_FMU.components, i)
                 break
             end

@@ -32,3 +32,5 @@ include(joinpath(@__DIR__, "..", "examples", "FMI2", "BouncingBall", "src", "Bou
 
 # @test solution_FMI_jl.states.t[end] == 5.0
 # @test solution_FMI_jl.states.u[end] == [1.0e-10, 0.0]
+
+rm(fmu_save_path)

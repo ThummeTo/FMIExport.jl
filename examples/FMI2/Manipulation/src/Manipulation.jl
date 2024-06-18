@@ -4,8 +4,8 @@
 #
 
 using FMIExport: fmi2SetFctGetReal, fmi2CreateEmbedded
-using FMIExport.FMICore: fmi2Real, fmi2Component, fmi2StatusOK, fmi2ValueReference
-using FMIExport.FMICore: fmi2CausalityParameter, fmi2VariabilityTunable, fmi2InitialExact
+using FMIExport.FMIBase.FMICore: fmi2Real, fmi2Component, fmi2StatusOK, fmi2ValueReference
+using FMIExport.FMIBase.FMICore: fmi2CausalityParameter, fmi2VariabilityTunable, fmi2InitialExact
 using FMIImport: loadFMU
 import FMIExport 
 
