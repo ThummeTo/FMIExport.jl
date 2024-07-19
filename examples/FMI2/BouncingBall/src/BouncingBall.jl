@@ -38,7 +38,7 @@ FMU_FCT_EVALUATE = function(t, x_c, ẋ_c, x_d, u, p, eventMode)
 
     if sticking == fmi2True
         a = 0.0
-    else
+    elseif sticking == fmi2False
         if eventMode
             if s < r && v < 0.0
                 s = r + eps # so that indicator is not triggered again
@@ -52,7 +52,10 @@ FMU_FCT_EVALUATE = function(t, x_c, ẋ_c, x_d, u, p, eventMode)
             end
         end
 
-        a = (m * -g) / m     # the system's physical equation
+        a = (m * -g) / m     # the system's physical equation (a little longer than necessary)
+    else
+        @error "Unknown value for `sticking` == $(sticking)."
+        return (x_c, ẋ_c, x_d, p)
     end
 
     x_c = [s, v]
@@ -135,7 +138,7 @@ fmu_save_path = joinpath(tmpDir, "BouncingBall.fmu")
 
 fmu = FMIBUILD_CONSTRUCTOR()
 using FMIBuild: saveFMU                    # <= this must be excluded during export, because FMIBuild cannot execute itself (but it is able to build)
-saveFMU(fmu, fmu_save_path; debug=true)    # <= this must be excluded during export, because fmi2Save would start an infinte build loop with itself (debug=true allows debug messages, but is slow during execution!)
+saveFMU(fmu, fmu_save_path; debug=true, compress=false)    # <= this must be excluded during export, because fmi2Save would start an infinte build loop with itself (debug=true allows debug messages, but is slow during execution!)
 
 ### some tests ###
 # using FMI

@@ -306,24 +306,27 @@ function simple_fmi2GetInteger(_component::fmi2Component, _vr::Ptr{fmi2ValueRefe
     component = dereferenceInstance(_component)
    
     # ToDo
+    logWarning(component, "fmi2GetInteger: Not implemented yet, please open an issue.")
 
-    return fmi2StatusOK
+    return fmi2StatusWarning
 end
 
 function simple_fmi2GetBoolean(_component::fmi2Component, _vr::Ptr{fmi2ValueReference}, nvr::Csize_t, _value::Ptr{fmi2Boolean})
     component = dereferenceInstance(_component)
     
     # ToDo
+    logWarning(component, "fmi2GetBoolean: Not implemented yet, please open an issue.")
 
-    return fmi2StatusOK
+    return fmi2StatusWarning
 end
 
 function simple_fmi2GetString(_component::fmi2Component, _vr::Ptr{fmi2ValueReference}, nvr::Csize_t, _value::Ptr{fmi2String})
     component = dereferenceInstance(_component)
    
     # ToDo
+    logWarning(component, "fmi2GetString: Not implemented yet, please open an issue.")
 
-    return fmi2StatusOK
+    return fmi2StatusWarning
 end
 
 function simple_fmi2SetReal(_component::fmi2Component, _vr::Ptr{fmi2ValueReference}, nvr::Csize_t, _value::Ptr{fmi2Real})
@@ -352,24 +355,27 @@ function simple_fmi2SetInteger(_component::fmi2Component, _vr::Ptr{fmi2ValueRefe
     component = dereferenceInstance(_component)
    
     # ToDo
+    logWarning(component, "fmi2SetInteger: Not implemented yet, please open an issue.")
 
-    return fmi2StatusOK
+    return fmi2StatusWarning
 end
 
 function simple_fmi2SetBoolean(_component::fmi2Component, _vr::Ptr{fmi2ValueReference}, nvr::Csize_t, _value::Ptr{fmi2Boolean})
     component = dereferenceInstance(_component)
     
     # ToDo
+    logWarning(component, "fmi2SetBoolean: Not implemented yet, please open an issue.")
 
-    return fmi2StatusOK
+    return fmi2StatusWarning
 end
 
 function simple_fmi2SetString(_component::fmi2Component, _vr::Ptr{fmi2ValueReference}, nvr::Csize_t, _value::Ptr{fmi2String})
     component = dereferenceInstance(_component)
     
     # ToDo
+    logWarning(component, "fmi2SetString: Not implemented yet, please open an issue.")
 
-    return fmi2StatusOK
+    return fmi2StatusWarning
 end
 
 function simple_fmi2SetTime(_component::fmi2Component, time::fmi2Real)
@@ -417,11 +423,11 @@ function simple_fmi2NewDiscreteStates(_component::fmi2Component, _fmi2eventInfo:
     # ToDo: This is not efficient (copy struct and overwrite), direct memory access would be much nicer!
     eventInfo = unsafe_load(_fmi2eventInfo)
     eventInfo.newDiscreteStatesNeeded = component.eventInfo.newDiscreteStatesNeeded
-    eventInfo.terminateSimulation = fmi2False
-    eventInfo.nominalsOfContinuousStatesChanged = fmi2False
+    eventInfo.terminateSimulation = fmi2False # [ToDo]
+    eventInfo.nominalsOfContinuousStatesChanged = fmi2False # [ToDo]
     eventInfo.valuesOfContinuousStatesChanged = component.eventInfo.valuesOfContinuousStatesChanged
-    eventInfo.nextEventTimeDefined = fmi2False
-    eventInfo.nextEventTime = 0.0
+    eventInfo.nextEventTimeDefined = fmi2False # [ToDo]
+    eventInfo.nextEventTime = 0.0 # [ToDo]
     unsafe_store!(_fmi2eventInfo, eventInfo);
     
     return fmi2StatusOK
@@ -439,8 +445,9 @@ function simple_fmi2CompletedIntegratorStep(_component::fmi2Component, noSetFMUS
     component = dereferenceInstance(_component)
     
     # ToDo
+    logWarning(component, "fmi2CompletedIntegratorStep: Not implemented yet, please open an issue.")
 
-    return fmi2StatusOK
+    return fmi2StatusWarning
 end
 
 function simple_fmi2GetDerivatives(_component::fmi2Component, _derivatives::Ptr{fmi2Real}, nx::Csize_t)
@@ -469,13 +476,15 @@ function simple_fmi2GetEventIndicators(_component::fmi2Component, _eventIndicato
 
     eventIndicators = unsafe_wrap(Array{fmi2Real}, _eventIndicators, ni)
     
+    t = component.t
+    xc, ẋc, xd, u, y, p = extractValues(_component)
+    component.z = FMU_FCT_EVENT(t, xc, ẋc, xd, u, p)
+
     for i in 1:ni
         eventIndicators[i] = component.z[i]
     end
 
-    status = fmi2StatusOK
-
-    return status
+    return fmi2StatusOK
 end
 
 function simple_fmi2GetContinuousStates(_component::fmi2Component, _x::Ptr{fmi2Real}, nx::Csize_t)
