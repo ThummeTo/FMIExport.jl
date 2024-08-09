@@ -5,20 +5,23 @@
 
 module FMIExport
 
-using FMICore
-using FMICore: FMU2, FMU2Component, fmi2ModelDescription, fmi2ValueReference, fmi2Component, fmi2ComponentEnvironment, fmi2Status, fmi2EventInfo
-using FMICore: fmi2Causality, fmi2CausalityOutput, fmi2CausalityInput
-using FMICore: fmi2ScalarVariable, fmi2Variability, fmi2Initial, FMI2_SCALAR_VARIABLE_ATTRIBUTE_STRUCT
-using FMICore: fmi2RealAttributesExt, fmi2IntegerAttributesExt, fmi2BooleanAttributesExt, fmi2StringAttributesExt, fmi2EnumerationAttributesExt
-using FMICore: fmi2VariableDependency, fmi2Unknown, fmi2DependencyKind
-using FMICore: fmi2VariableNamingConventionStructured
-using FMICore: fmi2CausalityToString, fmi2VariabilityToString, fmi2InitialToString
-using FMICore: fmi2String, fmi2Boolean, fmi2Integer, fmi2Real
-using FMICore: fmi2Type, fmi2TypeModelExchange, fmi2TypeCoSimulation
-using FMICore: fmi2CallbackFunctions
-using FMICore: fmi2StatusOK, fmi2StatusWarning, fmi2StatusError
-using FMICore: fmi2True, fmi2False
-using FMICore: fmi2ModelDescriptionModelExchange, fmi2ModelDescriptionCoSimulation
+# using FMICore
+# using FMICore: FMU2, FMU2Component, fmi2ModelDescription, fmi2ValueReference, fmi2Component, fmi2ComponentEnvironment, fmi2Status, fmi2EventInfo
+# using FMICore: fmi2Causality, fmi2CausalityOutput, fmi2CausalityInput
+# using FMICore: fmi2ScalarVariable, fmi2Variability, fmi2Initial, FMI2_SCALAR_VARIABLE_ATTRIBUTE_STRUCT
+# using FMICore: fmi2RealAttributesExt, fmi2IntegerAttributesExt, fmi2BooleanAttributesExt, fmi2StringAttributesExt, fmi2EnumerationAttributesExt
+# using FMICore: fmi2VariableDependency, fmi2Unknown, fmi2DependencyKind
+# using FMICore: fmi2VariableNamingConventionStructured
+# using FMICore: fmi2CausalityToString, fmi2VariabilityToString, fmi2InitialToString
+# using FMICore: fmi2String, fmi2Boolean, fmi2Integer, fmi2Real
+# using FMICore: fmi2Type, fmi2TypeModelExchange, fmi2TypeCoSimulation
+# using FMICore: fmi2CallbackFunctions
+# using FMICore: fmi2StatusOK, fmi2StatusWarning, fmi2StatusError
+# using FMICore: fmi2True, fmi2False
+# using FMICore: fmi2ModelDescriptionModelExchange, fmi2ModelDescriptionCoSimulation
+using FMIBase
+using FMIBase.FMICore
+using FMIBase.FMICore: FMI2_SCALAR_VARIABLE_ATTRIBUTE_STRUCT
 
 include("FMI2_md.jl")
 export fmi2CreateModelDescription

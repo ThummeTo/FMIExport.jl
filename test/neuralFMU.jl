@@ -37,3 +37,5 @@ include(joinpath(@__DIR__, "..", "examples", "FMI2", "NeuralFMU", "src", "Neural
 # ToDo check results
 # @test solution_FMI_jl.states.t[end] == 5.0
 # @test solution_FMI_jl.states.u[end] == [0.0, 0.0]
+
+rm(fmu_save_path)

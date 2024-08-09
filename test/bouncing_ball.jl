@@ -6,8 +6,15 @@
 # export FMU script
 include(joinpath(@__DIR__, "..", "examples", "FMI2", "BouncingBall", "src", "BouncingBall.jl"))
 
+# demo!
+#using FMIZoo, Test, Plots
+#fmu_save_path = FMIZoo.get_model_filename("BouncingBall1D", "Dymola", "2022x")
+#fmu_save_path = "C:/Users/thummeto/Documents/BouncingBall.fmu" # "C:/Users/thummeto/Documents/FMIZoo.jl/models/bin/Dymola/2023x/2.0/BouncingBallGravitySwitch1D.fmu"
+
 # check if FMU exists now
 @test isfile(fmu_save_path)
+fsize = filesize(fmu_save_path)/1024/1024
+@test fsize > 300
 
 # Simulate FMU in Python / FMPy
 # @info "Installing `fmpy`..."
@@ -16,19 +23,33 @@ include(joinpath(@__DIR__, "..", "examples", "FMI2", "BouncingBall", "src", "Bou
 
 # @info "Simulating with `fmpy`..."
 # using PyCall
-# fmpy = pyimport("fmpy")
+# @pyimport fmpy
 # fmpy.dump(fmu_save_path)
 
-# ToDo: Unfortunately, this errors ... (but it runs in python shell)
+# t_start = 0.0
+# t_stop = 5.0
+
 # solution_FMPy = fmpy.simulate_fmu(filename=fmu_save_path,
 #     validate=false,
-#     start_time=0.0,
-#     stop_time=5.0) # , fmi_call_logger=lambda s: print('[FMI] ' + s) , record_events=true, solver="CVode"
+#     start_time=t_start,
+#     stop_time=t_stop, record_events=true, solver="CVode") # fmi_call_logger=lambda s: print('[FMI] ' + s) , 
 
-# Simulate FMU in Julia / FMI.jl
-# using FMI
-# fmu.executionConfig.loggingOn = true
-# solution_FMI_jl = fmiSimulateME(fmu, (0.0, 5.0); dtmax=0.1)
+# ts = collect(solution_FMPy[i][1] for i in 1:length(solution_FMPy))
+# ss = collect(solution_FMPy[i][2] for i in 1:length(solution_FMPy))
+# vs = collect(solution_FMPy[i][3] for i in 1:length(solution_FMPy))
 
-# @test solution_FMI_jl.states.t[end] == 5.0
-# @test solution_FMI_jl.states.u[end] == [1.0e-10, 0.0]
+# @test length(solution_FMPy) == 1001
+
+# @test isapprox(ts[1], t_start; atol=1e-6)
+# @test isapprox(ss[1], 1.0; atol=1e-6)
+# @test isapprox(vs[1], 0.0; atol=1e-6)
+
+# @test isapprox(ts[end], t_stop; atol=1e-6)
+# @test isapprox(ss[end], 0.23272552; atol=1e-6)
+# @test isapprox(vs[end], -0.17606235; atol=1e-6)
+
+# plot(ts, ss)
+# plot(ts, vs)
+
+# ToDo: enable the following line
+rm(fmu_save_path)

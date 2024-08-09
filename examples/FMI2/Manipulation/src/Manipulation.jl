@@ -4,9 +4,9 @@
 #
 
 using FMIExport: fmi2SetFctGetReal, fmi2CreateEmbedded
-using FMIExport.FMICore: fmi2Real, fmi2Component, fmi2StatusOK, fmi2ValueReference
-using FMIExport.FMICore: fmi2CausalityParameter, fmi2VariabilityTunable, fmi2InitialExact
-using FMIImport: fmi2Load
+using FMIExport.FMIBase.FMICore: fmi2Real, fmi2Component, fmi2StatusOK, fmi2ValueReference
+using FMIExport.FMIBase.FMICore: fmi2CausalityParameter, fmi2VariabilityTunable, fmi2InitialExact
+using FMIImport: loadFMU
 import FMIExport 
 
 originalGetReal = nothing # function pointer to the original fmi2GetReal c-function
@@ -17,7 +17,7 @@ function myGetReal!(c::fmi2Component, vr::Union{Array{fmi2ValueReference}, Ptr{f
     global originalGetReal
     
     # first, we do what the original function does
-    status = FMIExport.FMICore.fmi2GetReal!(originalGetReal, c, vr, nvr, value)
+    status = FMIExport.FMIBase.FMICore.fmi2GetReal!(originalGetReal, c, vr, nvr, value)
 
     # if we have a pointer to an array, we must interprete it as array to access elements
     if isa(value, Ptr{fmi2Real})
@@ -44,7 +44,7 @@ FMIBUILD_CONSTRUCTOR = function(resPath)
     global originalGetReal
 
     # loads an existing FMU inside the FMU
-    fmu = fmi2Load(joinpath(resPath, "SpringDamperPendulum1D.fmu"))
+    fmu = loadFMU(joinpath(resPath, "SpringDamperPendulum1D.fmu"))
 
     # create a FMU that embedds the existing FMU
     fmu = fmi2CreateEmbedded(fmu)
@@ -78,8 +78,8 @@ fmu_save_path = joinpath(tmpDir, "Manipulation.fmu")
 
 sourceFMU = FMIZoo.get_model_filename("SpringDamperPendulum1D", "Dymola", "2022x")
 fmu = FMIBUILD_CONSTRUCTOR(dirname(sourceFMU))
-import FMIBuild:fmi2Save        # <= this must be excluded during export, because FMIBuild cannot execute itself (but it is able to build)
-fmi2Save(fmu, fmu_save_path; resources=Dict(sourceFMU=>"SpringDamperPendulum1D.fmu"))    # <= this must be excluded during export, because fmi2Save would start an infinte build loop with itself 
+import FMIBuild:saveFMU        # <= this must be excluded during export, because FMIBuild cannot execute itself (but it is able to build)
+saveFMU(fmu, fmu_save_path; resources=Dict(sourceFMU=>"SpringDamperPendulum1D.fmu"))    # <= this must be excluded during export, because fmi2Save would start an infinte build loop with itself 
 
 # some tests
 # using FMI
