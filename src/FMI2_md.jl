@@ -141,7 +141,10 @@ function fmi2ModelDescriptionAddIntegerDiscreteState(md::fmi2ModelDescription, n
     _Integer = fmi2IntegerAttributesExt()
     _Integer.start = start
     
-    sv = fmi2ModelDescriptionAddModelVariable(md, name; attribute=_Integer, kwargs...)
+    sv = fmi2ModelDescriptionAddModelVariable(md, name; 
+        attribute=_Integer, 
+        variability=fmi2VariabilityDiscrete, 
+        kwargs...)
 
     push!(md.discreteStateValueReferences, sv.valueReference)
     push!(md.stringValueReferences, sv.name => sv.valueReference)
@@ -150,7 +153,7 @@ function fmi2ModelDescriptionAddIntegerDiscreteState(md::fmi2ModelDescription, n
 end
 
 function fmi2ModelDescriptionAddEventIndicator(md::fmi2ModelDescription)
-    if md.numberOfEventIndicators == nothing
+    if isnothing(md.numberOfEventIndicators)
         md.numberOfEventIndicators = 0
     end 
     md.numberOfEventIndicators += 1

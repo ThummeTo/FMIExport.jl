@@ -6,6 +6,8 @@
 using FMIExport
 using FMIExport.FMIBase.FMICore: fmi2True, fmi2False 
 
+EPS = 1e-6
+
 FMU_FCT_INIT = function()
     m = 1.0         # ball mass
     r = 0.0         # ball radius
@@ -34,14 +36,12 @@ FMU_FCT_EVALUATE = function(t, x_c, ẋ_c, x_d, u, p, eventMode)
     sticking = x_d[1]
     _, a = ẋ_c
 
-    eps = 1e-10
-
     if sticking == fmi2True
         a = 0.0
     elseif sticking == fmi2False
         if eventMode
             if s < r && v < 0.0
-                s = r + eps # so that indicator is not triggered again
+                s = r + EPS # so that indicator is not triggered again
                 v = -v*d 
                 
                 # stop bouncing to prevent high frequency bouncing (and maybe tunneling the floor)
@@ -50,6 +50,8 @@ FMU_FCT_EVALUATE = function(t, x_c, ẋ_c, x_d, u, p, eventMode)
                     v = 0.0
                 end
             end
+        else
+            # no specials in continuos time mode
         end
 
         a = (m * -g) / m     # the system's physical equation (a little longer than necessary)

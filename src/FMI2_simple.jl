@@ -48,15 +48,15 @@ end
 function evaluate(_component::fmi2Component, eventMode=false)
     component = dereferenceInstance(_component)
 
-    xc, ẋc, xd, u, y, p = extractValues(_component)
+    # eventMode = component.state == fmi2ComponentStateEventMode
 
-    #eventMode = (component.state == fmi2ComponentStateEventMode)
+    xc, ẋc, xd, u, y, p = extractValues(_component)
 
     tmp_xc, ẋc, tmp_xd, p = FMU_FCT_EVALUATE(component.t, xc, ẋc, xd, u, p, eventMode)
 
     if eventMode # overwrite state vector allowed
         component.eventInfo.valuesOfContinuousStatesChanged = (xc != tmp_xc ? fmi2True : fmi2False)
-        component.eventInfo.newDiscreteStatesNeeded = (xd != tmp_xd ? fmi2True : fmi2False)
+        component.eventInfo.newDiscreteStatesNeeded =         (xd != tmp_xd ? fmi2True : fmi2False)
         
         xc = tmp_xc 
         xd = tmp_xd 
@@ -294,7 +294,7 @@ function simple_fmi2GetReal(_component::fmi2Component, _vr::Ptr{fmi2ValueReferen
         try
             value[i] = component.values[valueRef]
         catch e
-            logError(component, "fmi2SetReal: Unknown value reference $(valueRef).")
+            logError(component, "fmi2GetReal: Unknown value reference $(valueRef).")
             return fmi2StatusError
         end
     end
@@ -305,10 +305,23 @@ end
 function simple_fmi2GetInteger(_component::fmi2Component, _vr::Ptr{fmi2ValueReference}, nvr::Csize_t, _value::Ptr{fmi2Integer})
     component = dereferenceInstance(_component)
    
-    # ToDo
-    logWarning(component, "fmi2GetInteger: Not implemented yet, please open an issue.")
+    value = unsafe_wrap(Array{fmi2Integer}, _value, nvr)
+    vr = unsafe_wrap(Array{fmi2ValueReference}, _vr, nvr)
 
-    return fmi2StatusWarning
+    global FMU_NUM_STATES, FMU_NUM_OUTPUTS, FMU_NUM_INPUTS, FMU_NUM_PARAMETERS
+
+    for i in 1:nvr
+        valueRef = vr[i]
+
+        try
+            value[i] = component.values[valueRef]
+        catch e
+            logError(component, "fmi2GetReal: Unknown value reference $(valueRef).")
+            return fmi2StatusError
+        end
+    end
+
+    return fmi2StatusOK
 end
 
 function simple_fmi2GetBoolean(_component::fmi2Component, _vr::Ptr{fmi2ValueReference}, nvr::Csize_t, _value::Ptr{fmi2Boolean})
@@ -417,6 +430,11 @@ end
 
 function simple_fmi2NewDiscreteStates(_component::fmi2Component, _fmi2eventInfo::Ptr{fmi2EventInfo})
     component = dereferenceInstance(_component)
+
+    if component.state != fmi2ComponentStateEventMode
+        logError(component, "fmi2NewDiscreteStates must be called in event mode, mode is `$(component.state )`!")
+        return fmi2StatusError
+    end
    
     evaluate(_component, true)
 
@@ -441,13 +459,16 @@ function simple_fmi2EnterContinuousTimeMode(_component::fmi2Component)
     return fmi2StatusOK
 end
 
-function simple_fmi2CompletedIntegratorStep(_component::fmi2Component, noSetFMUStatePriorToCurrentPoint::fmi2Boolean, enterEventMode::Ptr{fmi2Boolean}, terminateSimulation::Ptr{fmi2Boolean}) 
+function simple_fmi2CompletedIntegratorStep(_component::fmi2Component, noSetFMUStatePriorToCurrentPoint::fmi2Boolean, _enterEventMode::Ptr{fmi2Boolean}, _terminateSimulation::Ptr{fmi2Boolean}) 
     component = dereferenceInstance(_component)
-    
-    # ToDo
-    logWarning(component, "fmi2CompletedIntegratorStep: Not implemented yet, please open an issue.")
 
-    return fmi2StatusWarning
+    enterEventMode = unsafe_wrap(Array{fmi2Boolean}, _enterEventMode, 1)
+    terminateSimulation = unsafe_wrap(Array{fmi2Boolean}, _terminateSimulation, 1)
+    
+    enterEventMode[1] = fmi2False
+    terminateSimulation[1] = fmi2False
+
+    return fmi2StatusOK
 end
 
 function simple_fmi2GetDerivatives(_component::fmi2Component, _derivatives::Ptr{fmi2Real}, nx::Csize_t)
