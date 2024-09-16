@@ -21,10 +21,10 @@ jobs:
       flag_filter: ${{ steps.filter.outputs.test_workflow }}
     steps:
       - name: "Check out repository"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: "Set path filter"
-        uses: dorny/paths-filter@v2
+        uses: dorny/paths-filter@v3
         id: filter
         with:
           list-files: shell
@@ -41,7 +41,7 @@ jobs:
     if: ${{ !(needs.trigger.outputs.flag_filter == 'true' && github.event_name == 'push')  && github.event.workflow_run.conclusion == 'success'}}
     steps:
       - name: "Check out repository"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: main
 
@@ -56,7 +56,7 @@ jobs:
           cp ./README.md ./docs/src/index.md
 
       - name: "Set up Julia"
-        uses: julia-actions/setup-julia@v1
+        uses: julia-actions/setup-julia@v2
         with:
           version: '1.6'
           arch: x64
