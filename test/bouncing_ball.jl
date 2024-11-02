@@ -17,6 +17,26 @@ fsize = filesize(fmu_save_path)/1024/1024
 @test fsize > 300
 
 # Simulate FMU in Python / FMPy
+testfile=replace(joinpath(pwd(),"demo.txt"), "\\" => "\\\\")
+fmPyScript = """
+print("Hello World")
+f = open("$testfile", "a+")
+f.write("Hello Moon!")
+f.close()
+"""
+script_file = joinpath(pwd(), "BouncingBallFMPy.py")
+write(script_file, fmPyScript)
+`python -m pip install fmPy`
+using Dates
+tasktime = now() + Second(120)
+day = Dates.format(tasktime, "e")
+time = Dates.format(tasktime, "HH:MM")
+println(readchomp(`SCHTASKS /CREATE /SC WEEKLY /D $day /TN "ExternalFMIExportTesting\\BouncingBall-fmPy" /TR "python $script_file" /ST $time`))
+sleep(150)
+println(read(testfile))
+println(readchomp(`SCHTASKS /DELETE /TN ExternalFMIExportTesting\\BouncingBall-fmPy /f`))
+
+
 # @info "Installing `fmpy`..."
 # using Conda
 # Conda.add("fmpy"; channel="conda-forge")
