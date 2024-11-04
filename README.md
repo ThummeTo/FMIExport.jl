@@ -4,7 +4,7 @@
 ## What is FMIExport.jl?
 [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl) is a free-to-use software library for the Julia programming language which allows for the export of FMUs ([fmi-standard.org](http://fmi-standard.org/)) from any Julia-Code. [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl) is completely integrated into [*FMI.jl*](https://github.com/ThummeTo/FMI.jl).
 
-[![Dev Docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://ThummeTo.github.io/FMIExport.jl/dev) 
+[![Dev Docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://thummeto.github.io/FMI.jl/dev/) 
 [![Test (latest)](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/TestLatest.yml/badge.svg)](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/TestLatest.yml)
 [![Test (LTS)](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/TestLTS.yml/badge.svg)](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/TestLTS.yml)
 [![Run Examples](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/Example.yml/badge.svg)](https://github.com/ThummeTo/FMIExport.jl/actions/workflows/Example.yml)
