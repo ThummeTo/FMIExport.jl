@@ -17,39 +17,60 @@ fsize = filesize(fmu_save_path)/1024/1024
 @test fsize > 300
 
 # Simulate FMU in Python / FMPy
-testfile=replace(joinpath(pwd(),"demo.txt"), "\\" => "\\\\")
-fmPyScript = """
-print("Hello World")
-f = open("$testfile", "a+")
-f.write("Hello Moon!")
+lockfile=replace(joinpath(pwd(),"lockfile.txt"), "\\" => "\\\\")
+logfile=replace(joinpath(pwd(),"FMPy-log.txt"), "\\" => "\\\\")
+FMPyScript = """
+f = open("$lockfile", "w+")
+f.write("FMPy_running")
+f.close()
+
+import sys
+with open("$logfile", "w+") as sys.stdout:
+    print("redirecting output...")
+    import subprocess
+    import sys
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "FMPy"])
+    import FMPy
+    FMPy.dump($fmu_save_path)
+
+f = open("$lockfile", "w+")
+f.write("FMPy_done")
 f.close()
 """
 script_file = joinpath(pwd(), "BouncingBallFMPy.py")
-write(script_file, fmPyScript)
-`python -m pip install fmPy`
+write(script_file, FMPyScript)
+`python -m pip install FMPy`
 using Dates
 tasktime = now() + Second(120)
 day = Dates.format(tasktime, "e")
 time = Dates.format(tasktime, "HH:MM")
-println(readchomp(`SCHTASKS /CREATE /SC WEEKLY /D $day /TN "ExternalFMIExportTesting\\BouncingBall-fmPy" /TR "python $script_file" /ST $time`))
+println(readchomp(`SCHTASKS /CREATE /SC WEEKLY /D $day /TN "ExternalFMIExportTesting\\BouncingBall-FMPy" /TR "python $script_file" /ST $time`))
 sleep(150)
-println(read(testfile))
-println(readchomp(`SCHTASKS /DELETE /TN ExternalFMIExportTesting\\BouncingBall-fmPy /f`))
+time_wait_max = datetime2unix(now()) + 600.0
+while "FMPy_running" in read(lockfile) && datetime2unix(now()) < time_wait_max
+    sleep(10)
+end
+println("wating for FMPy-Task ended; status of FMPy-Task: " * String(read(lockfile)) * "; Log of FMPy-Task: ")
+for line in readlines(logfile)
+    println(line)
+end
+println("------------------END_of_FMPy_log--------------------")
+println(readchomp(`SCHTASKS /DELETE /TN ExternalFMIExportTesting\\BouncingBall-FMPy /f`))
 
 
-# @info "Installing `fmpy`..."
+# @info "Installing `FMPy`..."
 # using Conda
-# Conda.add("fmpy"; channel="conda-forge")
+# Conda.add("FMPy"; channel="conda-forge")
 
-# @info "Simulating with `fmpy`..."
+# @info "Simulating with `FMPy`..."
 # using PyCall
-# @pyimport fmpy
-# fmpy.dump(fmu_save_path)
+# @pyimport FMPy
+# FMPy.dump(fmu_save_path)
 
 # t_start = 0.0
 # t_stop = 5.0
 
-# solution_FMPy = fmpy.simulate_fmu(filename=fmu_save_path,
+# solution_FMPy = FMPy.simulate_fmu(filename=fmu_save_path,
 #     validate=false,
 #     start_time=t_start,
 #     stop_time=t_stop, record_events=true, solver="CVode") # fmi_call_logger=lambda s: print('[FMI] ' + s) , 
