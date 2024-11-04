@@ -1,33 +1,32 @@
-name: Examples v1 (latest)
+name: Examples
 
 on:
-  workflow_run:
-    workflows: ["Test v1 (latest)"]
-    types:
-      - completed
+  workflow_dispatch:
+  pull_request:
   push:
-    branches:
-      - examples
-  
+    branches: 
+      - main
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '.github/workflows/Example.yml'
+      - 'Project.toml'
+
 jobs:
-  sync-files:
-    if: |
-      ${{ (github.event.workflow_run.conclusion == 'success' && github.sha == github.event.workflow_run.head_sha) || 
-      (github.event_name == 'push' && github.event.head_commit.committer.name != 'github-actions[bot]') }}
+  jupyter:
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
-        julia-version: ['1.9']
+        os: [windows-latest] # ubuntu-latest
+        file-name: [Export-BouncingBall]
+        julia-version: ['1.10'] # 1.9
         julia-arch: [x64]
-        os: [windows-latest]
-        experimental: [false]
+        experimental: [false] # true
 
     steps:
       - name: "Check out repository"
         uses: actions/checkout@v4
-        with:
-          ref: examples
 
       - name: "Set up Julia"
         uses: julia-actions/setup-julia@v2
@@ -35,42 +34,119 @@ jobs:
             version: ${{ matrix.julia-version }}
             arch: ${{ matrix.julia-arch }}
 
-      - name: "Build package"
-        uses: julia-actions/julia-buildpkg@v1
+      - name: "Install dependencies"
+        run: julia --project=examples/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
 
       - name: "Install packages"
         run: pip install jupyter nbconvert
+        
+      - name: "Execute notebook"
+        env:
+          FILE: examples/jupyter-src/${{ matrix.file-name }}.ipynb
+        run: jupyter nbconvert --ExecutePreprocessor.kernel_name="julia-${{ matrix.julia-version }}" --to notebook --inplace --execute ${{ env.FILE }}
 
-      - name: "Set path filter"
-        uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          list-files: shell
-          filters: |
-            all:
-              - 'examples/**.ipynb'
-            changed:
-              - added|modified: 'examples/**.ipynb'
-          base: 'examples'
-          ref: 'examples'
-                        
-      - name: "Execute and synchronize changed files"    
-        if: ${{ github.event_name == 'push' && steps.filter.outputs.changed == 'true' }}
+      - name: "Export notebook to jl and md"
+        env:
+          FILE: examples/jupyter-src/${{ matrix.file-name }}.ipynb
         run: |
-          jupyter nbconvert --ExecutePreprocessor.kernel_name="julia-1.9" --to notebook --inplace --execute ${{ steps.filter.outputs.changed_files }}
-          jupyter nbconvert --to script ${{ steps.filter.outputs.changed_files }}
-          jupyter nbconvert --to markdown ${{ steps.filter.outputs.changed_files }}
-      
-      - name: "Execute and synchronize all files"
-        if: ${{ github.event_name == 'workflow_run' && steps.filter.outputs.all == 'true'}}
-        run: |
-          jupyter nbconvert --ExecutePreprocessor.kernel_name="julia-1.9" --to notebook --inplace --execute ${{ steps.filter.outputs.all_files }}
-          jupyter nbconvert --to script ${{ steps.filter.outputs.all_files }}
-          jupyter nbconvert --to markdown ${{ steps.filter.outputs.all_files }}
-      
-      - name: "Auto commit"
-        if: ${{ matrix.os == 'ubuntu-latest'}}
-        uses: stefanzweifel/git-auto-commit-action@v5
+          jupyter nbconvert --to script ${{ env.FILE }}
+          jupyter nbconvert --to markdown ${{ env.FILE }}
+
+      - name: "run generated jl script to determine success of example building"
+        run: julia --project=examples/ examples/jupyter-src/${{ matrix.file-name }}.jl
+
+      - name: "auto-commit (retry on merge)"
+        if: success() && github.event_name != 'pull_request' && github.ref_name == 'main'
+        uses: nick-fields/retry@v3
+        env: 
+          CI_COMMIT_MESSAGE: jupyter-example-${{ matrix.file-name }}-${{ matrix.os }}-${{ matrix.julia-version }}-${{ matrix.julia-arch }}-${{ matrix.experimental }}[${{ github.ref_name }}]
+          CI_COMMIT_AUTHOR: github-actions[bot]
+          EXAMPLES_PATH: examples/jupyter-src
+        # Fetch all and clear the stash list. Include all files from the examples folder to the stash and switch the branch.
+        # Reset the branch and remove all current files in the examples folder. 
+        # Checkout the last stash to restore the new notebooks and apply the stash index to restore all other new files in the folder.
         with:
-          commit_message: Jupyter nbconvert synch - modified, paired .ipynb files
-          push_options: '--force-with-lease'
+          timeout_minutes: 999
+          max_attempts: 10
+          warning_on_retry: false
+          shell: bash
+          command: |
+            git fetch --all
+            git stash clear
+            git stash --include-untracked -- ${{ env.EXAMPLES_PATH }}/${{ matrix.file-name }}*
+            git switch examples
+            git reset --hard origin/examples
+            rm -r ${{ env.EXAMPLES_PATH }}/${{ matrix.file-name }}*
+            git checkout stash -f -- ${{ env.EXAMPLES_PATH }}
+            git stash apply --index
+            git stash drop
+            git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
+            git config --global user.email "${{ env.CI_COMMIT_AUTHOR }}@users.noreply.github.com"
+            git config --global core.autocrlf false
+            git pull
+            git reset
+            git add ${{ env.EXAMPLES_PATH }}/${{ matrix.file-name }}*
+            git commit -m "${{ env.CI_COMMIT_MESSAGE }}"
+            git push origin examples || (git reset --soft HEAD~1 && (exit 1))
+
+  pluto:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Check out repository"
+        uses: actions/checkout@v4
+
+      - name: "Set up Julia"
+        uses: julia-actions/setup-julia@v2
+        with:
+            version: '1.10'
+            
+      - name: "Execute pluto notebooks"
+        if: ${{ hashFiles('examples/pluto-src/') != '' }}
+        run: julia -e 'using Pkg; Pkg.add("PlutoSliderServer"); using PlutoSliderServer; PlutoSliderServer.export_directory("examples/pluto-src")'
+
+      - name: "auto-commit (retry on merge)"
+        if: success() && github.event_name != 'pull_request' && github.ref_name == 'main'
+        uses: nick-fields/retry@v3
+        env: 
+          CI_COMMIT_MESSAGE: pluto-examples[${{ github.ref_name }}]
+          CI_COMMIT_AUTHOR: github-actions[bot]
+          EXAMPLES_PATH: examples/pluto-src
+        # Fetch all and clear the stash list. Include all files from the examples folder to the stash and switch the branch.
+        # Reset the branch and remove all current files in the examples folder. 
+        # Checkout the last stash to restore the new notebooks and apply the stash index to restore all other new files in the folder.
+        with:
+          timeout_minutes: 999
+          max_attempts: 10
+          warning_on_retry: false
+          shell: bash
+          command: |
+            git fetch --all
+            git stash clear
+            git stash --include-untracked -- ${{ env.EXAMPLES_PATH }}
+            git switch examples
+            git reset --hard origin/examples
+            rm -r ${{ env.EXAMPLES_PATH }}/*
+            git checkout stash -f -- ${{ env.EXAMPLES_PATH }}
+            git stash apply --index
+            git stash drop
+            git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
+            git config --global user.email "${{ env.CI_COMMIT_AUTHOR }}@users.noreply.github.com"
+            git config --global core.autocrlf false
+            git pull
+            git reset
+            git add ${{ env.EXAMPLES_PATH }}
+            git commit -m "${{ env.CI_COMMIT_MESSAGE }}"
+            git push origin examples || (git reset --soft HEAD~1 && (exit 1))
+            
+  call-docu:
+    needs: [jupyter, pluto]
+    if: github.event_name != 'pull_request' && github.ref_name == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      # Trigger an repoisitory dispath event
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.FMI_DOC_TRIGGER_PAT }}
+          repository: 'ThummeTo/FMI.jl'
+          event-type: trigger-docu
