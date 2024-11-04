@@ -20,7 +20,7 @@ jobs:
       matrix:
         os: [windows-latest] # ubuntu-latest
         file-name: [Export]
-        julia-version: ['1.10'] # 1.9
+        julia-version: ['1.10']
         julia-arch: [x64]
         experimental: [false] # true
 
