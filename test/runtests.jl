@@ -15,7 +15,7 @@ using Test
         end
     
         @testset "Bouncing Ball" begin
-            include("bouncing_ball.jl")
+            include(joinpath("bouncing_ball", "bouncing_ball.jl"))
         end
     
         @testset "FMU Manipulation" begin
