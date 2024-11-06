@@ -17,16 +17,24 @@ fsize = filesize(fmu_save_path)/1024/1024
 @test fsize > 300
 
 # Simulate FMU in Python / FMPy
-lockfile=joinpath(pwd(), "test", "bouncing_ball", "lockfile.txt")
-logfile=joinpath(pwd(), "test", "bouncing_ball", "FMPy-log.txt")
+lockfile=joinpath(pwd(), "bouncing_ball", "lockfile.txt")
+logfile=joinpath(pwd(), "bouncing_ball", "FMPy-log.txt")
 
 t_start = "0.0"
 t_stop = "5.0"
 juliatestflag = "JULIA_@test:"
-fmu_save_path = joinpath(pwd(), "BouncingBall.fmu")
-script_file = joinpath(pwd(), "test", "bouncing_ball", "fmpy-bouncing_ball.py")
-rm(lockfile)
-rm(logfile)
+#fmu_save_path = joinpath(pwd(), "BouncingBall.fmu")
+script_file = joinpath(pwd(), "bouncing_ball", "fmpy-bouncing_ball.py")
+try
+    rm(lockfile)
+catch e
+    println(e)
+end
+try
+    rm(logfile)
+catch e
+    println(e)
+end
 
 `python -m pip install FMPy`
 
