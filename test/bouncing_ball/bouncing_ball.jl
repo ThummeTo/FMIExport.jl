@@ -65,6 +65,9 @@ sleep(150)
 rm(config_file)
 time_wait_max = datetime2unix(now()) + 600.0
 if isfile(lockfile) || isfile(logfile)
+    if isfile(lockfile)
+        println("FMPy-Task still running, will wait for termination or a maximum time of " * string((time_wait_max-datetime2unix(now()))/60.0) * "minutes from now.")
+    end
     while isfile(lockfile) && datetime2unix(now()) < time_wait_max
         sleep(10)
     end
@@ -75,11 +78,17 @@ if isfile(lockfile) || isfile(logfile)
         @test false # error: no log by fmpy created
     else
         println("Log of FMPy-Task: ")
+        any_tests_in_fmpy_log = false
         for line in readlines(logfile)
             println(line)
             if contains(line, juliatestflag)
                 eval(Meta.parse("@test " * split(line, juliatestflag)[2]))
+                any_tests_in_fmpy_log = true
             end
+        end
+        if !any_tests_in_fmpy_log
+            println("There where no occurences of \"$juliatestflag\" found in fmpy-log. This is illegal, as then there is no use in running fmpy at all if the results are not used for testing. Also it meight indicate premature termination of the fmpy-task and therefor indicate a failed test itself.")
+            @test false
         end
         println("------------------END_of_FMPy_log--------------------")
     end
