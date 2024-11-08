@@ -17,11 +17,11 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: true
+      fail-fast: false # keep other os running if one fails
       matrix:
         julia-version: ['1']
         julia-arch: [x64]
-        os: [windows-latest] # ubuntu-latest, 
+        os: [windows-latest, ubuntu-latest] # ubuntu-latest, 
         experimental: [false]
 
     steps:

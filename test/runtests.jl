@@ -7,7 +7,7 @@ using FMIExport
 using Test
 
 @testset "FMIExport.jl" begin
-    if Sys.iswindows()
+    if Sys.iswindows() || Sys.islinux()
         @info "Automated testing is supported on Windows/Linux/Mac."
     
         @testset "Model Description" begin
@@ -17,7 +17,7 @@ using Test
         @testset "Bouncing Ball" begin
             include(joinpath("bouncing_ball", "bouncing_ball.jl"))
         end
-    
+
         @testset "FMU Manipulation" begin
             #@warn "The test `FMU Manipulation` is currently excluded because of insufficient resources in GitHub-Actions."
             include("manipulation.jl")
@@ -29,7 +29,7 @@ using Test
         end
 
     elseif Sys.islinux() || Sys.isapple()
-        @warn "Tests not supported on Linux and Mac."
+        @warn "Tests not supported on Mac."
     else
         @warn "Tests not supported on `unknown operation system`."
     end

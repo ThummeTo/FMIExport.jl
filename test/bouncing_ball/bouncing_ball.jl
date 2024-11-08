@@ -17,12 +17,23 @@ fsize = filesize(fmu_save_path)/1024/1024
 @test fsize > 300
 
 # Simulate FMU in Python / FMPy
-lockfile=joinpath(pwd(), "bouncing_ball", "lockfile.txt")
-logfile=joinpath(pwd(), "bouncing_ball", "FMPy-log.txt")
+# for ci testing: if modelica reference FMU is available in test/bouncing_ball directory, use it instead of generated FMU (for CI testing, as generated FMU contains problems as of now)
+if isfile(joinpath(pwd(), "bouncing_ball", "Modelica_BouncingBall.fmu"))
+    fmu_save_path = joinpath(pwd(), "bouncing_ball", "Modelica_BouncingBall.fmu")
+    println("::warning title=Test-Warning::using \"Modelica_BouncingBall.fmu\" instead of exported generated FMU. Rename or remove \"Modelica_BouncingBall.fmu\" for CI-tests to use the exported FMU\r\n")
+end
+# mutex implementation: indicates running state of fmpy script. File must only be created and cleared afterwards by fmpy script
+lockfile = joinpath(pwd(), "bouncing_ball", "lockfile.txt")
+# fmpy script puts its logs here
+logfile = joinpath(pwd(), "bouncing_ball", "FMPy-log.txt")
+# output for scheduled command starting the fmpy script. meight be useful for debugging if logfile does not contain any helpful information on error
+outlog = joinpath(pwd(), "bouncing_ball", "outlog.txt")
+# fmu-experiment setup
 t_start = "0.0"
 t_stop = "5.0"
+# flag (in logfile), that gets replaced by "@test " by this jl script and evaluated after fmpys completion
 juliatestflag = "JULIA_@test:"
-#fmu_save_path = joinpath(pwd(), "BouncingBall.fmu")
+
 # as commandline interface for task sheduling in windows does only allow 261 characters for \TR option, we need an external config file
 config_file = joinpath(pwd(), "bouncing_ball", "fmpy-bouncing_ball.config")
 open(config_file, "w+") do io
@@ -45,8 +56,9 @@ open(config_file, "w+") do io
     write(io, t_stop)
     write(io, "\n")
 end
-
 script_file = joinpath(pwd(), "bouncing_ball", "fmpy-bouncing_ball.py")
+
+# should not exist but cleanup anyway
 if isfile(lockfile)
     rm(lockfile)
 end
@@ -54,51 +66,110 @@ if isfile(logfile)
     rm(logfile)
 end
 
-`python -m pip install FMPy`
+#install fmpy
+println(readchomp(`python -m pip install FMPy`))
 
 using Dates
+# task can only be sheduled at full minutes, schedule with at least one full minute until start to avoid cornercases. 120s achives this optimally (seconds get truncated in minute-based-scheduling)
 tasktime = now() + Second(120)
-time = Dates.format(tasktime, "HH:MM")
-println("FMPY-DEBUG-Flag")
-println(readchomp(`SCHTASKS /CREATE /SC ONCE /TN "ExternalFMIExportTesting\\BouncingBall-FMPy" /TR "python $script_file $config_file" /ST $time`))
+# cleanup github-actions logs
+flush(stdout)
+flush(stderr)
+
+# the fmpy task that we want to schedule (its stdout and stderr get redirected for debugging, remains empty/non existent if no error occurs)
+task_string = "python $script_file $config_file > $outlog 2>&1"
+
+if Sys.iswindows()
+    # in windows only 261 chars are allowed as command with args
+    @test length(task_string) < 261
+    time = Dates.format(tasktime, "HH:MM")
+    println(readchomp(`SCHTASKS /CREATE /SC ONCE /TN "ExternalFMIExportTesting\\BouncingBall-FMPy" /TR "$task_string" /ST $time`))
+elseif Sys.islinux()
+    time = Dates.format(tasktime, "M")
+    open("crontab_fmiexport_fmpy_bouncingball", "w+") do io
+        # hourly as there were issues when scheduling at fixed hour (not starting, possibly due to timzone issues or am/pm; did not investigate further)
+        write(io, "$time * * * * $task_string")
+        write(io, "\n")
+    end
+end
+
+# print schedule status for debugging
+if Sys.iswindows()
+    println(readchomp(`SCHTASKS /query /tn "ExternalFMIExportTesting\\BouncingBall-FMPy" /v /fo list`))
+elseif Sys.islinux()
+    println(readchomp(`crontab -l`))
+end
+
+# wait until task has started for shure
 sleep(150)
+
+# cleanup
 rm(config_file)
-time_wait_max = datetime2unix(now()) + 600.0
+
+# we will wait a maximum time for fmpy. usually it should be done within seconds... (keep in mind maximum runtime on github runner)
+time_wait_max = datetime2unix(now()) + 900.0
+
+# fmpy still running or generated output in its logfile
 if isfile(lockfile) || isfile(logfile)
     if isfile(lockfile)
-        println("FMPy-Task still running, will wait for termination or a maximum time of " * string((time_wait_max-datetime2unix(now()))/60.0) * "minutes from now.")
+        println(
+            "FMPy-Task still running, will wait for termination or a maximum time of " *
+            string(round((time_wait_max - datetime2unix(now())) / 60.0, digits = 2)) *
+            " minutes from now."
+        )
     end
     while isfile(lockfile) && datetime2unix(now()) < time_wait_max
         sleep(10)
     end
+
+    # print schedule status for debugging
+    if Sys.iswindows()
+        println(readchomp(`SCHTASKS /query /tn "ExternalFMIExportTesting\\BouncingBall-FMPy" /v /fo list`))
+    elseif Sys.islinux()
+        println(readchomp(`crontab -l`))
+    end
+
     println("wating for FMPy-Task ended; FMPy-Task done: " * string(!isfile(lockfile)))
-    println(readchomp(`SCHTASKS /DELETE /TN ExternalFMIExportTesting\\BouncingBall-FMPy /f`))
+
+    # sould not be existing; if there was no error, fmpy script redirected all its output to its own logfile (see FMPy_log below)
+    if isfile(outlog)
+        println("CMD output of FMPy-Task: ")
+        for line in readlines(outlog)
+            println(line)
+        end
+        println("------------------END_of_CMD_output--------------------")
+    end
+
+    # FMPy_log
     if !isfile(logfile)
         println("No log of FMPy-Task found")
         @test false # error: no log by fmpy created
     else
         println("Log of FMPy-Task: ")
-        any_tests_in_fmpy_log = false
         for line in readlines(logfile)
             println(line)
+            # if there is a testflag, evaluate the line
             if contains(line, juliatestflag)
                 eval(Meta.parse("@test " * split(line, juliatestflag)[2]))
-                any_tests_in_fmpy_log = true
             end
         end
-        if !any_tests_in_fmpy_log
-            println("There where no occurences of \"$juliatestflag\" found in fmpy-log. This is illegal, as then there is no use in running fmpy at all if the results are not used for testing. Also it meight indicate premature termination of the fmpy-task and therefor indicate a failed test itself.")
-            @test false
-        end
         println("------------------END_of_FMPy_log--------------------")
+
+        fmpy_log = String(read(logfile))
+        # if no testflags occur in log, why are we running the script?! we need testflags in the log to evaluate the result...
+        @test occursin(juliatestflag, fmpy_log)
     end
 else
-    println("Error in FMPy-testsetup: Windows task scheduler did not start FMPy successfully or FMPy terminated prematurely before generating lock or logfiles")
-    println(readchomp(`SCHTASKS /DELETE /TN ExternalFMIExportTesting\\BouncingBall-FMPy /f`))    
+    println("Error in FMPy-testsetup: Windows task scheduler or cron did not start FMPy successfully or FMPy terminated prematurely before generating lockfile or logfile")
     @test false
 end
 
-
+# cleanup scheduling
+if Sys.iswindows()
+    println(readchomp(`SCHTASKS /DELETE /TN ExternalFMIExportTesting\\BouncingBall-FMPy /f`))
+elseif Sys.islinux()
+    println(readchomp(`crontab -r`))
+end
 
 # @test length(solution_FMPy) == 1001
 
