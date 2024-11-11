@@ -3,22 +3,30 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-# export FMU script
-include(joinpath(@__DIR__, "..", "..", "examples", "FMI2", "BouncingBall", "src", "BouncingBall.jl"))
+# export FMU script, currently only available on Windows
+if Sys.iswindows()
+    include(joinpath(@__DIR__, "..", "..", "examples", "FMI2", "BouncingBall", "src", "BouncingBall.jl"))
+
+    # check if FMU exists now
+    @test isfile(fmu_save_path)
+    fsize = filesize(fmu_save_path)/1024/1024
+    @test fsize > 300
+else
+    # if not on windows, use BouncingBall from FMIZoo
+    using FMIZoo
+    fmu_save_path = FMIZoo.get_model_filename("BouncingBall1D", "Dymola", "2023x") # 2023x instead of 2022x? meight support Windows
+end
 
 # demo!
 #using FMIZoo, Test, Plots
 #fmu_save_path = FMIZoo.get_model_filename("BouncingBall1D", "Dymola", "2022x")
 #fmu_save_path = "C:/Users/thummeto/Documents/BouncingBall.fmu" # "C:/Users/thummeto/Documents/FMIZoo.jl/models/bin/Dymola/2023x/2.0/BouncingBallGravitySwitch1D.fmu"
 
-# check if FMU exists now
-@test isfile(fmu_save_path)
-fsize = filesize(fmu_save_path)/1024/1024
-@test fsize > 300
 
 # Simulate FMU in Python / FMPy
 # for ci testing: if modelica reference FMU is available in test/bouncing_ball directory, use it instead of generated FMU (for CI testing, as generated FMU contains problems as of now)
-if isfile(joinpath(pwd(), "bouncing_ball", "Modelica_BouncingBall.fmu"))
+if isfile(joinpath(pwd(), "bouncing_ball", "Modelica_BouncingBall.fmu")) && Sys.iswindows()
+    #todo also on linux, but testing FMIZoo now
     fmu_save_path = joinpath(pwd(), "bouncing_ball", "Modelica_BouncingBall.fmu")
     println("::warning title=Test-Warning::using \"Modelica_BouncingBall.fmu\" instead of exported generated FMU. Rename or remove \"Modelica_BouncingBall.fmu\" for CI-tests to use the exported FMU\r\n")
 end
