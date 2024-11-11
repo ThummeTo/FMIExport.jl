@@ -99,6 +99,7 @@ elseif Sys.islinux()
         write(io, "$time * * * * $task_string")
         write(io, "\n")
     end
+    println(readchomp(`crontab crontab_fmiexport_fmpy_bouncingball`))
 end
 
 # print schedule status for debugging
