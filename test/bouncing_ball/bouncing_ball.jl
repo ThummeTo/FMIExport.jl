@@ -25,8 +25,7 @@ end
 
 # Simulate FMU in Python / FMPy
 # for ci testing: if modelica reference FMU is available in test/bouncing_ball directory, use it instead of generated FMU (for CI testing, as generated FMU contains problems as of now)
-if isfile(joinpath(pwd(), "bouncing_ball", "Modelica_BouncingBall.fmu")) && Sys.iswindows()
-    #todo also on linux, but testing FMIZoo now
+if isfile(joinpath(pwd(), "bouncing_ball", "Modelica_BouncingBall.fmu"))
     fmu_save_path = joinpath(pwd(), "bouncing_ball", "Modelica_BouncingBall.fmu")
     println("::warning title=Test-Warning::using \"Modelica_BouncingBall.fmu\" instead of exported generated FMU. Rename or remove \"Modelica_BouncingBall.fmu\" for CI-tests to use the exported FMU\r\n")
 end
@@ -140,7 +139,7 @@ if isfile(lockfile) || isfile(logfile)
 
     println("wating for FMPy-Task ended; FMPy-Task done: " * string(!isfile(lockfile)))
 
-    # sould not be existing; if there was no error, fmpy script redirected all its output to its own logfile (see FMPy_log below)
+    # sould not be existing/be empty; if there was no error, fmpy script redirected all its output to its own logfile (see FMPy_log below)
     if isfile(outlog)
         println("CMD output of FMPy-Task: ")
         for line in readlines(outlog)
