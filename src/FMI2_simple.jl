@@ -56,14 +56,14 @@ function evaluate(_component::fmi2Component, eventMode=false)
 
     if eventMode # overwrite state vector allowed
         component.eventInfo.valuesOfContinuousStatesChanged = (xc != tmp_xc ? fmi2True : fmi2False)
-        component.eventInfo.newDiscreteStatesNeeded =         (xd != tmp_xd ? fmi2True : fmi2False)
+        #component.eventInfo.newDiscreteStatesNeeded =         (xd != tmp_xd ? fmi2True : fmi2False)
         
         xc = tmp_xc 
         xd = tmp_xd 
     else
-        if xc != tmp_xc
-            logError(component, "FMU_FCT_EVALUATE changes the systems continuous state while not being in event-mode, this is not allowed!")
-        end
+        # if xc != tmp_xc
+        #     logError(component, "FMU_FCT_EVALUATE changes the systems continuous state while not being in event-mode, this is not allowed!")
+        # end
         if xd != tmp_xd
             logError(component, "FMU_FCT_EVALUATE changes the systems discrete state while not being in event-mode, this is not allowed!")
         end
@@ -440,7 +440,7 @@ function simple_fmi2NewDiscreteStates(_component::fmi2Component, _fmi2eventInfo:
 
     # ToDo: This is not efficient (copy struct and overwrite), direct memory access would be much nicer!
     eventInfo = unsafe_load(_fmi2eventInfo)
-    eventInfo.newDiscreteStatesNeeded = component.eventInfo.newDiscreteStatesNeeded
+    eventInfo.newDiscreteStatesNeeded = fmi2False # component.eventInfo.newDiscreteStatesNeeded
     eventInfo.terminateSimulation = fmi2False # [ToDo]
     eventInfo.nominalsOfContinuousStatesChanged = fmi2False # [ToDo]
     eventInfo.valuesOfContinuousStatesChanged = component.eventInfo.valuesOfContinuousStatesChanged
