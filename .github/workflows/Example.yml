@@ -19,8 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest] # ubuntu-latest
-        file-name: [Export]
-        julia-version: ['1.10']
+        file-name: [Export-BouncingBall]
+        julia-version: ['1.10'] # 1.9
         julia-arch: [x64]
         experimental: [false] # true
 
@@ -140,11 +140,14 @@ jobs:
             
   call-docu:
     needs: [jupyter, pluto]
-    if: github.event_name != 'pull_request' && github.ref_name == 'main'
+    if: github.ref_name == 'test-fmPy' # github.event_name != 'pull_request' && github.ref_name == 'main'
     runs-on: ubuntu-latest
+    env: 
+      HAS_TRIGGER_TOKEN: ${{ secrets.FMI_DOC_TRIGGER_PAT != '' }}
     steps:
       # Trigger an repoisitory dispath event
       - name: Repository Dispatch
+        if: ${{ env.HAS_TRIGGER_TOKEN == 'true' }}
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.FMI_DOC_TRIGGER_PAT }}
