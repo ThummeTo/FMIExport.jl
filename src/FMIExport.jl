@@ -199,6 +199,7 @@ function fmi2Create(modelName::String=""; type=fmi2TypeModelExchange)
     fmu = FMU2()
     
     fmu.modelName = modelName
+    fmu.isZeroState = false
     fmu.type = type
     fmu.modelDescription = fmi2CreateModelDescription()
     fmu.fmuResourceLocation = pwd()
