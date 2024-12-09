@@ -3,10 +3,13 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
+# equations are a modified version of the Modelica reference FMUs:
+# https://github.com/modelica/Reference-FMUs/blob/main/BouncingBall/model.c
+
 using FMIExport
 using FMIExport.FMIBase.FMICore: fmi2True, fmi2False 
 
-EPS = 1e-6
+EPS = 1e-8
 
 FMU_FCT_INIT = function()
     m = 1.0         # ball mass
@@ -39,19 +42,20 @@ FMU_FCT_EVALUATE = function(t, x_c, ẋ_c, x_d, u, p, eventMode)
     if sticking == fmi2True
         a = 0.0
     elseif sticking == fmi2False
+
         if eventMode
-            if s < r && v < 0.0
+            h = s-r
+            if h <= 0 && v < 0
                 s = r + EPS # so that indicator is not triggered again
                 v = -v*d 
-                
+
                 # stop bouncing to prevent high frequency bouncing (and maybe tunneling the floor)
                 if abs(v) < v_min
                     sticking = fmi2True
                     v = 0.0
                 end
             end
-        else
-            # no specials in continuos time mode
+
         end
 
         a = (m * -g) / m     # the system's physical equation (a little longer than necessary)
@@ -60,12 +64,13 @@ FMU_FCT_EVALUATE = function(t, x_c, ẋ_c, x_d, u, p, eventMode)
         return (x_c, ẋ_c, x_d, p)
     end
 
+    # Todo: Remove these allocations. Make it inplace.
     x_c = [s, v]
     ẋ_c = [v, a]
     x_d = [sticking]
     p = [m, r, d, v_min, g]
 
-    return (x_c, ẋ_c, x_d, p) # evaluation can't change discrete state!
+    return (x_c, ẋ_c, x_d, p)
 end
 
 FMU_FCT_OUTPUT = function(t, x_c, ẋ_c, x_d, u, p)
@@ -84,11 +89,19 @@ FMU_FCT_EVENT = function(t, x_c, ẋ_c, x_d, u, p)
     s, v = x_c
     _, a = ẋ_c
     sticking = x_d[1]
-   
+
+    # helpers
+    z1 = 0.0 # first event indicator
+    h = s-r # ball height
+
     if sticking == fmi2True
         z1 = 1.0            # event 1: ball stay-on-ground
     else
-        z1 = (s-r)          # event 1: ball hits ground 
+        if h > -EPS && h <= 0 && v > 0
+            z1 = -EPS
+        else 
+            z1 = h
+        end
     end
 
     z = [z1]
@@ -140,14 +153,14 @@ fmu_save_path = joinpath(tmpDir, "BouncingBall.fmu")
 
 fmu = FMIBUILD_CONSTRUCTOR()
 using FMIBuild: saveFMU                    # <= this must be excluded during export, because FMIBuild cannot execute itself (but it is able to build)
-saveFMU(fmu, fmu_save_path; debug=true, compress=false)    # <= this must be excluded during export, because fmi2Save would start an infinte build loop with itself (debug=true allows debug messages, but is slow during execution!)
+saveFMU(fmu, fmu_save_path; debug=true, compress=false)    # <= this must be excluded during export, because saveFMU would start an infinite build loop with itself (debug=true allows debug messages, but is slow during execution!)
 
 ### some tests ###
-# using FMI
-# fmu.executionConfig.loggingOn = true
-# solution = fmiSimulateME(fmu, (0.0, 5.0); dtmax=0.1)
-# using Plots
-# fmiPlot(solution)
+using FMI, DifferentialEquations
+fmu.executionConfig.loggingOn = true
+solution = simulate(fmu, (0.0, 3.0); recordValues=["sticking"])
+using Plots
+plot(solution)
 
 # The following line is a end-marker for excluded code for the FMU compilation process!
 ### FMIBUILD_NO_EXPORT_END ###

@@ -1,0 +1,4 @@
+tmp/
+.ipynb_checkpoints/
+*.png
+*.fmu
