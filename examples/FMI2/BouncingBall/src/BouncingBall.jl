@@ -55,7 +55,6 @@ FMU_FCT_EVALUATE = function(t, x_c, ẋ_c, x_d, u, p, eventMode)
                     v = 0.0
                 end
             end
-
         end
 
         a = (m * -g) / m     # the system's physical equation (a little longer than necessary)
@@ -147,7 +146,7 @@ end
 ### FMIBUILD_NO_EXPORT_BEGIN ###
 # The line above is a start-marker for excluded code for the FMU compilation process!
 
-tmpDir = mktempdir(; prefix="fmibuildjl_test_", cleanup=false) 
+tmpDir = "C:\\Users\\thummeto\\Documents\\FMIExport.jl\\tmp" # mktempdir(; prefix="fmibuildjl_test_", cleanup=false) 
 @info "Saving example files at: $(tmpDir)"
 fmu_save_path = joinpath(tmpDir, "BouncingBall.fmu")  
 
