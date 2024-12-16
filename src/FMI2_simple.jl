@@ -556,7 +556,7 @@ function simple_fmi2NewDiscreteStates(
         component.eventInfo.valuesOfContinuousStatesChanged
     eventInfo.nextEventTimeDefined = fmi2False # [ToDo]
     eventInfo.nextEventTime = 0.0 # [ToDo]
-    unsafe_store!(_fmi2eventInfo, eventInfo);
+    unsafe_store!(_fmi2eventInfo, eventInfo)
 
     # reset 
     eventInfo.valuesOfContinuousStatesChanged = fmi2False
