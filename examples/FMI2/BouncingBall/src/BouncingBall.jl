@@ -55,7 +55,6 @@ FMU_FCT_EVALUATE = function (t, x_c, ẋ_c, x_d, u, p, eventMode)
                     v = 0.0
                 end
             end
-
         end
 
         a = (m * -g) / m     # the system's physical equation (a little longer than necessary)

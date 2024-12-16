@@ -64,7 +64,7 @@ function evaluate(_component::fmi2Component, eventMode = false)
 
     if eventMode # overwrite state vector allowed
         component.eventInfo.valuesOfContinuousStatesChanged =
-            (xc != tmp_xc ? fmi2True : fmi2False)
+            (xc != tmp_xc ? fmi2True : component.eventInfo.valuesOfContinuousStatesChanged)
         #component.eventInfo.newDiscreteStatesNeeded =         (xd != tmp_xd ? fmi2True : fmi2False)
 
         xc = tmp_xc
@@ -508,6 +508,7 @@ function simple_fmi2SetContinuousStates(
             component,
             "fmi2SetContinuousStates: Model has $(length(component.fmu.modelDescription.stateValueReferences)) states, but `nx`=$(nx).",
         )
+        return fmi2StatusWarning
     end
 
     x = unsafe_wrap(Array{fmi2Real}, _x, nx)
@@ -555,8 +556,10 @@ function simple_fmi2NewDiscreteStates(
         component.eventInfo.valuesOfContinuousStatesChanged
     eventInfo.nextEventTimeDefined = fmi2False # [ToDo]
     eventInfo.nextEventTime = 0.0 # [ToDo]
-    unsafe_store!(_fmi2eventInfo, eventInfo)
+    unsafe_store!(_fmi2eventInfo, eventInfo);
 
+    # reset 
+    eventInfo.valuesOfContinuousStatesChanged = fmi2False
     return fmi2StatusOK
 end
 
@@ -597,6 +600,7 @@ function simple_fmi2GetDerivatives(
             component,
             "fmi2GetDerivatives: Model has $(length(component.fmu.modelDescription.derivativeValueReferences)) states, but `nx`=$(nx).",
         )
+        return fmi2StatusWarning
     end
 
     derivatives = unsafe_wrap(Array{fmi2Real}, _derivatives, nx)
@@ -621,6 +625,7 @@ function simple_fmi2GetEventIndicators(
             component,
             "fmi2GetEventIndicators: Model has $(length(component.eventIndicators)) states, but `ni`=$(ni).",
         )
+        return fmi2StatusWarning
     end
 
     eventIndicators = unsafe_wrap(Array{fmi2Real}, _eventIndicators, ni)
@@ -648,6 +653,7 @@ function simple_fmi2GetContinuousStates(
             component,
             "fmi2GetContinuousStates: Model has $(length(component.fmu.modelDescription.stateValueReferences)) states, but `nx`=$(nx).",
         )
+        return fmi2StatusWarning
     end
 
     x = unsafe_wrap(Array{fmi2Real}, _x, nx)
@@ -672,6 +678,7 @@ function simple_fmi2GetNominalsOfContinuousStates(
             component,
             "fmi2GetNominalsOfContinuousStates: Model has $(length(component.fmu.modelDescription.stateValueReferences)) states, but `nx`=$(nx).",
         )
+        return fmi2StatusWarning
     end
 
     x_nominal = unsafe_wrap(Array{fmi2Real}, _x_nominal, nx)
