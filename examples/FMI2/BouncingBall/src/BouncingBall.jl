@@ -152,7 +152,7 @@ fmu_save_path = joinpath(tmpDir, "BouncingBall.fmu")
 
 fmu = FMIBUILD_CONSTRUCTOR()
 using FMIBuild: saveFMU                    # <= this must be excluded during export, because FMIBuild cannot execute itself (but it is able to build)
-saveFMU(fmu, fmu_save_path; debug=true, compress=false)    # <= this must be excluded during export, because saveFMU would start an infinite build loop with itself (debug=true allows debug messages, but is slow during execution!)
+#TODO saveFMU(fmu, fmu_save_path; debug=true, compress=false)    # <= this must be excluded during export, because saveFMU would start an infinite build loop with itself (debug=true allows debug messages, but is slow during execution!)
 
 ### some tests ###
 using FMI, DifferentialEquations
