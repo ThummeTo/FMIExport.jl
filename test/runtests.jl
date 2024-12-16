@@ -9,20 +9,20 @@ using Test
 @testset "FMIExport.jl" begin
     if Sys.iswindows()
         @info "Automated testing is supported on Windows/Linux/Mac."
-    
+
         @testset "Model Description" begin
             include("model_description.jl")
         end
-    
+
         @testset "Bouncing Ball" begin
             include("bouncing_ball.jl")
         end
-    
+
         @testset "FMU Manipulation" begin
             #@warn "The test `FMU Manipulation` is currently excluded because of insufficient resources in GitHub-Actions."
             include("manipulation.jl")
         end
-    
+
         @testset "NeuralFMU" begin
             #@warn "The test `NeuralFMU` is currently excluded because of insufficient resources in GitHub-Actions."
             include("neuralFMU.jl")

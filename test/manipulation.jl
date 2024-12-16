@@ -4,7 +4,9 @@
 #
 
 # export FMU script
-include(joinpath(@__DIR__, "..", "examples", "FMI2", "Manipulation", "src", "Manipulation.jl"))
+include(
+    joinpath(@__DIR__, "..", "examples", "FMI2", "Manipulation", "src", "Manipulation.jl"),
+)
 
 # check if FMU exists now
 @test isfile(fmu_save_path)

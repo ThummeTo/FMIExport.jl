@@ -10,8 +10,8 @@ abstract type Layer end
 struct Dense{T} <: Layer
     W::AbstractMatrix{T}
     b::AbstractArray{T}
-    σ
-    
+    σ::Any
+
     function Dense{T}(W::AbstractMatrix{T}, b::AbstractArray{T}, σ) where {T<:Real}
         inst = new(W, b, σ)
         return inst
@@ -40,7 +40,7 @@ struct Chain <: Layer
 end
 
 function (l::Chain)(x)
-    for layer in l.layers 
+    for layer in l.layers
         x = layer(x)
     end
     return x

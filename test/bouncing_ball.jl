@@ -4,7 +4,9 @@
 #
 
 # export FMU script
-include(joinpath(@__DIR__, "..", "examples", "FMI2", "BouncingBall", "src", "BouncingBall.jl"))
+include(
+    joinpath(@__DIR__, "..", "examples", "FMI2", "BouncingBall", "src", "BouncingBall.jl"),
+)
 
 # demo!
 #using FMIZoo, Test, Plots
@@ -13,7 +15,7 @@ include(joinpath(@__DIR__, "..", "examples", "FMI2", "BouncingBall", "src", "Bou
 
 # check if FMU exists now
 @test isfile(fmu_save_path)
-fsize = filesize(fmu_save_path)/1024/1024
+fsize = filesize(fmu_save_path) / 1024 / 1024
 @test fsize > 300
 
 # Simulate FMU in Python / FMPy
