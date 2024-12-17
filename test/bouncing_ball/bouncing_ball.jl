@@ -18,9 +18,9 @@ if Sys.iswindows()
         ),
     )
     # check if FMU exists now
-    #TODO @test isfile(fmu_save_path)
-    #TODO fsize = filesize(fmu_save_path) / 1024 / 1024
-    #TODO @test fsize > 300
+    @test isfile(fmu_save_path)
+    fsize = filesize(fmu_save_path) / 1024 / 1024
+    @test fsize > 300
 
     # TODO: as Exported FMUs are currently not able to be simulated with FMPy, use BouncingBall from FMIZoo instead to test Pipeline
     println(

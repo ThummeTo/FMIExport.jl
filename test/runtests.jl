@@ -20,7 +20,7 @@ using Test
     
         @testset "FMU Manipulation" begin
             if Sys.iswindows()
-                #TODO include("manipulation.jl")
+                include("manipulation.jl")
             else
                 @warn "The test `FMU Manipulation` is currently only availale for Windows"
             end
@@ -28,7 +28,7 @@ using Test
     
         @testset "NeuralFMU" begin
             if Sys.iswindows()
-                #TODO include("neuralFMU.jl")
+                include("neuralFMU.jl")
             else
                 @warn "The test `NeuralFMU` is currently only availale for Windows"
             end

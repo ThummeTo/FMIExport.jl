@@ -6,8 +6,6 @@ on:
   push:
     branches: 
       - main
-      #TODO
-      - tests-on-fmPy-0.4.1-unformatted
     paths:
       - 'src/**'
       - 'examples/**'
@@ -142,8 +140,7 @@ jobs:
             
   call-docu:
     needs: [jupyter, pluto]
-    #TODO
-    if: (github.event_name != 'pull_request' && github.ref_name == 'main') || github.ref_name == 'tests-on-fmPy-0.4.1-unformatted'
+    if: github.event_name != 'pull_request' && github.ref_name == 'main'
     runs-on: ubuntu-latest
     env: 
       HAS_TRIGGER_TOKEN: ${{ secrets.FMI_DOC_TRIGGER_PAT != '' }}
