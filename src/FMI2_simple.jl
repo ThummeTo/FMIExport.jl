@@ -55,7 +55,7 @@ function evaluate(_component::fmi2Component, eventMode=false)
     tmp_xc, ẋc, tmp_xd, p = FMU_FCT_EVALUATE(component.t, xc, ẋc, xd, u, p, eventMode)
 
     if eventMode # overwrite state vector allowed
-        component.eventInfo.valuesOfContinuousStatesChanged = (xc != tmp_xc ? fmi2True : fmi2False)
+        component.eventInfo.valuesOfContinuousStatesChanged = (xc != tmp_xc ? fmi2True : component.eventInfo.valuesOfContinuousStatesChanged)
         #component.eventInfo.newDiscreteStatesNeeded =         (xd != tmp_xd ? fmi2True : fmi2False)
         
         xc = tmp_xc 
@@ -406,6 +406,7 @@ function simple_fmi2SetContinuousStates(_component::fmi2Component, _x::Ptr{fmi2R
    
     if nx != length(component.fmu.modelDescription.stateValueReferences)
         logWarning(component, "fmi2SetContinuousStates: Model has $(length(component.fmu.modelDescription.stateValueReferences)) states, but `nx`=$(nx).")
+        return fmi2StatusWarning
     end
 
     x = unsafe_wrap(Array{fmi2Real}, _x, nx)
@@ -432,7 +433,7 @@ function simple_fmi2NewDiscreteStates(_component::fmi2Component, _fmi2eventInfo:
     component = dereferenceInstance(_component)
 
     if component.state != fmi2ComponentStateEventMode
-        logError(component, "fmi2NewDiscreteStates must be called in event mode, mode is `$(component.state )`!")
+        logError(component, "fmi2NewDiscreteStates must be called in event mode, mode is `$(component.state)`!")
         return fmi2StatusError
     end
    
@@ -447,6 +448,9 @@ function simple_fmi2NewDiscreteStates(_component::fmi2Component, _fmi2eventInfo:
     eventInfo.nextEventTimeDefined = fmi2False # [ToDo]
     eventInfo.nextEventTime = 0.0 # [ToDo]
     unsafe_store!(_fmi2eventInfo, eventInfo);
+
+    # reset 
+    eventInfo.valuesOfContinuousStatesChanged = fmi2False
     
     return fmi2StatusOK
 end
@@ -476,6 +480,7 @@ function simple_fmi2GetDerivatives(_component::fmi2Component, _derivatives::Ptr{
     
     if nx != length(component.fmu.modelDescription.derivativeValueReferences)
         logWarning(component, "fmi2GetDerivatives: Model has $(length(component.fmu.modelDescription.derivativeValueReferences)) states, but `nx`=$(nx).")
+        return fmi2StatusWarning
     end
 
     derivatives = unsafe_wrap(Array{fmi2Real}, _derivatives, nx)
@@ -493,6 +498,7 @@ function simple_fmi2GetEventIndicators(_component::fmi2Component, _eventIndicato
 
     if ni != length(component.fmu.modelDescription.numberOfEventIndicators)
         logWarning(component, "fmi2GetEventIndicators: Model has $(length(component.eventIndicators)) states, but `ni`=$(ni).")
+        return fmi2StatusWarning
     end
 
     eventIndicators = unsafe_wrap(Array{fmi2Real}, _eventIndicators, ni)
@@ -513,6 +519,7 @@ function simple_fmi2GetContinuousStates(_component::fmi2Component, _x::Ptr{fmi2R
    
     if nx != length(component.fmu.modelDescription.stateValueReferences)
         logWarning(component, "fmi2GetContinuousStates: Model has $(length(component.fmu.modelDescription.stateValueReferences)) states, but `nx`=$(nx).")
+        return fmi2StatusWarning
     end
 
     x = unsafe_wrap(Array{fmi2Real}, _x, nx)
@@ -530,6 +537,7 @@ function simple_fmi2GetNominalsOfContinuousStates(_component::fmi2Component, _x_
     
     if nx != length(component.fmu.modelDescription.stateValueReferences)
         logWarning(component, "fmi2GetNominalsOfContinuousStates: Model has $(length(component.fmu.modelDescription.stateValueReferences)) states, but `nx`=$(nx).")
+        return fmi2StatusWarning
     end
 
     x_nominal = unsafe_wrap(Array{fmi2Real}, _x_nominal, nx)
