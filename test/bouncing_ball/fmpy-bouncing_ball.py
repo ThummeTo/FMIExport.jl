@@ -10,9 +10,8 @@ with open(sys.argv[1]) as f:
 lockfile = lines[0]
 logfile = lines[1]
 fmufile = lines[2]
-juliatestflag = lines[3]
-t_start = float(lines[4])
-t_stop = float(lines[5])
+t_start = float(lines[3])
+t_stop = float(lines[4])
 
 f = open(lockfile, 'w+')
 f.write('FMPy_running')
@@ -33,26 +32,13 @@ with open(logfile, 'w+') as sys.stdout:
         solver='CVode',
         )
     try:
-        print(juliatestflag + 'isapprox(' + str(solution_FMPy[-1][0]) + ', ' + str(t_stop) + ' ; atol=1e-6) # @test isapprox(ts[end], t_stop; atol=1e-6)')
-
-        # check for height at or just after 0.5s (simulated time), just after first bounce
-        s_05s = 0
+        print("---begin_of_fmpy-simulation_results---")
         for elem in solution_FMPy:
-            if elem[0] >= 0.5:
-                s_05s = elem[1]
-                break
-        print(juliatestflag + 'isapprox(' + str(s_05s) + ', 0.3456658910552819; atol=1e-6) # @test isapprox(ss[<0.5s>], 0.135600687; atol=1e-6)')
-
-        # check for height at or just after 1s (simulated time)
-        s_1s = 0
-        for elem in solution_FMPy:
-            if elem[0] >= 1.0:
-                s_1s = elem[1]
-                break
-        print(juliatestflag + 'isapprox(' + str(s_1s) + ', 0.6587682981502954; atol=1e-6) # @test isapprox(ss[<1.0s>], 0.236643687; atol=1e-6)')
+            print(';'.join(elem))
+        print("---end_of_fmpy-simulation_results---")
     except Exception:
         print(traceback.format_exc())
-        print(juliatestflag + 'false # exception occured in python script')
+        print('exception_occured_in_python_script')
     print('fmpy-bouncing_ball.py done')
 
 f = open(lockfile, 'w')

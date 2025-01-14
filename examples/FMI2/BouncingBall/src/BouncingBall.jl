@@ -146,7 +146,7 @@ end
 ### FMIBUILD_NO_EXPORT_BEGIN ###
 # The line above is a start-marker for excluded code for the FMU compilation process!
 
-tmpDir = "C:\\Users\\thummeto\\Documents\\FMIExport.jl\\tmp" # mktempdir(; prefix="fmibuildjl_test_", cleanup=false) 
+tmpDir = mktempdir(; prefix="fmibuildjl_test_", cleanup=false) 
 @info "Saving example files at: $(tmpDir)"
 fmu_save_path = joinpath(tmpDir, "BouncingBall.fmu")  
 
@@ -155,11 +155,11 @@ using FMIBuild: saveFMU                    # <= this must be excluded during exp
 saveFMU(fmu, fmu_save_path; debug=true, compress=false)    # <= this must be excluded during export, because saveFMU would start an infinite build loop with itself (debug=true allows debug messages, but is slow during execution!)
 
 ### some tests ###
-using FMI, DifferentialEquations
-fmu.executionConfig.loggingOn = true
-solution = simulate(fmu, (0.0, 3.0); recordValues=["sticking"])
-using Plots
-plot(solution)
+# using FMI, DifferentialEquations
+# fmu.executionConfig.loggingOn = true
+# solution = simulate(fmu, (0.0, 3.0); recordValues=["sticking"])
+# using Plots
+# plot(solution)
 
 # The following line is a end-marker for excluded code for the FMU compilation process!
 ### FMIBUILD_NO_EXPORT_END ###

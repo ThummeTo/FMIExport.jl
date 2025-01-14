@@ -81,7 +81,7 @@ fmu = FMIBUILD_CONSTRUCTOR(dirname(sourceFMU))
 import FMIBuild:saveFMU        # <= this must be excluded during export, because FMIBuild cannot execute itself (but it is able to build)
 saveFMU(fmu, fmu_save_path; resources=Dict(sourceFMU=>"SpringDamperPendulum1D.fmu"))    # <= this must be excluded during export, because fmi2Save would start an infinte build loop with itself 
 
-# some tests
+### some tests ###
 # using FMI
 # fmu.executionConfig.loggingOn = true
 # solution = fmiSimulateME(fmu, (0.0, 5.0); dtmax=0.1, recordValues=[fmi2ValueReference(335544320)])
