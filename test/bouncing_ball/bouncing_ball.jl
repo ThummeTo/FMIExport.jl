@@ -52,7 +52,7 @@ outlog = joinpath(pwd(), "bouncing_ball", "outlog.txt")
 t_start = "0.0"
 t_stop = "5.0"
 
-# as commandline interface for task sheduling in windows does only allow 261 characters for \TR option, we need an external config file
+# as commandline interface for task sheduling in windows does only allow 261 characters for \TR option, we need a config file instead of commandline options
 config_file = joinpath(pwd(), "bouncing_ball", "fmpy-bouncing_ball.config")
 open(config_file, "w+") do io
     #line 1: lockfile
@@ -168,8 +168,8 @@ if isfile(lockfile) || isfile(logfile)
         println("------------------END_of_CMD_output--------------------")
     end
 
-    fmpy_simulation_results = nothing
-    parsing_done = false
+    global fmpy_simulation_results = nothing
+    global parsing_done = false
 
     # FMPy_log
     if !isfile(logfile)
@@ -184,6 +184,8 @@ if isfile(lockfile) || isfile(logfile)
                 @test false
             end
 
+            global fmpy_simulation_results
+            global parsing_done
             # if we are within the section of simulation results, parse them:
             if parsing_done # endmarker has been found already
 
