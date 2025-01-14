@@ -7,7 +7,7 @@
 # TODO: reenable as soon as exporting FMUs is possible again
 #include(joinpath(@__DIR__, "..", "examples", "FMI2", "NeuralFMU", "src", "NeuralFMU.jl"))
 println(
-    "::warning title=Test-Warning::exporting is not tested, as it is currently broken \r\n",
+    "::warning title=Testing-Disabled::exporting is not tested, as it is currently broken \r\n",
 )
 
 # check if FMU exists now
