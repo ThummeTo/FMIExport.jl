@@ -34,7 +34,7 @@ with open(logfile, 'w+') as sys.stdout:
     try:
         print("---begin_of_fmpy-simulation_results---")
         for elem in solution_FMPy:
-            print(';'.join(elem))
+            print(';'.join(map(str,elem)))
         print("---end_of_fmpy-simulation_results---")
     except Exception:
         print(traceback.format_exc())

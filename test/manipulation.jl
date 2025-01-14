@@ -6,6 +6,9 @@
 # export FMU script
 # TODO: reenable as soon as exporting FMUs is possible again
 #include(joinpath(@__DIR__, "..", "examples", "FMI2", "Manipulation", "src", "Manipulation.jl"))
+println(
+    "::warning title=Test-Warning::exporting is not tested, as it is currently broken \r\n",
+)
 
 # check if FMU exists now
 # TODO: reenable as soon as exporting FMUs is possible again

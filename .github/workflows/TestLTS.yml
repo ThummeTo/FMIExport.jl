@@ -1,4 +1,4 @@
-name: Test v1.10 (LTS)
+name: Test (LTS)
 
 on:
   workflow_dispatch:
@@ -16,11 +16,11 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: true
+      fail-fast: false # keep other os running if one fails
       matrix:
         julia-version: ['lts']
         julia-arch: [x64]
-        os: [windows-latest] # ubuntu-latest, 
+        os: [windows-latest, ubuntu-latest]
         experimental: [false]
 
     steps:

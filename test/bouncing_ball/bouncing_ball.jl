@@ -24,6 +24,9 @@ if Sys.iswindows()
     fsize = filesize(fmu_save_path) / 1024 / 1024
     @test fsize > 300
     =#
+    println(
+        "::warning title=Test-Warning::exporting is not tested, as it is currently broken \r\n",
+    )
 
     # TODO: as Exported FMUs are currently not able to be simulated with FMPy, use BouncingBall from FMIZoo instead to test Pipeline
     println(
@@ -49,8 +52,8 @@ logfile = joinpath(pwd(), "bouncing_ball", "FMPy-log.txt")
 # output for scheduled command starting the fmpy script. meight be useful for debugging if logfile does not contain any helpful information on error
 outlog = joinpath(pwd(), "bouncing_ball", "outlog.txt")
 # fmu-experiment setup
-t_start = "0.0"
-t_stop = "5.0"
+t_start = 0.0
+t_stop = 5.0
 
 # as commandline interface for task sheduling in windows does only allow 261 characters for \TR option, we need a config file instead of commandline options
 config_file = joinpath(pwd(), "bouncing_ball", "fmpy-bouncing_ball.config")
@@ -65,10 +68,10 @@ open(config_file, "w+") do io
     write(io, fmu_save_path)
     write(io, "\n")
     #line 4: t_start
-    write(io, t_start)
+    write(io, string(t_start))
     write(io, "\n")
     #line 5: t_stop
-    write(io, t_stop)
+    write(io, string(t_stop))
     write(io, "\n")
 end
 script_file = joinpath(pwd(), "bouncing_ball", "fmpy-bouncing_ball.py")
