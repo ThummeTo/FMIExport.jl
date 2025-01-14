@@ -39,7 +39,7 @@ else
     # check if FMU exists
     @test isfile(fmu_save_path)
     fsize = filesize(fmu_save_path) / 1024 # / 1024 # check for 300KB instead of 300 MB as FMIZoo FMU is smaller
-    @test fsize > 300 
+    @test fsize > 300
 end
 
 # mutex implementation: indicates running state of fmpy script. File must only be created and cleared afterwards by fmpy script
@@ -186,8 +186,9 @@ if isfile(lockfile) || isfile(logfile)
 
             # if we are within the section of simulation results, parse them:
             if parsing_done # endmarker has been found already
-                ;
-            elseif !isnothing(fmpy_simulation_results) && contains(line, "---end_of_fmpy-simulation_results---") # endmarker has been found just now
+
+            elseif !isnothing(fmpy_simulation_results) &&
+                   contains(line, "---end_of_fmpy-simulation_results---") # endmarker has been found just now
                 parsing_done = true
             elseif !isnothing(fmpy_simulation_results) && !parsing_done # we are currently in parsing mode
                 push!(fmpy_simulation_results, parse.(Float64, split(line, ";")))
@@ -203,13 +204,13 @@ if isfile(lockfile) || isfile(logfile)
 
         @test length(fmpy_simulation_results) == 1001
 
-        @test isapprox(ts[1], t_start; atol=1e-6)
-        @test isapprox(ss[1], 1.0; atol=1e-6)
-        @test isapprox(vs[1], 0.0; atol=1e-6)
+        @test isapprox(ts[1], t_start; atol = 1e-6)
+        @test isapprox(ss[1], 1.0; atol = 1e-6)
+        @test isapprox(vs[1], 0.0; atol = 1e-6)
 
-        @test isapprox(ts[end], t_stop; atol=1e-6)
-        @test isapprox(ss[end], 0.23272552; atol=1e-6)
-        @test isapprox(vs[end], -0.17606235; atol=1e-6)
+        @test isapprox(ts[end], t_stop; atol = 1e-6)
+        @test isapprox(ss[end], 0.23272552; atol = 1e-6)
+        @test isapprox(vs[end], -0.17606235; atol = 1e-6)
     end
 else
     println(
