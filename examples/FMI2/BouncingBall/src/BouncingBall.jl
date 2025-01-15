@@ -55,7 +55,6 @@ FMU_FCT_EVALUATE = function(t, x_c, ẋ_c, x_d, u, p, eventMode)
                     v = 0.0
                 end
             end
-
         end
 
         a = (m * -g) / m     # the system's physical equation (a little longer than necessary)
@@ -156,11 +155,11 @@ using FMIBuild: saveFMU                    # <= this must be excluded during exp
 saveFMU(fmu, fmu_save_path; debug=true, compress=false)    # <= this must be excluded during export, because saveFMU would start an infinite build loop with itself (debug=true allows debug messages, but is slow during execution!)
 
 ### some tests ###
-using FMI, DifferentialEquations
-fmu.executionConfig.loggingOn = true
-solution = simulate(fmu, (0.0, 3.0); recordValues=["sticking"])
-using Plots
-plot(solution)
+# using FMI, DifferentialEquations
+# fmu.executionConfig.loggingOn = true
+# solution = simulate(fmu, (0.0, 3.0); recordValues=["sticking"])
+# using Plots
+# plot(solution)
 
 # The following line is a end-marker for excluded code for the FMU compilation process!
 ### FMIBUILD_NO_EXPORT_END ###
