@@ -13,11 +13,11 @@ using Test
         @testset "Model Description" begin
             include("model_description.jl")
         end
-    
+
         @testset "Bouncing Ball" begin
             include(joinpath("bouncing_ball", "bouncing_ball.jl"))
         end
-    
+
         @testset "FMU Manipulation" begin
             if Sys.iswindows()
                 include("manipulation.jl")
@@ -25,7 +25,7 @@ using Test
                 @warn "The test `FMU Manipulation` is currently only availale for Windows"
             end
         end
-    
+
         @testset "NeuralFMU" begin
             if Sys.iswindows()
                 include("neuralFMU.jl")
