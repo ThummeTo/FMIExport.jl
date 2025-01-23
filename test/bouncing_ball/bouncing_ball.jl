@@ -5,8 +5,6 @@
 
 # export FMU script, currently only available on Windows
 if Sys.iswindows()
-    # TODO: reenable as soon as exporting FMUs is possible again
-    #=
     include(
         joinpath(
             @__DIR__,
@@ -23,17 +21,17 @@ if Sys.iswindows()
     @test isfile(fmu_save_path)
     fsize = filesize(fmu_save_path) / 1024 / 1024
     @test fsize > 300
-    =#
-    println(
-        "::warning title=Testing-Disabled::exporting is not tested, as it is currently broken \r\n",
-    )
+    
+    # println(
+    #     "::warning title=Testing-Disabled::exporting is not tested, as it is currently broken \r\n",
+    # )
 
     # TODO: as Exported FMUs are currently not able to be simulated with FMPy, use BouncingBall from FMIZoo instead to test Pipeline
-    println(
-        "::warning title=Exported-FMU-not-usable-with-fmpy::using FMIZoo BouncingBallFMU instead of exported FMU. \r\n",
-    )
-    using FMIZoo
-    fmu_save_path = FMIZoo.get_model_filename("BouncingBall1D", "Dymola", "2023x")
+    # println(
+    #     "::warning title=Exported-FMU-not-usable-with-fmpy::using FMIZoo BouncingBallFMU instead of exported FMU. \r\n",
+    # )
+    # using FMIZoo
+    # fmu_save_path = FMIZoo.get_model_filename("BouncingBall1D", "Dymola", "2023x")
 else
     # if not on windows, use BouncingBall from FMIZoo
     using FMIZoo
