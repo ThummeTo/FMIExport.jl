@@ -21,10 +21,6 @@ if Sys.iswindows()
     @test isfile(fmu_save_path)
     fsize = filesize(fmu_save_path) / 1024 / 1024
     @test fsize > 300
-    
-    # println(
-    #     "::warning title=Testing-Disabled::exporting is not tested, as it is currently broken \r\n",
-    # )
 
     # TODO: as Exported FMUs are currently not able to be simulated with FMPy, use BouncingBall from FMIZoo instead to test Pipeline
     # println(
