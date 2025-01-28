@@ -6,5 +6,5 @@ FMIExport = "31b88311-cab6-44ed-ba9c-fe5a9abbd67a"
 IJulia = "7073ff75-c697-5162-941a-fcdaad2a7d2a"
 
 [compat]
-FMIBuild = "0.3.2"
+FMIBuild = "0.4"
 julia = "1.6"
