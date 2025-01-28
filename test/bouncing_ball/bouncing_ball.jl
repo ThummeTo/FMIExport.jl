@@ -53,7 +53,7 @@ outlog = joinpath(pwd(), "bouncing_ball", "outlog.txt")
 t_start = 0.0
 t_stop = 5.0
 
-# as commandline interface for task sheduling in windows does only allow 261 characters for \TR option, we need a config file instead of commandline options
+# as commandline interface for task scheduling in windows does only allow 261 characters for \TR option, we need a config file instead of commandline options
 config_file = joinpath(pwd(), "bouncing_ball", "fmpy-bouncing_ball.config")
 open(config_file, "w+") do io
     #line 1: lockfile
@@ -170,8 +170,7 @@ if isfile(lockfile) || isfile(logfile)
     end
 
     global fmpy_simulation_results = nothing
-    global parsing_done = false
-
+    
     # FMPy_log
     if !isfile(logfile)
         println("No log of FMPy-Task found")
@@ -186,20 +185,19 @@ if isfile(lockfile) || isfile(logfile)
             end
 
             global fmpy_simulation_results
-            global parsing_done
             # if we are within the section of simulation results, parse them:
-            if parsing_done # endmarker has been found already
-
-            elseif !isnothing(fmpy_simulation_results) &&
+            if !isnothing(fmpy_simulation_results) &&
                    contains(line, "---end_of_fmpy-simulation_results---") # endmarker has been found just now
-                parsing_done = true
-            elseif !isnothing(fmpy_simulation_results) && !parsing_done # we are currently in parsing mode
+                break
+            elseif !isnothing(fmpy_simulation_results) # we are currently in parsing mode
                 push!(fmpy_simulation_results, parse.(Float64, split(line, ";")))
             elseif contains(line, "---begin_of_fmpy-simulation_results---") # found begin marker
                 fmpy_simulation_results = []
             end
         end
         println("------------------END_of_FMPy_log--------------------")
+
+        @assert !isnothing(fmpy_simulation_results) "`fmpy_simulation_results` is nothing, script execution seems broken."
 
         ts = collect(result_set[1] for result_set in fmpy_simulation_results)
         ss = collect(result_set[2] for result_set in fmpy_simulation_results)
