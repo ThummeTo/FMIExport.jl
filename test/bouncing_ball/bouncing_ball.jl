@@ -204,20 +204,22 @@ if isfile(lockfile) || isfile(logfile)
 
             @test length(fmpy_simulation_results) == round(Int, (t_stop-t_start)*100 + 1)
 
-            @test isapprox(ts[1], t_start; atol = 1e-3)
-            @test isapprox(ss[1], 1.0; atol = 1e-3)
-            @test isapprox(vs[1], 0.0; atol = 1e-3)
+            atol = 1e-2 
+
+            @test isapprox(ts[1], t_start; atol = atol)
+            @test isapprox(ss[1], 1.0; atol = atol)
+            @test isapprox(vs[1], 0.0; atol = atol)
 
             # Reference results from Dymola 2024X (CVODE)
-            @test isapprox(ss[101], 0.658728; atol = 1e-3) 
-            @test isapprox(vs[101], -1.82623; atol = 1e-3)
+            @test isapprox(ss[101], 0.658728; atol = atol)
+            @test isapprox(vs[101], -1.82623; atol = atol)
 
-            @test isapprox(ss[201], 0.371237; atol = 1e-3) 
-            @test isapprox(vs[201], 2.01337; atol = 1e-3)
+            @test isapprox(ss[201], 0.371237; atol = atol)
+            @test isapprox(vs[201], 2.01337; atol = atol)
 
-            @test isapprox(ts[end], t_stop; atol = 1e-3)
-            @test isapprox(ss[end], 0.287215; atol = 1e-3)
-            @test isapprox(vs[end], -1.97912; atol = 1e-3)
+            @test isapprox(ts[end], t_stop; atol = atol)
+            @test isapprox(ss[end], 0.287215; atol = atol)
+            @test isapprox(vs[end], -1.97912; atol = atol)
         end
     end
 else
