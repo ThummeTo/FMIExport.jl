@@ -80,7 +80,7 @@ FMU_FCT_OUTPUT = function(t, x_c, ẋ_c, x_d, u, p)
     _, a = ẋ_c
     sticking, counter = x_d
 
-    y = [s]
+    y = [s, v]
 
     return y
 end
@@ -131,8 +131,9 @@ FMIBUILD_CONSTRUCTOR = function(resPath="")
     fmi2AddIntegerDiscreteState(fmu, "sticking"; description="Indicator (boolean) if the mass is sticking on the ground, as soon as abs(v) < v_min")
     fmi2AddIntegerDiscreteState(fmu, "counter"; description="Number of collision with the floor.")
 
-    # outputs [1]
+    # outputs [2]
     fmi2AddRealOutput(fmu, "ball.s_out"; description="Absolute position of ball center of mass")
+    fmi2AddRealOutput(fmu, "ball.v_out"; description="Absolute velocity of ball center of mass")
 
     # parameters [5]
     fmi2AddRealParameter(fmu, "m";     start=DEFAULT_PARAMS[1], description="Mass of ball")

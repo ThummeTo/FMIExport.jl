@@ -70,11 +70,10 @@ function evaluate(_component::fmi2Component, eventMode=false)
         end
     end
 
-    applyValues(_component, xc, ẋc, xd, u, y, p)
-
     y       = FMU_FCT_OUTPUT(  component.t, xc, ẋc, xd, u, p)
     z_new   = FMU_FCT_EVENT(   component.t, xc, ẋc, xd, u, p)
 
+    applyValues(_component, xc, ẋc, xd, u, y, p)
     
     # event triggering
 
