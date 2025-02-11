@@ -11,9 +11,10 @@ using FMIExport.FMIBase.FMICore: fmi2True, fmi2False, fmi2Integer
 
 EPS = 1e-8
 
-# ball mass, ball radius, ball collision damping, ball minimum velocity, gravity constant 
+# ball position, velocity (initial)
 DEFAULT_X0 = [1.0, 0.0]
-DEFAULT_PARAMS = [1.0, 0.0, 0.7, 1e-1, 9.81]
+# ball mass, ball radius, ball collision damping, ball minimum velocity, gravity constant 
+DEFAULT_PARAMS = [1.0, 0.1, 0.9, 1e-3, 9.81]
 
 FMU_FCT_INIT = function()
    

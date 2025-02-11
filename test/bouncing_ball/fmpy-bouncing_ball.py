@@ -28,7 +28,7 @@ with open(logfile, 'w+') as sys.stdout:
         validate=False,
         start_time=t_start,
         stop_time=t_stop,
-        record_events=True,
+        record_events=False,
         solver='CVode',
         )
     try:
