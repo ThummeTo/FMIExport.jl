@@ -25,7 +25,7 @@ with open(logfile, 'w+') as sys.stdout:
     fmpy.dump(fmufile)
     solution_FMPy = fmpy.simulate_fmu(
         filename=fmufile,
-        step_size=0.1,
+        output_interval=0.1,
         validate=False,
         start_time=t_start,
         stop_time=t_stop,
