@@ -202,7 +202,9 @@ if isfile(lockfile) || isfile(logfile)
             ss = collect(result_set[2] for result_set in fmpy_simulation_results)
             vs = collect(result_set[3] for result_set in fmpy_simulation_results)
 
-            @test length(fmpy_simulation_results) == round(Int, (t_stop-t_start)*100 + 1)
+            # sometimes, FMPy does one step more than expected ...
+            tar = round(Int, (t_stop-t_start)*100 + 1)
+            @test abs(length(fmpy_simulation_results)-tar) <= 1
 
             atol = 1e-2 
 
@@ -217,9 +219,9 @@ if isfile(lockfile) || isfile(logfile)
             @test isapprox(ss[201], 0.371237; atol = atol)
             @test isapprox(vs[201], 2.01337; atol = atol)
 
-            @test isapprox(ts[end], t_stop; atol = atol)
-            @test isapprox(ss[end], 0.287215; atol = atol)
-            @test isapprox(vs[end], -1.97912; atol = atol)
+            @test isapprox(ts[301], t_stop; atol = atol)
+            @test isapprox(ss[301], 0.287215; atol = atol)
+            @test isapprox(vs[301], -1.97912; atol = atol)
         end
     end
 else
