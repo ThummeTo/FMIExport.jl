@@ -64,16 +64,18 @@ function evaluate(_component::fmi2Component, eventMode=false)
         # if xc != tmp_xc
         #     logError(component, "FMU_FCT_EVALUATE changes the systems continuous state while not being in event-mode, this is not allowed!")
         # end
+
         if xd != tmp_xd
             logError(component, "FMU_FCT_EVALUATE changes the systems discrete state while not being in event-mode, this is not allowed!")
         end
     end
 
+    applyValues(_component, xc, ẋc, xd, u, y, p)
+
     y       = FMU_FCT_OUTPUT(  component.t, xc, ẋc, xd, u, p)
     z_new   = FMU_FCT_EVENT(   component.t, xc, ẋc, xd, u, p)
 
-    applyValues(_component, xc, ẋc, xd, u, y, p)
-
+    
     # event triggering
 
     if (component.z_prev != nothing) && (sign.(z_new) != sign.(component.z_prev))

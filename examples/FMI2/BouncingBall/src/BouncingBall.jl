@@ -7,28 +7,29 @@
 # https://github.com/modelica/Reference-FMUs/blob/main/BouncingBall/model.c
 
 using FMIExport
-using FMIExport.FMIBase.FMICore: fmi2True, fmi2False 
+using FMIExport.FMIBase.FMICore: fmi2True, fmi2False, fmi2Integer
 
 EPS = 1e-8
 
-FMU_FCT_INIT = function()
-    m = 1.0         # ball mass
-    r = 0.0         # ball radius
-    d = 0.7         # ball collision damping
-    v_min = 1e-1    # ball minimum velocity
-    g = 9.81        # gravity constant 
-    sticking = fmi2False
+# ball mass, ball radius, ball collision damping, ball minimum velocity, gravity constant 
+DEFAULT_X0 = [1.0, 0.0]
+DEFAULT_PARAMS = [1.0, 0.0, 0.7, 1e-1, 9.81]
 
-    s = 1.0         # ball position
-    v = 0.0         # ball velocity
-    a = 0.0         # ball acceleration
+FMU_FCT_INIT = function()
+   
+    sticking = fmi2False
+    counter = fmi2Integer(0)
+
+    s = DEFAULT_X0[1]         # ball position
+    v = DEFAULT_X0[2]         # ball velocity
+    a = 0.0                   # ball acceleration
 
     t = 0.0        
     x_c = [s, v]      
     ẋ_c = [v, a]
-    x_d = [sticking]
+    x_d = [sticking, counter]
     u = []
-    p = [m, r, d, v_min, g]
+    p = DEFAULT_PARAMS
 
     return (t, x_c, ẋ_c, x_d, u, p)
 end
@@ -36,7 +37,7 @@ end
 FMU_FCT_EVALUATE = function(t, x_c, ẋ_c, x_d, u, p, eventMode)
     m, r, d, v_min, g = p
     s, v = x_c
-    sticking = x_d[1]
+    sticking, counter = x_d
     _, a = ẋ_c
 
     if sticking == fmi2True
@@ -48,6 +49,7 @@ FMU_FCT_EVALUATE = function(t, x_c, ẋ_c, x_d, u, p, eventMode)
             if h <= 0 && v < 0
                 s = r + EPS # so that indicator is not triggered again
                 v = -v*d 
+                counter = fmi2Integer(counter+1)
 
                 # stop bouncing to prevent high frequency bouncing (and maybe tunneling the floor)
                 if abs(v) < v_min
@@ -66,7 +68,7 @@ FMU_FCT_EVALUATE = function(t, x_c, ẋ_c, x_d, u, p, eventMode)
     # Todo: Remove these allocations. Make it inplace.
     x_c = [s, v]
     ẋ_c = [v, a]
-    x_d = [sticking]
+    x_d = [sticking, counter]
     p = [m, r, d, v_min, g]
 
     return (x_c, ẋ_c, x_d, p)
@@ -76,7 +78,7 @@ FMU_FCT_OUTPUT = function(t, x_c, ẋ_c, x_d, u, p)
     m, r, d, v_min, g = p
     s, v = x_c
     _, a = ẋ_c
-    sticking = x_d[1]
+    sticking, counter = x_d
 
     y = [s]
 
@@ -87,7 +89,7 @@ FMU_FCT_EVENT = function(t, x_c, ẋ_c, x_d, u, p)
     m, r, d, v_min, g = p
     s, v = x_c
     _, a = ẋ_c
-    sticking = x_d[1]
+    sticking, counter = x_d
 
     # helpers
     z1 = 0.0 # first event indicator
@@ -122,21 +124,22 @@ FMIBUILD_CONSTRUCTOR = function(resPath="")
     fmi2ModelDescriptionAddModelExchange(fmu.modelDescription, "BouncingBall")
 
     # states [2]
-    fmi2AddStateAndDerivative(fmu, "ball.s"; stateDescr="Absolute position of ball center of mass", derivativeDescr="Absolute velocity of ball center of mass")
-    fmi2AddStateAndDerivative(fmu, "ball.v"; stateDescr="Absolute velocity of ball center of mass", derivativeDescr="Absolute acceleration of ball center of mass")
+    fmi2AddStateAndDerivative(fmu, "ball.s"; stateStart=DEFAULT_X0[1], stateDescr="Absolute position of ball center of mass", derivativeDescr="Absolute velocity of ball center of mass")
+    fmi2AddStateAndDerivative(fmu, "ball.v"; stateStart=DEFAULT_X0[2], stateDescr="Absolute velocity of ball center of mass", derivativeDescr="Absolute acceleration of ball center of mass")
 
-    # discrete state [1]
+    # discrete state [2]
     fmi2AddIntegerDiscreteState(fmu, "sticking"; description="Indicator (boolean) if the mass is sticking on the ground, as soon as abs(v) < v_min")
+    fmi2AddIntegerDiscreteState(fmu, "counter"; description="Number of collision with the floor.")
 
     # outputs [1]
     fmi2AddRealOutput(fmu, "ball.s_out"; description="Absolute position of ball center of mass")
 
     # parameters [5]
-    fmi2AddRealParameter(fmu, "m";     description="Mass of ball")
-    fmi2AddRealParameter(fmu, "r";     description="Radius of ball")
-    fmi2AddRealParameter(fmu, "d";     description="Collision damping constant (velocity fraction after hitting the ground)")
-    fmi2AddRealParameter(fmu, "v_min"; description="Minimal ball velocity to enter on-ground-state")
-    fmi2AddRealParameter(fmu, "g";     description="Gravity constant")
+    fmi2AddRealParameter(fmu, "m";     start=DEFAULT_PARAMS[1], description="Mass of ball")
+    fmi2AddRealParameter(fmu, "r";     start=DEFAULT_PARAMS[2], description="Radius of ball")
+    fmi2AddRealParameter(fmu, "d";     start=DEFAULT_PARAMS[3], description="Collision damping constant (velocity fraction after hitting the ground)")
+    fmi2AddRealParameter(fmu, "v_min"; start=DEFAULT_PARAMS[4], description="Minimal ball velocity to enter on-ground-state")
+    fmi2AddRealParameter(fmu, "g";     start=DEFAULT_PARAMS[5], description="Gravity constant")
 
     fmi2AddEventIndicator(fmu)
 
@@ -157,9 +160,12 @@ saveFMU(fmu, fmu_save_path; debug=true, compress=false)    # <= this must be exc
 ### some tests ###
 # using FMI, DifferentialEquations
 # fmu.executionConfig.loggingOn = true
-# solution = simulate(fmu, (0.0, 3.0); recordValues=["sticking"])
+# solution = simulate(fmu, (0.0, 3.0); recordValues=["sticking", "counter"])
 # using Plots
 # plot(solution)
+
+# fmu.modelDescription.discreteStateValueReferences
+# fmu.modelDescription.outputValueReferences
 
 # The following line is a end-marker for excluded code for the FMU compilation process!
 ### FMIBUILD_NO_EXPORT_END ###

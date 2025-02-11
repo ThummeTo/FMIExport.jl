@@ -47,7 +47,7 @@ function fmi2ModelDescriptionAddRealState(md::fmi2ModelDescription, name::String
 
     _Real = fmi2RealAttributesExt()
     _Real.start = start
-    sv =  fmi2ModelDescriptionAddModelVariable(md, name; attribute=_Real, kwargs...)
+    sv =  fmi2ModelDescriptionAddModelVariable(md, name; attribute=_Real, initial=fmi2InitialExact, kwargs...)
 
     push!(md.stateValueReferences, sv.valueReference)
     push!(md.stringValueReferences, sv.name => sv.valueReference)
@@ -78,11 +78,14 @@ end
 
 function fmi2ModelDescriptionAddRealStateAndDerivative(md::fmi2ModelDescription, stateName::String, derivativeName::String = "der(" * stateName * ")"; 
     stateDescr::Union{String, Nothing} = nothing,
-    derivativeDescr::Union{String, Nothing} = nothing)
+    derivativeDescr::Union{String, Nothing} = nothing,
+    stateStart::Union{Real, Nothing}=nothing,
+    derivativeStart::Union{Real, Nothing}=nothing,)
 
-    state = fmi2ModelDescriptionAddRealState(md, stateName; description=stateDescr)
+    state = fmi2ModelDescriptionAddRealState(md, stateName; description=stateDescr, start=stateStart)
     stateIndex = fmi2GetIndexOfScalarVariable(md, state)
-    derivative = fmi2ModelDescriptionAddRealDerivative(md, derivativeName; derivative=stateIndex, description=derivativeDescr)
+
+    derivative = fmi2ModelDescriptionAddRealDerivative(md, derivativeName; derivative=stateIndex, description=derivativeDescr, start=derivativeStart)
 
     return state, derivative
 end
@@ -113,6 +116,8 @@ function fmi2ModelDescriptionAddRealOutput(md::fmi2ModelDescription, name::Strin
     index = fmi2GetIndexOfScalarVariable(md, sv)
 
     fmi2ModelDescriptionAddModelStructureOutputs(md, index)
+    fmi2ModelDescriptionAddModelStructureInitialUnknowns(md, index)
+    
     push!(md.outputValueReferences, sv.valueReference)
     push!(md.stringValueReferences, sv.name => sv.valueReference)
 
@@ -121,12 +126,13 @@ end
 
 function fmi2ModelDescriptionAddRealParameter(md::fmi2ModelDescription, name::String; 
     start::Union{Real, Nothing}=nothing,
+    variability::fmi2Variability=fmi2VariabilityFixed,
     kwargs...)
 
     _Real = fmi2RealAttributesExt()
     _Real.start = start
     
-    sv = fmi2ModelDescriptionAddModelVariable(md, name; attribute=_Real, kwargs...)
+    sv = fmi2ModelDescriptionAddModelVariable(md, name; attribute=_Real, causality=fmi2CausalityParameter, variability=variability, kwargs...)
 
     push!(md.parameterValueReferences, sv.valueReference)
     push!(md.stringValueReferences, sv.name => sv.valueReference)
