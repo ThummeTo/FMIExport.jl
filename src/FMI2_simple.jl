@@ -545,8 +545,8 @@ function simple_fmi2GetNominalsOfContinuousStates(_component::fmi2Component, _x_
     x_nominal = unsafe_wrap(Array{fmi2Real}, _x_nominal, nx)
     
     for i in 1:nx
-        vr = component.fmu.modelDescription.stateValueReferences[i]
-        x_nominal[i] = component.values[vr]
+        #vr = component.fmu.modelDescription.stateValueReferences[i]
+        x_nominal[i] = 1.0
     end
 
     return fmi2StatusOK
