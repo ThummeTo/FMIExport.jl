@@ -27,30 +27,59 @@ include("FMI2_md.jl")
 export fmi2CreateModelDescription
 export fmi2ModelDescriptionAddEvent
 export fmi2GetIndexOfScalarVariable
-export fmi2ModelDescriptionAddRealStateAndDerivative, fmi2ModelDescriptionAddIntegerDiscreteState
-export fmi2ModelDescriptionAddRealState, fmi2ModelDescriptionAddRealDerivative, fmi2ModelDescriptionAddRealInput, fmi2ModelDescriptionAddRealOutput, fmi2ModelDescriptionAddRealParameter, fmi2ModelDescriptionAddEventIndicator
-export fmi2ModelDescriptionAddModelVariable, fmi2ModelDescriptionAddModelStructureOutputs, fmi2ModelDescriptionAddModelStructureDerivatives, fmi2ModelDescriptionAddModelStructureInitialUnknowns
+export fmi2ModelDescriptionAddRealStateAndDerivative,
+    fmi2ModelDescriptionAddIntegerDiscreteState
+export fmi2ModelDescriptionAddRealState,
+    fmi2ModelDescriptionAddRealDerivative,
+    fmi2ModelDescriptionAddRealInput,
+    fmi2ModelDescriptionAddRealOutput,
+    fmi2ModelDescriptionAddRealParameter,
+    fmi2ModelDescriptionAddEventIndicator
+export fmi2ModelDescriptionAddModelVariable,
+    fmi2ModelDescriptionAddModelStructureOutputs,
+    fmi2ModelDescriptionAddModelStructureDerivatives,
+    fmi2ModelDescriptionAddModelStructureInitialUnknowns
 
 export fmi2Create, fmi2CreateEmbedded
 export fmi2AddIntegerDiscreteState
-export fmi2AddRealStateAndDerivative, fmi2AddStateAndDerivative 
-export fmi2AddRealOutput, fmi2AddOutput 
-export fmi2AddRealInput, fmi2AddInput 
+export fmi2AddRealStateAndDerivative, fmi2AddStateAndDerivative
+export fmi2AddRealOutput, fmi2AddOutput
+export fmi2AddRealInput, fmi2AddInput
 export fmi2AddRealParameter, fmi2AddParameter, fmi2AddEventIndicator
 
 export fmi2SetFctGetTypesPlatform, fmi2SetFctGetVersion
-export fmi2SetFctInstantiate, fmi2SetFctFreeInstance, fmi2SetFctSetDebugLogging, fmi2SetFctSetupExperiment, fmi2SetFctEnterInitializationMode, fmi2SetFctExitInitializationMode
+export fmi2SetFctInstantiate,
+    fmi2SetFctFreeInstance,
+    fmi2SetFctSetDebugLogging,
+    fmi2SetFctSetupExperiment,
+    fmi2SetFctEnterInitializationMode,
+    fmi2SetFctExitInitializationMode
 export fmi2SetFctTerminate, fmi2SetFctReset
-export fmi2SetFctGetReal, fmi2SetFctGetInteger, fmi2SetFctGetBoolean, fmi2SetFctGetString, fmi2SetFctSetReal, fmi2SetFctSetInteger, fmi2SetFctSetBoolean, fmi2SetFctSetString
-export fmi2SetFctSetTime, fmi2SetFctSetContinuousStates, fmi2SetFctEnterEventMode, fmi2SetFctNewDiscreteStates, fmi2SetFctEnterContinuousTimeMode, fmi2SetFctCompletedIntegratorStep
-export fmi2SetFctGetDerivatives, fmi2SetFctGetEventIndicators, fmi2SetFctGetContinuousStates, fmi2SetFctGetNominalsOfContinuousStates
+export fmi2SetFctGetReal,
+    fmi2SetFctGetInteger,
+    fmi2SetFctGetBoolean,
+    fmi2SetFctGetString,
+    fmi2SetFctSetReal,
+    fmi2SetFctSetInteger,
+    fmi2SetFctSetBoolean,
+    fmi2SetFctSetString
+export fmi2SetFctSetTime,
+    fmi2SetFctSetContinuousStates,
+    fmi2SetFctEnterEventMode,
+    fmi2SetFctNewDiscreteStates,
+    fmi2SetFctEnterContinuousTimeMode,
+    fmi2SetFctCompletedIntegratorStep
+export fmi2SetFctGetDerivatives,
+    fmi2SetFctGetEventIndicators,
+    fmi2SetFctGetContinuousStates,
+    fmi2SetFctGetNominalsOfContinuousStates
 
 export fmi2ModelDescriptionAddModelExchange
 
 include("ANN.jl")
 
 include("FMI2_simple.jl")
-export fmi2CreateSimple 
+export fmi2CreateSimple
 
 function fmi2SetFctGetTypesPlatform(fmu::FMU2, fun)
     c_fun = @cfunction($fun, fmi2String, ())
@@ -63,7 +92,19 @@ function fmi2SetFctGetVersion(fmu::FMU2, fun)
 end
 
 function fmi2SetFctInstantiate(fmu::FMU2, fun)
-    c_fun = @cfunction($fun, fmi2Component, (fmi2String, fmi2Type, fmi2String, fmi2String, Ptr{fmi2CallbackFunctions}, fmi2Boolean, fmi2Boolean))
+    c_fun = @cfunction(
+        $fun,
+        fmi2Component,
+        (
+            fmi2String,
+            fmi2Type,
+            fmi2String,
+            fmi2String,
+            Ptr{fmi2CallbackFunctions},
+            fmi2Boolean,
+            fmi2Boolean,
+        )
+    )
     fmu.cInstantiate = c_fun.ptr
 end
 
@@ -73,12 +114,17 @@ function fmi2SetFctFreeInstance(fmu::FMU2, fun)
 end
 
 function fmi2SetFctSetDebugLogging(fmu::FMU2, fun)
-    c_fun = @cfunction($fun, fmi2Status, (fmi2Component, fmi2Boolean, Csize_t, Ptr{fmi2String}))
+    c_fun =
+        @cfunction($fun, fmi2Status, (fmi2Component, fmi2Boolean, Csize_t, Ptr{fmi2String}))
     fmu.cSetDebugLogging = c_fun.ptr
 end
 
 function fmi2SetFctSetupExperiment(fmu::FMU2, fun)
-    c_fun = @cfunction($fun, fmi2Status, (fmi2Component, fmi2Boolean, fmi2Real, fmi2Real, fmi2Boolean, fmi2Real))
+    c_fun = @cfunction(
+        $fun,
+        fmi2Status,
+        (fmi2Component, fmi2Boolean, fmi2Real, fmi2Real, fmi2Boolean, fmi2Real)
+    )
     fmu.cSetupExperiment = c_fun.ptr
 end
 
@@ -89,7 +135,7 @@ end
 
 function fmi2SetFctExitInitializationMode(fmu::FMU2, fun)
     c_fun = @cfunction($fun, fmi2Status, (fmi2Component,))
-    fmu.cExitInitializationMode= c_fun.ptr
+    fmu.cExitInitializationMode = c_fun.ptr
 end
 
 function fmi2SetFctTerminate(fmu::FMU2, fun)
@@ -103,42 +149,74 @@ function fmi2SetFctReset(fmu::FMU2, fun)
 end
 
 function fmi2SetFctGetReal(fmu::FMU2, fun)
-    c_fun = @cfunction($fun, fmi2Status, (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2Real}))
+    c_fun = @cfunction(
+        $fun,
+        fmi2Status,
+        (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2Real})
+    )
     fmu.cGetReal = c_fun.ptr
 end
 
 function fmi2SetFctGetInteger(fmu::FMU2, fun)
-    c_fun = @cfunction($fun, fmi2Status, (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2Integer}))
+    c_fun = @cfunction(
+        $fun,
+        fmi2Status,
+        (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2Integer})
+    )
     fmu.cGetInteger = c_fun.ptr
 end
 
 function fmi2SetFctGetBoolean(fmu::FMU2, fun)
-    c_fun = @cfunction($fun, fmi2Status, (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2Boolean}))
+    c_fun = @cfunction(
+        $fun,
+        fmi2Status,
+        (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2Boolean})
+    )
     fmu.cGetBoolean = c_fun.ptr
 end
 
 function fmi2SetFctGetString(fmu::FMU2, fun)
-    c_fun = @cfunction($fun, fmi2Status, (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2String}))
+    c_fun = @cfunction(
+        $fun,
+        fmi2Status,
+        (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2String})
+    )
     fmu.cGetString = c_fun.ptr
 end
 
 function fmi2SetFctSetReal(fmu::FMU2, fun)
-    c_fun = @cfunction($fun, fmi2Status, (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2Real}))
+    c_fun = @cfunction(
+        $fun,
+        fmi2Status,
+        (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2Real})
+    )
     fmu.cSetReal = c_fun.ptr
 end
 
 function fmi2SetFctSetInteger(fmu::FMU2, fun)
-    c_fun = @cfunction($fun, fmi2Status, (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2Integer}))
+    c_fun = @cfunction(
+        $fun,
+        fmi2Status,
+        (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2Integer})
+    )
     fmu.cSetInteger = c_fun.ptr
 end
 
 function fmi2SetFctSetBoolean(fmu::FMU2, fun)
-    c_fun = @cfunction($fun, fmi2Status, (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2Boolean}))
+    c_fun = @cfunction(
+        $fun,
+        fmi2Status,
+        (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2Boolean})
+    )
     fmu.cSetBoolean = c_fun.ptr
 end
 
 function fmi2SetFctSetString(fmu::FMU2, fun)
-    c_fun = @cfunction($fun, fmi2Status, (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2String}))
+    c_fun = @cfunction(
+        $fun,
+        fmi2Status,
+        (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2String})
+    )
     fmu.cSetString = c_fun.ptr
 end
 
@@ -168,7 +246,11 @@ function fmi2SetFctEnterContinuousTimeMode(fmu::FMU2, fun)
 end
 
 function fmi2SetFctCompletedIntegratorStep(fmu::FMU2, fun)
-    c_fun = @cfunction($fun, fmi2Status, (fmi2Component, fmi2Boolean, Ptr{fmi2Boolean}, Ptr{fmi2Boolean}))
+    c_fun = @cfunction(
+        $fun,
+        fmi2Status,
+        (fmi2Component, fmi2Boolean, Ptr{fmi2Boolean}, Ptr{fmi2Boolean})
+    )
     fmu.cCompletedIntegratorStep = c_fun.ptr
 end
 
@@ -195,22 +277,22 @@ end
 """ 
 ToDo
 """
-function fmi2Create(modelName::String=""; type=fmi2TypeModelExchange)
+function fmi2Create(modelName::String = ""; type = fmi2TypeModelExchange)
     fmu = FMU2()
-    
+
     fmu.modelName = modelName
     fmu.isZeroState = false
     fmu.type = type
     fmu.modelDescription = fmi2CreateModelDescription()
     fmu.fmuResourceLocation = pwd()
-    
+
     return fmu
 end
 
 """ 
 ToDo
 """
-function fmi2CreateEmbedded(fmu::FMU; type=fmi2TypeModelExchange)
+function fmi2CreateEmbedded(fmu::FMU; type = fmi2TypeModelExchange)
     global FMIBUILD_FMU
 
     FMIBUILD_FMU = fmu
@@ -218,18 +300,22 @@ function fmi2CreateEmbedded(fmu::FMU; type=fmi2TypeModelExchange)
     # store function pointers to embedded FMU
     fmu.cFunctionPtrs["EMBEDDED_fmi2Instantiate"] = fmu.cInstantiate
     fmu.cFunctionPtrs["EMBEDDED_fmi2FreeInstance"] = fmu.cFreeInstance
-    
+
     # a special instantiation function for embedded FMUs (enables FMI.jl interface)
-    fmi2SetFctInstantiate(fmu, embedded_fmi2Instantiate) 
-    
+    fmi2SetFctInstantiate(fmu, embedded_fmi2Instantiate)
+
     # a special function for simple instance release (enables FMI.jl interface)
-    fmi2SetFctFreeInstance(fmu, embedded_fmi2FreeInstance) 
+    fmi2SetFctFreeInstance(fmu, embedded_fmi2FreeInstance)
 
     return fmu
 end
 
 function fmi2AddRealStateAndDerivative(fmu, stateName; kwargs...)
-    fmi2ModelDescriptionAddRealStateAndDerivative(fmu.modelDescription, stateName; kwargs...)
+    fmi2ModelDescriptionAddRealStateAndDerivative(
+        fmu.modelDescription,
+        stateName;
+        kwargs...,
+    )
 end
 fmi2AddStateAndDerivative = fmi2AddRealStateAndDerivative
 

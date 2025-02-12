@@ -166,7 +166,7 @@ if isfile(lockfile) || isfile(logfile)
     end
 
     global fmpy_simulation_results = nothing
-    
+
     # FMPy_log
     if !isfile(logfile)
         println("No log of FMPy-Task found")
@@ -183,7 +183,7 @@ if isfile(lockfile) || isfile(logfile)
             global fmpy_simulation_results
             # if we are within the section of simulation results, parse them:
             if !isnothing(fmpy_simulation_results) &&
-                   contains(line, "---end_of_fmpy-simulation_results---") # endmarker has been found just now
+               contains(line, "---end_of_fmpy-simulation_results---") # endmarker has been found just now
                 break
             elseif !isnothing(fmpy_simulation_results) # we are currently in parsing mode
                 push!(fmpy_simulation_results, parse.(Float64, split(line, ";")))
@@ -195,7 +195,7 @@ if isfile(lockfile) || isfile(logfile)
 
         if isnothing(fmpy_simulation_results)
             @error "`fmpy_simulation_results` is nothing, no results in output file."
-            @test false 
+            @test false
         else
 
             ts = collect(result_set[1] for result_set in fmpy_simulation_results)
@@ -203,10 +203,10 @@ if isfile(lockfile) || isfile(logfile)
             vs = collect(result_set[3] for result_set in fmpy_simulation_results)
 
             # sometimes, FMPy does one step more than expected ...
-            tar = round(Int, (t_stop-t_start)*100 + 1)
-            @test abs(length(fmpy_simulation_results)-tar) <= 1
+            tar = round(Int, (t_stop - t_start) * 100 + 1)
+            @test abs(length(fmpy_simulation_results) - tar) <= 1
 
-            atol = 1e-2 
+            atol = 1e-2
 
             @test isapprox(ts[1], t_start; atol = atol)
             @test isapprox(ss[1], 1.0; atol = atol)
