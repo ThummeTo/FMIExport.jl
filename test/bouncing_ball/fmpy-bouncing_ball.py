@@ -25,10 +25,11 @@ with open(logfile, 'w+') as sys.stdout:
     fmpy.dump(fmufile)
     solution_FMPy = fmpy.simulate_fmu(
         filename=fmufile,
+        output_interval=0.01,
         validate=False,
         start_time=t_start,
         stop_time=t_stop,
-        record_events=True,
+        record_events=False,
         solver='CVode',
         )
     try:

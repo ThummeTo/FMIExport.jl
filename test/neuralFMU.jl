@@ -4,15 +4,11 @@
 #
 
 # export FMU script
-# TODO: reenable as soon as exporting FMUs is possible again
-#include(joinpath(@__DIR__, "..", "examples", "FMI2", "NeuralFMU", "src", "NeuralFMU.jl"))
-println(
-    "::warning title=Testing-Disabled::exporting is not tested, as it is currently broken \r\n",
-)
+include(joinpath(@__DIR__, "..", "examples", "FMI2", "NeuralFMU", "src", "NeuralFMU.jl"))
+
 
 # check if FMU exists now
-# TODO: reenable as soon as exporting FMUs is possible again
-#@test isfile(fmu_save_path)
+@test isfile(fmu_save_path)
 
 # Simulate FMU in Python / FMPy
 # @info "Installing `fmpy`..."
@@ -43,5 +39,4 @@ println(
 # @test solution_FMI_jl.states.t[end] == 5.0
 # @test solution_FMI_jl.states.u[end] == [0.0, 0.0]
 
-# TODO: reenable as soon as exporting FMUs is possible again
-#rm(fmu_save_path)
+rm(fmu_save_path)

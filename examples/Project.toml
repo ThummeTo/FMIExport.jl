@@ -1,10 +1,13 @@
 name = "Examples"
 
 [deps]
+DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
+FMI = "14a09403-18e3-468f-ad8a-74f8dda2d9ac"
 FMIBuild = "226f0e26-6dd6-4589-ada7-1d32f6e1d800"
 FMIExport = "31b88311-cab6-44ed-ba9c-fe5a9abbd67a"
 IJulia = "7073ff75-c697-5162-941a-fcdaad2a7d2a"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 
 [compat]
-FMIBuild = "0.3.2"
+FMIBuild = "0.4"
 julia = "1.6"
