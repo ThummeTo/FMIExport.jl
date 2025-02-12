@@ -9,6 +9,7 @@
 using FMIExport
 using FMIExport.FMIBase.FMICore: fmi2True, fmi2False, fmi2Integer
 
+# a minimum height to reset the ball after event
 EPS = 1e-8
 
 # ball position, velocity (initial)
