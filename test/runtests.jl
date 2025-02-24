@@ -19,19 +19,19 @@ using Test
         end
 
         @testset "FMU Manipulation" begin
-            # if Sys.iswindows()
-            #     include("manipulation.jl")
-            # else
-            @warn "The test `FMU Manipulation` is currently only availale for Windows"
-            # end
+            if Sys.iswindows()
+                include(joinpath("manipulation", "manipulation.jl"))
+            else
+                @warn "The test `FMU Manipulation` is currently only availale for Windows"
+            end
         end
 
         @testset "NeuralFMU" begin
-            # if Sys.iswindows()
-            #     include("neuralFMU.jl")
-            # else
-            @warn "The test `NeuralFMU` is currently only availale for Windows"
-            #end
+            if Sys.iswindows()
+                include(joinpath("neuralFMU", "neuralFMU.jl"))
+            else
+                @warn "The test `NeuralFMU` is currently only availale for Windows"
+            end
         end
 
     elseif Sys.isapple()
