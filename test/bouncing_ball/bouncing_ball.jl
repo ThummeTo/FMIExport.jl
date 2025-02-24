@@ -4,7 +4,7 @@
 #
 
 # export FMU script, currently only available on Windows
-if Sys.iswindows()
+if Sys.iswindows() || Sys.islinux()
     include(
         joinpath(
             @__DIR__,
