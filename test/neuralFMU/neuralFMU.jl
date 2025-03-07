@@ -3,17 +3,22 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
+fmu_save_path = nothing
+
 # export FMU script
 include(
     joinpath(@__DIR__, "..", "..", "examples", "FMI2", "NeuralFMU", "src", "NeuralFMU.jl"),
 )
-
 
 # check if FMU exists now
 @test isfile(fmu_save_path)
 fsize = filesize(fmu_save_path) / 1024 / 1024
 @test fsize > 600
 
+# running FMPy only makes sense if we have an fmu file to check
+if !isfile(fmu_save_path)
+    throw("no fmu found, probably exporting failed")
+end
 
 # mutex implementation: indicates running state of fmpy script. File must only be created and cleared afterwards by fmpy script
 lockfile = joinpath(pwd(), "neuralFMU", "lockfile.txt")

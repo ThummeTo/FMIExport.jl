@@ -3,6 +3,8 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
+fmu_save_path = nothing
+
 # export FMU script, currently only available on Windows
 include(
     joinpath(
@@ -21,6 +23,10 @@ include(
 fsize = filesize(fmu_save_path) / 1024 / 1024
 @test fsize > 150
 
+# running FMPy only makes sense if we have an fmu file to check
+if !isfile(fmu_save_path)
+    throw("no fmu found, probably exporting failed")
+end
 
 # mutex implementation: indicates running state of fmpy script. File must only be created and cleared afterwards by fmpy script
 lockfile = joinpath(pwd(), "manipulation", "lockfile.txt")

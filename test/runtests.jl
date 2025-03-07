@@ -15,23 +15,15 @@ using Test
         end
 
         @testset "Bouncing Ball" begin
-            #include(joinpath("bouncing_ball", "bouncing_ball.jl"))
+            include(joinpath("bouncing_ball", "bouncing_ball.jl"))
         end
 
         @testset "FMU Manipulation" begin
-            #if Sys.iswindows()
-                include(joinpath("manipulation", "manipulation.jl"))
-            #else
-            #    @warn "The test `FMU Manipulation` is currently only availale for Windows"
-            #end
+            include(joinpath("manipulation", "manipulation.jl"))
         end
 
         @testset "NeuralFMU" begin
-            #if Sys.iswindows()
-                include(joinpath("neuralFMU", "neuralFMU.jl"))
-            #else
-            #    @warn "The test `NeuralFMU` is currently only availale for Windows"
-            #end
+            include(joinpath("neuralFMU", "neuralFMU.jl"))
         end
 
     elseif Sys.isapple()

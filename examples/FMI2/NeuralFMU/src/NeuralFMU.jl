@@ -434,13 +434,34 @@ end
 # The line above is a start-marker for excluded code for the FMU compilation process!
 
 import FMIZoo
+sourceFMU = FMIZoo.get_model_filename("SpringDamperPendulum1D", "Dymola", "2022x")
+fmu = FMIBUILD_CONSTRUCTOR(dirname(sourceFMU))
+
+# first, we try to simulate the FMU before ExternalFMIExportTesting
+# this is not required for export but a good idea anyway: 
+# the export takes a long time and exporting a possibly broken FMU does not help anyone
+using FMI, DifferentialEquations
+fmu.executionConfig.loggingOn = true
+solution = simulateME(
+    fmu,
+    (0.0, 5.0);
+    dtmax = 0.1,
+    recordValues = [
+        ANN_PARAMETERS...,
+        fmi2ValueReference(16777219),
+        fmi2ValueReference(335544321),
+    ],
+    parameters = Dict{fmi2ValueReference,Any}(
+        fmi2ValueReference(1) => 2.0,
+        fmi2ValueReference(335544321) => 1.23,
+    ),
+)
+# using Plots
+# plot(solution)
 
 tmpDir = mktempdir(; prefix = "fmibuildjl_test_", cleanup = false)
 @info "Saving example files at: $(tmpDir)"
 fmu_save_path = joinpath(tmpDir, "NeuralFMU.fmu")
-
-sourceFMU = FMIZoo.get_model_filename("SpringDamperPendulum1D", "Dymola", "2022x")
-fmu = FMIBUILD_CONSTRUCTOR(dirname(sourceFMU))
 import FMIBuild: saveFMU        # <= this must be excluded during export, because FMIBuild cannot execute itself (but it is able to build)
 saveFMU(
     fmu,
@@ -449,13 +470,6 @@ saveFMU(
     debug = true,
     resources = Dict(sourceFMU => "SpringDamperPendulum1D.fmu"),
 )    # <= this must be excluded during export, because fmi2Save would start an infinte build loop with itself 
-
-### some tests ###
-# using FMI
-# fmu.executionConfig.loggingOn = true
-# solution = fmiSimulateME(fmu, (0.0, 5.0); dtmax=0.1, recordValues=[ANN_PARAMETERS..., fmi2ValueReference(16777219), fmi2ValueReference(335544321)], parameters=Dict{fmi2ValueReference, Any}(fmi2ValueReference(1)=>2.0, fmi2ValueReference(335544321)=>1.23))
-# using Plots
-# fmiPlot(solution)
 
 # The following line is a end-marker for excluded code for the FMU compilation process!
 ### FMIBUILD_NO_EXPORT_END ###
