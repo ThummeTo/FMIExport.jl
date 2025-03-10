@@ -1,7 +1,7 @@
 using PkgEval
 using FMIExport
 
-config = Configuration(; julia = "1.8");
+config = Configuration(; julia = "1.10");
 
 package = Package(; name = "FMIExport");
 
