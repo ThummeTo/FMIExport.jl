@@ -205,7 +205,7 @@ if isfile(lockfile) || isfile(logfile)
             # @test isapprox(ss[1], 1.0; atol = atol)
             # @test isapprox(vs[1], 0.0; atol = atol)
 
-            # Reference results from Dymola 2024X (CVODE)
+            # Reference results from ??? should be Julia
             # @test isapprox(ss[101], 0.658728; atol = atol)
             # @test isapprox(vs[101], -1.82623; atol = atol)
 
@@ -236,13 +236,3 @@ end
 if isfile(fmu_save_path)
     rm(fmu_save_path)
 end
-
-# ToDo: Unfortunately, this errors ... (but it runs in python shell)
-# solution_FMPy = fmpy.simulate_fmu(filename=fmu_save_path,
-#     validate=false,
-#     start_time=0.0,
-#     stop_time=5.0,
-#     solver="CVode",
-#     step_size=1e-2,
-#     output_interval=2e-2,
-#     record_events=true) # , fmi_call_logger=lambda s: print('[FMI] ' + s) 

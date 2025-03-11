@@ -462,14 +462,16 @@ solution = simulateME(
 tmpDir = mktempdir(; prefix = "fmibuildjl_test_", cleanup = false)
 @info "Saving example files at: $(tmpDir)"
 fmu_save_path = joinpath(tmpDir, "NeuralFMU.fmu")
-import FMIBuild: saveFMU        # <= this must be excluded during export, because FMIBuild cannot execute itself (but it is able to build)
+# this must be excluded during export -done by FMIBUILD_NO_EXPORT marker-, because FMIBuild cannot execute itself (but it is able to build)
+import FMIBuild: saveFMU
+# this must be excluded during export -done by FMIBUILD_NO_EXPORT marker-, because saveFMU would start an infinite build loop with itself
 saveFMU(
     fmu,
     fmu_save_path;
     compress = false,
     debug = true,
     resources = Dict(sourceFMU => "SpringDamperPendulum1D.fmu"),
-)    # <= this must be excluded during export, because fmi2Save would start an infinte build loop with itself 
+)    # (debug=true allows debug messages, but is slow during execution!)
 
 # The following line is a end-marker for excluded code for the FMU compilation process!
 ### FMIBUILD_NO_EXPORT_END ###

@@ -52,9 +52,6 @@ jobs:
             ${{ runner.os }}-test-
             ${{ runner.os }}-
 
-      - name: "FMIBuild feature branch"
-        run: julia --project=test/ -e 'using Pkg;Pkg.add(url="https://github.com/ThummeTo/FMIBuild.jl", rev="v0.5.0");Pkg.develop(path=".");Pkg.instantiate()'
-        
       # Build package
       - name: "Build package"
         uses: julia-actions/julia-buildpkg@v1

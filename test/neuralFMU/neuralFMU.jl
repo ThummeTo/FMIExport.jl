@@ -197,7 +197,7 @@ if isfile(lockfile) || isfile(logfile)
             # @test isapprox(ss[1], 1.0; atol = atol)
             # @test isapprox(vs[1], 0.0; atol = atol)
 
-            # Reference results from Julia
+            # Reference results from ??? should be Julia
             # @test isapprox(ss[101], 0.658728; atol = atol)
             # @test isapprox(vs[101], -1.82623; atol = atol)
 
