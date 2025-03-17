@@ -2,7 +2,6 @@
 # Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
-
 using FMIExport
 using Test
 
@@ -19,19 +18,13 @@ using Test
         end
 
         @testset "FMU Manipulation" begin
-            # if Sys.iswindows()
-            #     include("manipulation.jl")
-            # else
-            @warn "The test `FMU Manipulation` is currently only availale for Windows"
-            # end
+            # currently broken due to embedded FMUs not working
+            #include(joinpath("manipulation", "manipulation.jl"))
         end
 
         @testset "NeuralFMU" begin
-            # if Sys.iswindows()
-            #     include("neuralFMU.jl")
-            # else
-            @warn "The test `NeuralFMU` is currently only availale for Windows"
-            #end
+            # currently broken due to embedded FMUs not working
+            #include(joinpath("neuralFMU", "neuralFMU.jl"))
         end
 
     elseif Sys.isapple()

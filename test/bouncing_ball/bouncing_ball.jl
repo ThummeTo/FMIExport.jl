@@ -3,8 +3,10 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
+fmu_save_path = nothing
+
 # export FMU script, currently only available on Windows
-if Sys.iswindows()
+if Sys.iswindows() || Sys.islinux()
     include(
         joinpath(
             @__DIR__,
@@ -21,15 +23,8 @@ if Sys.iswindows()
     @test isfile(fmu_save_path)
     fsize = filesize(fmu_save_path) / 1024 / 1024
     @test fsize > 300
-
-    # TODO: as Exported FMUs are currently not able to be simulated with FMPy, use BouncingBall from FMIZoo instead to test Pipeline
-    # println(
-    #     "::warning title=Exported-FMU-not-usable-with-fmpy::using FMIZoo BouncingBallFMU instead of exported FMU. \r\n",
-    # )
-    # using FMIZoo
-    # fmu_save_path = FMIZoo.get_model_filename("BouncingBall1D", "Dymola", "2023x")
 else
-    # if not on windows, use BouncingBall from FMIZoo
+    # if not on windows or linux, use BouncingBall from FMIZoo
     using FMIZoo
     fmu_save_path = FMIZoo.get_model_filename("BouncingBall1D", "Dymola", "2023x")
 
@@ -37,6 +32,11 @@ else
     @test isfile(fmu_save_path)
     fsize = filesize(fmu_save_path) / 1024 # / 1024 # check for 300KB instead of 300 MB as FMIZoo FMU is smaller
     @test fsize > 300
+end
+
+# running FMPy only makes sense if we have an fmu file to check
+if !isfile(fmu_save_path)
+    throw("no fmu found, probably exporting failed")
 end
 
 # mutex implementation: indicates running state of fmpy script. File must only be created and cleared afterwards by fmpy script
@@ -241,6 +241,5 @@ elseif Sys.islinux()
 end
 
 if isfile(fmu_save_path)
-    # TODO disable for testing
-    # rm(fmu_save_path)
+    rm(fmu_save_path)
 end
