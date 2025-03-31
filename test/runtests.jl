@@ -20,11 +20,17 @@ using Test
         @testset "FMU Manipulation" begin
             # currently broken due to embedded FMUs not working
             #include(joinpath("manipulation", "manipulation.jl"))
+            println(
+                "::warning::FMU Manipulation test is disbaled due to embedded FMUs beeing broken!!!",
+            )
         end
 
         @testset "NeuralFMU" begin
             # currently broken due to embedded FMUs not working
             #include(joinpath("neuralFMU", "neuralFMU.jl"))
+            println(
+                "::warning::NeuralFMU test is disbaled due to embedded FMUs beeing broken!!!",
+            )
         end
 
     elseif Sys.isapple()

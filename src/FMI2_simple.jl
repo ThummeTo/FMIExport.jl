@@ -215,7 +215,7 @@ function embedded_fmi2Instantiate(
     global FMIBUILD_FMU
 
     component = FMU2Component(FMIBUILD_FMU)
-    component.loggingOn = loggingOn
+    component.loggingOn = (loggingOn == fmi2True ? true : false)
     component.callbackFunctions = unsafe_load(functions)
     component.instanceName = unsafe_string(instanceName)
 
