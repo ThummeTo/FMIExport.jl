@@ -148,7 +148,7 @@ jobs:
       # Trigger an repoisitory dispath event
       - name: Repository Dispatch
         if: ${{ env.HAS_TRIGGER_TOKEN == 'true' }}
-        uses: peter-evans/repository-dispatch@v3
+        uses: peter-evans/repository-dispatch@v4
         with:
           token: ${{ secrets.FMI_DOC_TRIGGER_PAT }}
           repository: 'ThummeTo/FMI.jl'
