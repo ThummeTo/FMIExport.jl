@@ -193,6 +193,7 @@ function simple_fmi2Instantiate(
     component.loggingOn = (loggingOn == fmi2True)
     component.callbackFunctions = unsafe_load(functions)
     component.instanceName = unsafe_string(instanceName)
+    component.type = component.fmu.type
 
     component.addr = pointer_from_objref(component)
     push!(FMIBUILD_FMU.components, component)
