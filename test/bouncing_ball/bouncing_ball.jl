@@ -81,77 +81,37 @@ end
 # install fmpy
 println(readchomp(`python -m pip install FMPy`))
 
-using Dates
-# task can only be sheduled at full minutes, schedule with at least one full minute until start to avoid cornercases. 120s achives this optimally (seconds get truncated in minute-based-scheduling)
-tasktime = now() + Second(120)
 # cleanup github-actions logs
 flush(stdout)
 flush(stderr)
 
-# the fmpy task that we want to schedule (its stdout and stderr get redirected for debugging, remains empty/non existent if no error occurs)
-task_string = "python $script_file $config_file > $outlog 2>&1"
-
-if Sys.iswindows()
-    # in windows only 261 chars are allowed as command with args
-    @test length(task_string) < 261
-    time = Dates.format(tasktime, "HH:MM")
-    println(
-        readchomp(
-            `SCHTASKS /CREATE /SC ONCE /TN "ExternalFMIExportTesting\\BouncingBall-FMPy" /TR "$task_string" /ST $time`,
-        ),
-    )
-elseif Sys.islinux()
-    time = Dates.format(tasktime, "M")
-    open("crontab_fmiexport_fmpy_bouncingball", "w+") do io
-        # hourly as there were issues when scheduling at fixed hour (not starting, possibly due to timzone issues or am/pm; did not investigate further)
-        write(io, "$time * * * * $task_string")
-        write(io, "\n")
-    end
-    println(readchomp(`crontab crontab_fmiexport_fmpy_bouncingball`))
+if isfile(outlog)
+    rm(outlog)
 end
 
-# print schedule status for debugging
-if Sys.iswindows()
-    println(
-        readchomp(
-            `SCHTASKS /query /tn "ExternalFMIExportTesting\\BouncingBall-FMPy" /v /fo list`,
-        ),
-    )
-elseif Sys.islinux()
-    println(readchomp(`crontab -l`))
+fmpy_cmd = pipeline(`python $script_file $config_file`; stdout = outlog, stderr = outlog)
+fmpy_success = success(fmpy_cmd)
+if !fmpy_success
+    println("FMPy process exited with an error; see captured output below.")
 end
-
-# wait until task has started for shure
-sleep(150)
 
 # cleanup
 rm(config_file)
 
 # we will wait a maximum time for fmpy. usually it should be done within seconds... (keep in mind maximum runtime on github runner)
-time_wait_max = datetime2unix(now()) + 60.0 * 5
+time_wait_max = time() + 60.0 * 5
 
 # fmpy still running or generated output in its logfile
 if isfile(lockfile) || isfile(logfile)
     if isfile(lockfile)
         println(
             "FMPy-Task still running, will wait for termination or a maximum time of " *
-            string(round((time_wait_max - datetime2unix(now())) / 60.0, digits = 2)) *
+            string(round((time_wait_max - time()) / 60.0, digits = 2)) *
             " minutes from now.",
         )
     end
-    while isfile(lockfile) && datetime2unix(now()) < time_wait_max
+    while isfile(lockfile) && time() < time_wait_max
         sleep(10)
-    end
-
-    # print schedule status for debugging
-    if Sys.iswindows()
-        println(
-            readchomp(
-                `SCHTASKS /query /tn "ExternalFMIExportTesting\\BouncingBall-FMPy" /v /fo list`,
-            ),
-        )
-    elseif Sys.islinux()
-        println(readchomp(`crontab -l`))
     end
 
     println("wating for FMPy-Task ended; FMPy-Task done: " * string(!isfile(lockfile)))
@@ -229,15 +189,6 @@ else
         "Error in FMPy-testsetup: Windows task scheduler or cron did not start FMPy successfully or FMPy terminated prematurely before generating lockfile or logfile",
     )
     @test false
-end
-
-# cleanup scheduling
-if Sys.iswindows()
-    println(
-        readchomp(`SCHTASKS /DELETE /TN ExternalFMIExportTesting\\BouncingBall-FMPy /f`),
-    )
-elseif Sys.islinux()
-    println(readchomp(`crontab -r`))
 end
 
 if isfile(fmu_save_path)

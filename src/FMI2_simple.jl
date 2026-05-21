@@ -623,10 +623,11 @@ function simple_fmi2GetEventIndicators(
 )
     component = dereferenceInstance(_component)
 
-    if ni != length(component.fmu.modelDescription.numberOfEventIndicators)
+    numberOfEventIndicators = component.fmu.modelDescription.numberOfEventIndicators
+    if ni != numberOfEventIndicators
         logWarning(
             component,
-            "fmi2GetEventIndicators: Model has $(length(component.eventIndicators)) states, but `ni`=$(ni).",
+            "fmi2GetEventIndicators: Model has $(numberOfEventIndicators) event indicators, but `ni`=$(ni).",
         )
         return fmi2StatusWarning
     end
