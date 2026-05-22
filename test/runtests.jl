@@ -6,7 +6,7 @@
 using FMIExport
 using Test
 
-function test_fmu_file(fmu_save_path, minimum_size; size_unit = :MiB)
+function test_fmu_file(fmu_save_path, minimum_size; size_unit=:MiB)
     @test isfile(fmu_save_path)
 
     divisor = if size_unit == :MiB
@@ -32,10 +32,10 @@ end
 function compare_fmpy_results_to_reference_solution(
     fmpy_simulation_results,
     reference_solution;
-    fmpy_value_indices = nothing,
-    reference_value_indices = nothing,
-    atol = 1e-2,
-    rtol = 1e-2,
+    fmpy_value_indices=nothing,
+    reference_value_indices=nothing,
+    atol=1e-2,
+    rtol=1e-2,
 )
     @test !isnothing(reference_solution.values)
     if isnothing(reference_solution.values)
@@ -66,7 +66,7 @@ function compare_fmpy_results_to_reference_solution(
     max_value_error = 0.0
     max_value_scale = 0.0
     for i = 1:common_count
-        fmpy_values = fmpy_simulation_results[i][collect(fmpy_value_indices) .+ 1]
+        fmpy_values = fmpy_simulation_results[i][collect(fmpy_value_indices).+1]
         reference_values =
             collect(reference_solution.values.saveval[i])[collect(reference_value_indices)]
         max_value_error =
@@ -80,10 +80,10 @@ end
 function compare_fmpy_results_to_reference_states(
     fmpy_simulation_results,
     reference_solution;
-    fmpy_value_indices = nothing,
-    state_indices = nothing,
-    atol = 1e-2,
-    rtol = 1e-2,
+    fmpy_value_indices=nothing,
+    state_indices=nothing,
+    atol=1e-2,
+    rtol=1e-2,
 )
     @test !isnothing(reference_solution.states)
     if isnothing(reference_solution.states)
@@ -112,7 +112,7 @@ function compare_fmpy_results_to_reference_states(
     max_value_error = 0.0
     max_value_scale = 0.0
     for i = 1:common_count
-        fmpy_values = fmpy_simulation_results[i][collect(fmpy_value_indices) .+ 1]
+        fmpy_values = fmpy_simulation_results[i][collect(fmpy_value_indices).+1]
         reference_values = reference_solution.states.u[i][collect(state_indices)]
         max_value_error =
             max(max_value_error, maximum(abs.(fmpy_values .- reference_values)))
@@ -125,12 +125,12 @@ end
 function compare_fmpy_results_to_expected_rows(
     fmpy_simulation_results,
     expected_rows;
-    atol = 1e-2,
+    atol=1e-2,
 )
     for (index, expected_row) in expected_rows
         @test length(fmpy_simulation_results) >= index
         @test length(fmpy_simulation_results[index]) == length(expected_row)
-        @test all(isapprox.(fmpy_simulation_results[index], expected_row; atol = atol))
+        @test all(isapprox.(fmpy_simulation_results[index], expected_row; atol=atol))
     end
 end
 
@@ -141,8 +141,8 @@ function run_fmpy_test(
     fmu_save_path::AbstractString;
     t_start,
     t_stop,
-    cleanup_fmu = true,
-    timeout_minutes = 5.0,
+    cleanup_fmu=true,
+    timeout_minutes=5.0,
 )
     run_fmpy_test(
         default_fmpy_result_check,
@@ -150,10 +150,10 @@ function run_fmpy_test(
         script_name,
         config_name,
         fmu_save_path;
-        t_start = t_start,
-        t_stop = t_stop,
-        cleanup_fmu = cleanup_fmu,
-        timeout_minutes = timeout_minutes,
+        t_start=t_start,
+        t_stop=t_stop,
+        cleanup_fmu=cleanup_fmu,
+        timeout_minutes=timeout_minutes,
     )
 end
 
@@ -165,8 +165,8 @@ function run_fmpy_test(
     fmu_save_path::AbstractString;
     t_start,
     t_stop,
-    cleanup_fmu = true,
-    timeout_minutes = 5.0,
+    cleanup_fmu=true,
+    timeout_minutes=5.0,
 )
     test_path = joinpath(pwd(), test_dir)
     lockfile = joinpath(test_path, "lockfile.txt")
@@ -195,7 +195,7 @@ function run_fmpy_test(
         flush(stderr)
 
         fmpy_cmd =
-            pipeline(`python $script_file $config_file`; stdout = outlog, stderr = outlog)
+            pipeline(`python $script_file $config_file`; stdout=outlog, stderr=outlog)
         fmpy_success = success(fmpy_cmd)
         if !fmpy_success
             println("FMPy process exited with an error; see captured output below.")
@@ -212,7 +212,7 @@ function run_fmpy_test(
         if isfile(lockfile)
             println(
                 "FMPy-Task still running, will wait for termination or a maximum time of " *
-                string(round((time_wait_max - time()) / 60.0, digits = 2)) *
+                string(round((time_wait_max - time()) / 60.0, digits=2)) *
                 " minutes from now.",
             )
         end
