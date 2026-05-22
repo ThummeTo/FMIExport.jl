@@ -204,7 +204,7 @@ end
 
 fmu = FMIBUILD_CONSTRUCTOR()
 
-# first, we try to simulate the FMU before ExternalFMIExportTesting
+# first, we try to simulate the FMU before external FMIExport testing
 # this is not required for export but a good idea anyway: 
 # the export takes a long time and exporting a possibly broken FMU does not help anyone
 using FMI, DifferentialEquations

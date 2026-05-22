@@ -296,6 +296,7 @@ function fmi2CreateEmbedded(fmu::FMU; type = fmi2TypeModelExchange)
     global FMIBUILD_FMU
 
     FMIBUILD_FMU = fmu
+    fmu.type = type
 
     # store function pointers to embedded FMU
     fmu.cFunctionPtrs["EMBEDDED_fmi2Instantiate"] = fmu.cInstantiate

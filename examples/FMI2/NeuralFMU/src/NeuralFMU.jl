@@ -15,7 +15,7 @@ using FMIExport: fmi2AddRealParameter
 using FMIExport.FMIBase.FMICore: fmi2Real, fmi2Component, fmi2StatusOK, fmi2ValueReference
 using FMIExport.FMIBase.FMICore:
     fmi2CausalityParameter, fmi2VariabilityTunable, fmi2InitialExact
-using FMIImport: loadFMU
+using FMIImport: loadFMU, unloadFMU
 import FMIExport
 
 fmu = nothing
@@ -446,9 +446,11 @@ solution = simulateME(
     fmu,
     (0.0, 5.0);
     dtmax = 0.1,
+    saveat = 0.0:0.01:5.0,
     recordValues = [
         ANN_PARAMETERS...,
         fmi2ValueReference(16777219),
+        fmi2ValueReference(335544320),
         fmi2ValueReference(335544321),
     ],
     parameters = Dict{fmi2ValueReference,Any}(
@@ -469,9 +471,10 @@ saveFMU(
     fmu,
     fmu_save_path;
     compress = false,
-    debug = true,
+    debug = true, # (debug=true allows debug messages, but is slow during execution!)
     resources = Dict(sourceFMU => "SpringDamperPendulum1D.fmu"),
-)    # (debug=true allows debug messages, but is slow during execution!)
+)
+unloadFMU(fmu)
 
 # The following line is a end-marker for excluded code for the FMU compilation process!
 ### FMIBUILD_NO_EXPORT_END ###

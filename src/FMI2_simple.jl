@@ -219,6 +219,7 @@ function embedded_fmi2Instantiate(
     component.loggingOn = (loggingOn == fmi2True ? true : false)
     component.callbackFunctions = unsafe_load(functions)
     component.instanceName = unsafe_string(instanceName)
+    component.type = component.fmu.type
 
     component.addr = FMICore.fmi2Instantiate(
         FMIBUILD_FMU.cFunctionPtrs["EMBEDDED_fmi2Instantiate"],
