@@ -8,5 +8,5 @@ PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-FMIBuild = "0.5, 0.6"
-julia = "1.6"
+FMIBuild = "0.6"
+julia = "1.10"
