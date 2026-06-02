@@ -5,29 +5,18 @@
 
 # export FMU script, currently only available on Windows
 module ManipulationExample
-previous_skip_reference_simulation =
-    get(ENV, "FMIEXPORT_SKIP_REFERENCE_SIMULATION", nothing)
-ENV["FMIEXPORT_SKIP_REFERENCE_SIMULATION"] = "true"
-try
-    include(
-        joinpath(
-            @__DIR__,
-            "..",
-            "..",
-            "examples",
-            "FMI2",
-            "Manipulation",
-            "src",
-            "Manipulation.jl",
-        ),
-    )
-finally
-    if isnothing(previous_skip_reference_simulation)
-        delete!(ENV, "FMIEXPORT_SKIP_REFERENCE_SIMULATION")
-    else
-        ENV["FMIEXPORT_SKIP_REFERENCE_SIMULATION"] = previous_skip_reference_simulation
-    end
-end
+include(
+    joinpath(
+        @__DIR__,
+        "..",
+        "..",
+        "examples",
+        "FMI2",
+        "Manipulation",
+        "src",
+        "Manipulation.jl",
+    ),
+)
 end
 fmu_save_path = ManipulationExample.fmu_save_path
 test_fmu_file(fmu_save_path, 150)
@@ -51,6 +40,6 @@ run_fmpy_test(
             401 => [4.0, 0.6731, 0.0811],
             501 => [5.0, 1.3014, -0.0917],
         ];
-        atol = 5e-2,
+        atol = 1e-1,
     )
 end

@@ -130,7 +130,8 @@ function compare_fmpy_results_to_expected_rows(
     for (index, expected_row) in expected_rows
         @test length(fmpy_simulation_results) >= index
         @test length(fmpy_simulation_results[index]) == length(expected_row)
-        @test all(isapprox.(fmpy_simulation_results[index], expected_row; atol = atol))
+        max_row_error = maximum(abs.(fmpy_simulation_results[index] .- expected_row))
+        @test max_row_error <= atol
     end
 end
 

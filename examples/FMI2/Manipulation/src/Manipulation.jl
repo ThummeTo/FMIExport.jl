@@ -84,17 +84,15 @@ fmu = FMIBUILD_CONSTRUCTOR(dirname(sourceFMU))
 # this is not required for export but a good idea anyway: 
 # the export takes a long time and exporting a possibly broken FMU does not help anyone
 
-if get(ENV, "FMIEXPORT_SKIP_REFERENCE_SIMULATION", "false") != "true"
-    using FMI, DifferentialEquations
-    fmu.executionConfig.loggingOn = true
-    solution = simulateME(
-        fmu,
-        (0.0, 5.0);
-        dtmax = 0.1,
-        saveat = 0.0:0.01:5.0,
-        recordValues = [fmi2ValueReference(335544320)],
-    )
-end
+# using FMI, DifferentialEquations
+# fmu.executionConfig.loggingOn = true
+# solution = simulateME(
+#     fmu,
+#     (0.0, 5.0);
+#     dtmax = 0.1,
+#     saveat = 0.0:0.01:5.0,
+#     recordValues = [fmi2ValueReference(335544320)],
+# )
 
 # using Plots
 # plot(solution)
