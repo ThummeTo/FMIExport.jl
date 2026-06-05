@@ -143,6 +143,7 @@ function run_fmpy_test(
     t_start,
     t_stop,
     cleanup_fmu = true,
+    config_lines = String[],
     timeout_minutes = 5.0,
 )
     run_fmpy_test(
@@ -154,6 +155,7 @@ function run_fmpy_test(
         t_start = t_start,
         t_stop = t_stop,
         cleanup_fmu = cleanup_fmu,
+        config_lines = config_lines,
         timeout_minutes = timeout_minutes,
     )
 end
@@ -167,6 +169,7 @@ function run_fmpy_test(
     t_start,
     t_stop,
     cleanup_fmu = true,
+    config_lines = String[],
     timeout_minutes = 5.0,
 )
     test_path = joinpath(pwd(), test_dir)
@@ -183,6 +186,9 @@ function run_fmpy_test(
             println(io, fmu_save_path)
             println(io, t_start)
             println(io, t_stop)
+            for line in config_lines
+                println(io, line)
+            end
         end
 
         for file in (lockfile, logfile, outlog)

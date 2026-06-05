@@ -179,7 +179,7 @@ function myGetDerivatives!(
 
     # if we have a pointer to an array, we must interprete it as array to access elements
     if isa(derivatives, Ptr{fmi2Real})
-        derivatives = unsafe_wrap(Array{fmi2Real}, derivatives, ndx, own = false)
+        derivatives = unsafe_wrap(Array{fmi2Real}, derivatives, ndx, own=false)
     end
 
     derivatives[:] = DERIVATIVES[:]
@@ -201,11 +201,11 @@ function myGetReal!(
 
     # if we have a pointer to an array, we must interprete it as array to access elements
     if isa(value, Ptr{fmi2Real})
-        value = unsafe_wrap(Array{fmi2Real}, value, nvr, own = false)
+        value = unsafe_wrap(Array{fmi2Real}, value, nvr, own=false)
     end
 
     if isa(vr, Ptr{fmi2ValueReference})
-        vr = unsafe_wrap(Array{fmi2ValueReference}, vr, nvr, own = false)
+        vr = unsafe_wrap(Array{fmi2ValueReference}, vr, nvr, own=false)
     end
 
     valuesFMU, vrsFMU, idxFMU, valuesDER, vrsDER, idxDER, valuesANN, vrsANN, idxANN =
@@ -278,13 +278,13 @@ function mySetReal(
 
     # if we have a pointer to an array, we must interprete it as array to access elements
     if isa(value, Ptr{fmi2Real})
-        value = unsafe_wrap(Array{fmi2Real}, value, nvr, own = false)
+        value = unsafe_wrap(Array{fmi2Real}, value, nvr, own=false)
     else
         value = value
     end
 
     if isa(vr, Ptr{fmi2ValueReference})
-        vr = unsafe_wrap(Array{fmi2ValueReference}, vr, nvr, own = false)
+        vr = unsafe_wrap(Array{fmi2ValueReference}, vr, nvr, own=false)
     else
         vr = vr
     end
@@ -401,12 +401,12 @@ FMIBUILD_CONSTRUCTOR = function (resPath)
                     fmi2AddRealParameter(
                         fmu,
                         "layer$(l)_W$(i)_$(j)";
-                        description = "ANN parameter in layer $l for weight matrix entry [$i,$j]",
-                        valueReference = vr,
-                        start = model[l].W[i, j],
-                        causality = fmi2CausalityParameter,
-                        variability = fmi2VariabilityTunable,
-                        initial = fmi2InitialExact,
+                        description="ANN parameter in layer $l for weight matrix entry [$i,$j]",
+                        valueReference=vr,
+                        start=model[l].W[i, j],
+                        causality=fmi2CausalityParameter,
+                        variability=fmi2VariabilityTunable,
+                        initial=fmi2InitialExact,
                     )
                     push!(ANN_PARAMETERS, vr)
                     vr += fmi2ValueReference(1)
@@ -414,12 +414,12 @@ FMIBUILD_CONSTRUCTOR = function (resPath)
                 fmi2AddRealParameter(
                     fmu,
                     "layer$(l)_b$(i)";
-                    description = "ANN parameter in layer $l for bias vector entry [$i]",
-                    valueReference = vr,
-                    start = model[l].b[i],
-                    causality = fmi2CausalityParameter,
-                    variability = fmi2VariabilityTunable,
-                    initial = fmi2InitialExact,
+                    description="ANN parameter in layer $l for bias vector entry [$i]",
+                    valueReference=vr,
+                    start=model[l].b[i],
+                    causality=fmi2CausalityParameter,
+                    variability=fmi2VariabilityTunable,
+                    initial=fmi2InitialExact,
                 )
                 push!(ANN_PARAMETERS, vr)
                 vr += fmi2ValueReference(1)
@@ -463,7 +463,7 @@ fmu = FMIBUILD_CONSTRUCTOR(dirname(sourceFMU))
 # using Plots
 # plot(solution)
 
-tmpDir = mktempdir(; prefix = "fmibuildjl_test_", cleanup = false)
+tmpDir = mktempdir(; prefix="fmibuildjl_test_", cleanup=false)
 @info "Saving example files at: $(tmpDir)"
 fmu_save_path = joinpath(tmpDir, "NeuralFMU.fmu")
 # this must be excluded during export -done by FMIBUILD_NO_EXPORT marker-, because FMIBuild cannot execute itself (but it is able to build)
@@ -472,9 +472,9 @@ import FMIBuild: saveFMU
 saveFMU(
     fmu,
     fmu_save_path;
-    compress = false,
-    debug = true, # (debug=true allows debug messages, but is slow during execution!)
-    resources = Dict(sourceFMU => "SpringDamperPendulum1D.fmu"),
+    compress=false,
+    debug=true, # (debug=true allows debug messages, but is slow during execution!)
+    resources=Dict(sourceFMU => "SpringDamperPendulum1D.fmu"),
 )
 unloadFMU(fmu)
 

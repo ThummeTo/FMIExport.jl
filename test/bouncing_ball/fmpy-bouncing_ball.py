@@ -12,6 +12,8 @@ logfile = lines[1]
 fmufile = lines[2]
 t_start = float(lines[3])
 t_stop = float(lines[4])
+fmi_type = lines[5] if len(lines) > 5 else None
+step_size = float(lines[6]) if len(lines) > 6 else None
 
 f = open(lockfile, 'w+')
 f.write('FMPy_running')
@@ -23,7 +25,7 @@ with open(logfile, 'w+') as sys.stdout:
     import fmpy
     print('imported fmpy')
     fmpy.dump(fmufile)
-    solution_FMPy = fmpy.simulate_fmu(
+    simulate_kwargs = dict(
         filename=fmufile,
         output_interval=0.01,
         validate=False,
@@ -32,6 +34,12 @@ with open(logfile, 'w+') as sys.stdout:
         record_events=False,
         solver='CVode',
         )
+    if fmi_type:
+        simulate_kwargs['fmi_type'] = fmi_type
+    if step_size:
+        simulate_kwargs['step_size'] = step_size
+
+    solution_FMPy = fmpy.simulate_fmu(**simulate_kwargs)
     try:
         print("---begin_of_fmpy-simulation_results---")
         for elem in solution_FMPy:

@@ -356,6 +356,76 @@ function simple_fmi2GetRealOutputDerivatives(
     return fmi2StatusWarning
 end
 
+# Checks whether any event indicator changed its sign over an integration interval.
+function fmi2EventIndicatorCrossed(z_left, z_right)
+    if isnothing(z_left) || isnothing(z_right) || length(z_left) != length(z_right)
+        return false
+    end
+
+    return any(sign.(z_left) .!= sign.(z_right))
+end
+
+# Evaluates the ME equations at a temporary continuous state and returns derivatives and events.
+function fmi2EvaluateContinuousCandidate(_component::fmi2Component, t, xc, xd, u, p)
+    component = dereferenceInstance(_component)
+
+    _, xcdot, _, _, y, _ = extractValues(_component)
+    component.t = t
+    applyValues(_component, fmi2Real.(xc), xcdot, xd, u, y, p)
+    evaluate(_component)
+
+    _, xcdot, xd, u, _, p = extractValues(_component)
+    return fmi2Real.(xcdot), xd, u, p, copy(component.z)
+end
+
+# Advances the continuous states with RK4 while reusing the FMU's ME derivative callback.
+function fmi2IntegrateContinuousRK4(_component::fmi2Component, t, xc, xd, u, p, h)
+    k1, _, _, _, _ = fmi2EvaluateContinuousCandidate(_component, t, xc, xd, u, p)
+    k2, _, _, _, _ = fmi2EvaluateContinuousCandidate(
+        _component,
+        t + h / 2,
+        xc .+ (h / 2) .* k1,
+        xd,
+        u,
+        p,
+    )
+    k3, _, _, _, _ = fmi2EvaluateContinuousCandidate(
+        _component,
+        t + h / 2,
+        xc .+ (h / 2) .* k2,
+        xd,
+        u,
+        p,
+    )
+    k4, _, _, _, _ =
+        fmi2EvaluateContinuousCandidate(_component, t + h, xc .+ h .* k3, xd, u, p)
+
+    return fmi2Real.(xc .+ (h / 6) .* (k1 .+ 2 .* k2 .+ 2 .* k3 .+ k4))
+end
+
+# Locates the first event in a communication step by bisection on the event indicators.
+function fmi2FindEventTime(_component::fmi2Component, t, xc, xd, u, p, h, z_start)
+    t_left = 0.0
+    t_right = h
+    z_left = z_start
+
+    for _ = 1:40
+        t_mid = (t_left + t_right) / 2
+        xc_mid = fmi2IntegrateContinuousRK4(_component, t, xc, xd, u, p, t_mid)
+        _, _, _, _, z_mid =
+            fmi2EvaluateContinuousCandidate(_component, t + t_mid, xc_mid, xd, u, p)
+
+        if fmi2EventIndicatorCrossed(z_left, z_mid)
+            t_right = t_mid
+        else
+            t_left = t_mid
+            z_left = z_mid
+        end
+    end
+
+    return t_right
+end
+
 function simple_fmi2DoStep(
     _component::fmi2Component,
     currentCommunicationPoint::fmi2Real,
@@ -369,15 +439,76 @@ function simple_fmi2DoStep(
         return fmi2StatusError
     end
 
+    remainingStepSize = communicationStepSize
     component.t = currentCommunicationPoint
-    evaluate(_component)
 
-    xc, xcdot, xd, u, y, p = extractValues(_component)
-    xc = fmi2Real.(xc .+ communicationStepSize .* xcdot)
-    component.t = currentCommunicationPoint + communicationStepSize
+    for _ = 1:100
+        evaluate(_component)
+        xc, _, xd, u, _, p = extractValues(_component)
+        z_start = copy(component.z)
 
-    applyValues(_component, xc, xcdot, xd, u, y, p)
-    evaluate(_component)
+        xc_end = fmi2IntegrateContinuousRK4(
+            _component,
+            component.t,
+            fmi2Real.(xc),
+            xd,
+            u,
+            p,
+            remainingStepSize,
+        )
+        xcdot_end, xd, u, p, z_end = fmi2EvaluateContinuousCandidate(
+            _component,
+            component.t + remainingStepSize,
+            xc_end,
+            xd,
+            u,
+            p,
+        )
+
+        if fmi2EventIndicatorCrossed(z_start, z_end)
+            eventStepSize = fmi2FindEventTime(
+                _component,
+                component.t,
+                fmi2Real.(xc),
+                xd,
+                u,
+                p,
+                remainingStepSize,
+                z_start,
+            )
+            eventTime = component.t + eventStepSize
+            xc_event = fmi2IntegrateContinuousRK4(
+                _component,
+                component.t,
+                fmi2Real.(xc),
+                xd,
+                u,
+                p,
+                eventStepSize,
+            )
+
+            xcdot_event, xd, u, p, _ = fmi2EvaluateContinuousCandidate(
+                _component,
+                eventTime,
+                xc_event,
+                xd,
+                u,
+                p,
+            )
+            component.t = eventTime
+            evaluate(_component, true)
+
+            remainingStepSize -= eventStepSize
+            if remainingStepSize <= eps(fmi2Real)
+                evaluate(_component)
+                break
+            end
+        else
+            component.t = currentCommunicationPoint + communicationStepSize
+            evaluate(_component)
+            break
+        end
+    end
 
     return fmi2StatusOK
 end
