@@ -36,6 +36,32 @@ function fmi2ModelDescriptionAddModelExchange(
     md.modelExchange.modelIdentifier = modelIdentifier
 end
 
+function fmi2ModelDescriptionAddCoSimulation(
+    md::fmi2ModelDescription,
+    modelIdentifier::String;
+    canHandleVariableCommunicationStepSize::Union{Bool,Nothing} = true,
+    canInterpolateInputs::Union{Bool,Nothing} = nothing,
+    maxOutputDerivativeOrder::Union{UInt,Nothing} = nothing,
+    canGetAndSetFMUstate::Union{Bool,Nothing} = false,
+    canSerializeFMUstate::Union{Bool,Nothing} = false,
+    providesDirectionalDerivative::Union{Bool,Nothing} = false,
+)
+    if isnothing(md.coSimulation)
+        md.coSimulation = fmi2ModelDescriptionCoSimulation()
+    end
+
+    md.coSimulation.modelIdentifier = modelIdentifier
+    md.coSimulation.canHandleVariableCommunicationStepSize =
+        canHandleVariableCommunicationStepSize
+    md.coSimulation.canInterpolateInputs = canInterpolateInputs
+    md.coSimulation.maxOutputDerivativeOrder = maxOutputDerivativeOrder
+    md.coSimulation.canGetAndSetFMUstate = canGetAndSetFMUstate
+    md.coSimulation.canSerializeFMUstate = canSerializeFMUstate
+    md.coSimulation.providesDirectionalDerivative = providesDirectionalDerivative
+
+    return md.coSimulation
+end
+
 function fmi2ModelDescriptionAddEvent(md::fmi2ModelDescription)
     md.numberOfEventIndicators += 1
 end

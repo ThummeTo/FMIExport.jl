@@ -39,6 +39,7 @@ export fmi2ModelDescriptionAddModelVariable,
     fmi2ModelDescriptionAddModelStructureOutputs,
     fmi2ModelDescriptionAddModelStructureDerivatives,
     fmi2ModelDescriptionAddModelStructureInitialUnknowns
+export fmi2ModelDescriptionAddCoSimulation
 
 export fmi2Create, fmi2CreateEmbedded
 export fmi2AddIntegerDiscreteState
@@ -46,6 +47,7 @@ export fmi2AddRealStateAndDerivative, fmi2AddStateAndDerivative
 export fmi2AddRealOutput, fmi2AddOutput
 export fmi2AddRealInput, fmi2AddInput
 export fmi2AddRealParameter, fmi2AddParameter, fmi2AddEventIndicator
+export fmi2AddCoSimulation
 
 export fmi2SetFctGetTypesPlatform, fmi2SetFctGetVersion
 export fmi2SetFctInstantiate,
@@ -73,6 +75,15 @@ export fmi2SetFctGetDerivatives,
     fmi2SetFctGetEventIndicators,
     fmi2SetFctGetContinuousStates,
     fmi2SetFctGetNominalsOfContinuousStates
+export fmi2SetFctSetRealInputDerivatives,
+    fmi2SetFctGetRealOutputDerivatives,
+    fmi2SetFctDoStep,
+    fmi2SetFctCancelStep,
+    fmi2SetFctGetStatus,
+    fmi2SetFctGetRealStatus,
+    fmi2SetFctGetIntegerStatus,
+    fmi2SetFctGetBooleanStatus,
+    fmi2SetFctGetStringStatus
 
 export fmi2ModelDescriptionAddModelExchange
 
@@ -274,6 +285,74 @@ function fmi2SetFctGetNominalsOfContinuousStates(fmu::FMU2, fun)
     fmu.cGetNominalsOfContinuousStates = c_fun.ptr
 end
 
+function fmi2SetFctSetRealInputDerivatives(fmu::FMU2, fun)
+    c_fun = @cfunction(
+        $fun,
+        fmi2Status,
+        (
+            fmi2Component,
+            Ptr{fmi2ValueReference},
+            Csize_t,
+            Ptr{fmi2Integer},
+            Ptr{fmi2Real},
+        )
+    )
+    fmu.cSetRealInputDerivatives = c_fun.ptr
+end
+
+function fmi2SetFctGetRealOutputDerivatives(fmu::FMU2, fun)
+    c_fun = @cfunction(
+        $fun,
+        fmi2Status,
+        (
+            fmi2Component,
+            Ptr{fmi2ValueReference},
+            Csize_t,
+            Ptr{fmi2Integer},
+            Ptr{fmi2Real},
+        )
+    )
+    fmu.cGetRealOutputDerivatives = c_fun.ptr
+end
+
+function fmi2SetFctDoStep(fmu::FMU2, fun)
+    c_fun =
+        @cfunction($fun, fmi2Status, (fmi2Component, fmi2Real, fmi2Real, fmi2Boolean))
+    fmu.cDoStep = c_fun.ptr
+end
+
+function fmi2SetFctCancelStep(fmu::FMU2, fun)
+    c_fun = @cfunction($fun, fmi2Status, (fmi2Component,))
+    fmu.cCancelStep = c_fun.ptr
+end
+
+function fmi2SetFctGetStatus(fmu::FMU2, fun)
+    c_fun = @cfunction($fun, fmi2Status, (fmi2Component, fmi2StatusKind, Ptr{fmi2Status}))
+    fmu.cGetStatus = c_fun.ptr
+end
+
+function fmi2SetFctGetRealStatus(fmu::FMU2, fun)
+    c_fun = @cfunction($fun, fmi2Status, (fmi2Component, fmi2StatusKind, Ptr{fmi2Real}))
+    fmu.cGetRealStatus = c_fun.ptr
+end
+
+function fmi2SetFctGetIntegerStatus(fmu::FMU2, fun)
+    c_fun =
+        @cfunction($fun, fmi2Status, (fmi2Component, fmi2StatusKind, Ptr{fmi2Integer}))
+    fmu.cGetIntegerStatus = c_fun.ptr
+end
+
+function fmi2SetFctGetBooleanStatus(fmu::FMU2, fun)
+    c_fun =
+        @cfunction($fun, fmi2Status, (fmi2Component, fmi2StatusKind, Ptr{fmi2Boolean}))
+    fmu.cGetBooleanStatus = c_fun.ptr
+end
+
+function fmi2SetFctGetStringStatus(fmu::FMU2, fun)
+    c_fun = @cfunction($fun, fmi2Status, (fmi2Component, fmi2StatusKind, Ptr{fmi2String}))
+    fmu.cGetStringStatus = c_fun.ptr
+end
+
 """ 
 ToDo
 """
@@ -341,6 +420,10 @@ fmi2AddParameter = fmi2AddRealParameter
 
 function fmi2AddEventIndicator(fmu)
     fmi2ModelDescriptionAddEventIndicator(fmu.modelDescription)
+end
+
+function fmi2AddCoSimulation(fmu, modelIdentifier::String; kwargs...)
+    fmi2ModelDescriptionAddCoSimulation(fmu.modelDescription, modelIdentifier; kwargs...)
 end
 
 """

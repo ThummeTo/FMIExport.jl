@@ -23,3 +23,17 @@ var = fmi2ModelDescriptionAddRealOutput(md, "mass.f")
 @test typeof(var) == fmi2ScalarVariable
 @test var.name == "mass.f"
 @test var.valueReference == 5
+
+cs = fmi2ModelDescriptionAddCoSimulation(md, "mass_cs")
+@test cs.modelIdentifier == "mass_cs"
+@test cs.canHandleVariableCommunicationStepSize == true
+@test cs.canGetAndSetFMUstate == false
+@test cs.canSerializeFMUstate == false
+@test cs.providesDirectionalDerivative == false
+
+fmu = fmi2Create(; type = FMIExport.FMICore.fmi2TypeCoSimulation)
+cs = fmi2AddCoSimulation(fmu, "simple_cs"; canInterpolateInputs = false)
+@test fmu.type == FMIExport.FMICore.fmi2TypeCoSimulation
+@test fmu.modelDescription.coSimulation === cs
+@test cs.modelIdentifier == "simple_cs"
+@test cs.canInterpolateInputs == false

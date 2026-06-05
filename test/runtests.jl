@@ -282,6 +282,10 @@ end
             include("model_description.jl")
         end
 
+        @testset "Co-Simulation" begin
+            include("cosimulation.jl")
+        end
+
         @testset "Bouncing Ball" begin
             include(joinpath("bouncing_ball", "bouncing_ball.jl"))
         end

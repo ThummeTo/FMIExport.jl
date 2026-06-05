@@ -322,10 +322,142 @@ function simple_fmi2ExitInitializationMode(_component::fmi2Component)
     return fmi2StatusOK
 end
 
+function simple_fmi2SetRealInputDerivatives(
+    _component::fmi2Component,
+    _vr::Ptr{fmi2ValueReference},
+    nvr::Csize_t,
+    _order::Ptr{fmi2Integer},
+    _value::Ptr{fmi2Real},
+)
+    component = dereferenceInstance(_component)
+
+    logWarning(
+        component,
+        "fmi2SetRealInputDerivatives: Not supported by this FMU.",
+    )
+
+    return fmi2StatusWarning
+end
+
+function simple_fmi2GetRealOutputDerivatives(
+    _component::fmi2Component,
+    _vr::Ptr{fmi2ValueReference},
+    nvr::Csize_t,
+    _order::Ptr{fmi2Integer},
+    _value::Ptr{fmi2Real},
+)
+    component = dereferenceInstance(_component)
+
+    logWarning(
+        component,
+        "fmi2GetRealOutputDerivatives: Not supported by this FMU.",
+    )
+
+    return fmi2StatusWarning
+end
+
+function simple_fmi2DoStep(
+    _component::fmi2Component,
+    currentCommunicationPoint::fmi2Real,
+    communicationStepSize::fmi2Real,
+    noSetFMUStatePriorToCurrentPoint::fmi2Boolean,
+)
+    component = dereferenceInstance(_component)
+
+    if communicationStepSize < 0.0
+        logError(component, "fmi2DoStep: communicationStepSize must be non-negative.")
+        return fmi2StatusError
+    end
+
+    component.t = currentCommunicationPoint
+    evaluate(_component)
+
+    xc, xcdot, xd, u, y, p = extractValues(_component)
+    xc = fmi2Real.(xc .+ communicationStepSize .* xcdot)
+    component.t = currentCommunicationPoint + communicationStepSize
+
+    applyValues(_component, xc, xcdot, xd, u, y, p)
+    evaluate(_component)
+
+    return fmi2StatusOK
+end
+
+function simple_fmi2CancelStep(_component::fmi2Component)
+    component = dereferenceInstance(_component)
+
+    logWarning(component, "fmi2CancelStep: Asynchronous fmi2DoStep is not supported.")
+
+    return fmi2StatusWarning
+end
+
+function simple_fmi2GetStatus(
+    _component::fmi2Component,
+    statusKind::fmi2StatusKind,
+    _value::Ptr{fmi2Status},
+)
+    value = unsafe_wrap(Array{fmi2Status}, _value, 1)
+    value[1] = fmi2StatusOK
+
+    return fmi2StatusOK
+end
+
+function simple_fmi2GetRealStatus(
+    _component::fmi2Component,
+    statusKind::fmi2StatusKind,
+    _value::Ptr{fmi2Real},
+)
+    component = dereferenceInstance(_component)
+    value = unsafe_wrap(Array{fmi2Real}, _value, 1)
+
+    if statusKind == fmi2StatusKindLastSuccessfulTime
+        value[1] = component.t
+        return fmi2StatusOK
+    end
+
+    logWarning(component, "fmi2GetRealStatus: Unsupported status kind $(statusKind).")
+    return fmi2StatusWarning
+end
+
+function simple_fmi2GetIntegerStatus(
+    _component::fmi2Component,
+    statusKind::fmi2StatusKind,
+    _value::Ptr{fmi2Integer},
+)
+    component = dereferenceInstance(_component)
+
+    logWarning(component, "fmi2GetIntegerStatus: Unsupported status kind $(statusKind).")
+
+    return fmi2StatusWarning
+end
+
+function simple_fmi2GetBooleanStatus(
+    _component::fmi2Component,
+    statusKind::fmi2StatusKind,
+    _value::Ptr{fmi2Boolean},
+)
+    component = dereferenceInstance(_component)
+
+    logWarning(component, "fmi2GetBooleanStatus: Unsupported status kind $(statusKind).")
+
+    return fmi2StatusWarning
+end
+
+function simple_fmi2GetStringStatus(
+    _component::fmi2Component,
+    statusKind::fmi2StatusKind,
+    _value::Ptr{fmi2String},
+)
+    component = dereferenceInstance(_component)
+
+    logWarning(component, "fmi2GetStringStatus: Unsupported status kind $(statusKind).")
+
+    return fmi2StatusWarning
+end
+
 function simple_fmi2Terminate(_component::fmi2Component)
     component = dereferenceInstance(_component)
 
-    # ToDo
+    component.state = fmi2ComponentStateTerminated
 
     return fmi2StatusOK
 end
@@ -707,6 +839,7 @@ function fmi2CreateSimple(;
     evaluationFct = nothing,
     outputFct = nothing,
     eventFct = nothing,
+    type = fmi2TypeModelExchange,
 )
 
     global FMIBUILD_FMU
@@ -723,7 +856,7 @@ function fmi2CreateSimple(;
     global FMU_NUM_EVENTS
     global FMU_NUM_PARAMETERS
 
-    FMIBUILD_FMU = fmi2Create()
+    FMIBUILD_FMU = fmi2Create(; type = type)
 
     FMU_FCT_INIT = initializationFct
     FMU_FCT_EVALUATE = evaluationFct
@@ -772,6 +905,16 @@ function fmi2CreateSimple(;
         FMIBUILD_FMU,
         simple_fmi2GetNominalsOfContinuousStates,
     )
+
+    fmi2SetFctSetRealInputDerivatives(FMIBUILD_FMU, simple_fmi2SetRealInputDerivatives)
+    fmi2SetFctGetRealOutputDerivatives(FMIBUILD_FMU, simple_fmi2GetRealOutputDerivatives)
+    fmi2SetFctDoStep(FMIBUILD_FMU, simple_fmi2DoStep)
+    fmi2SetFctCancelStep(FMIBUILD_FMU, simple_fmi2CancelStep)
+    fmi2SetFctGetStatus(FMIBUILD_FMU, simple_fmi2GetStatus)
+    fmi2SetFctGetRealStatus(FMIBUILD_FMU, simple_fmi2GetRealStatus)
+    fmi2SetFctGetIntegerStatus(FMIBUILD_FMU, simple_fmi2GetIntegerStatus)
+    fmi2SetFctGetBooleanStatus(FMIBUILD_FMU, simple_fmi2GetBooleanStatus)
+    fmi2SetFctGetStringStatus(FMIBUILD_FMU, simple_fmi2GetStringStatus)
 
     return FMIBUILD_FMU
 end
