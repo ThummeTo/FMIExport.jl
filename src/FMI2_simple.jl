@@ -193,6 +193,7 @@ function simple_fmi2Instantiate(
     component.loggingOn = (loggingOn == fmi2True)
     component.callbackFunctions = unsafe_load(functions)
     component.instanceName = unsafe_string(instanceName)
+    component.type = component.fmu.type
 
     component.addr = pointer_from_objref(component)
     push!(FMIBUILD_FMU.components, component)
@@ -218,6 +219,7 @@ function embedded_fmi2Instantiate(
     component.loggingOn = (loggingOn == fmi2True ? true : false)
     component.callbackFunctions = unsafe_load(functions)
     component.instanceName = unsafe_string(instanceName)
+    component.type = component.fmu.type
 
     component.addr = FMICore.fmi2Instantiate(
         FMIBUILD_FMU.cFunctionPtrs["EMBEDDED_fmi2Instantiate"],
@@ -622,10 +624,11 @@ function simple_fmi2GetEventIndicators(
 )
     component = dereferenceInstance(_component)
 
-    if ni != length(component.fmu.modelDescription.numberOfEventIndicators)
+    numberOfEventIndicators = component.fmu.modelDescription.numberOfEventIndicators
+    if ni != numberOfEventIndicators
         logWarning(
             component,
-            "fmi2GetEventIndicators: Model has $(length(component.eventIndicators)) states, but `ni`=$(ni).",
+            "fmi2GetEventIndicators: Model has $(numberOfEventIndicators) event indicators, but `ni`=$(ni).",
         )
         return fmi2StatusWarning
     end

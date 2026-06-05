@@ -204,12 +204,14 @@ end
 
 fmu = FMIBUILD_CONSTRUCTOR()
 
-# first, we try to simulate the FMU before ExternalFMIExportTesting
+# first, we try to simulate the FMU before external FMIExport testing
 # this is not required for export but a good idea anyway: 
 # the export takes a long time and exporting a possibly broken FMU does not help anyone
-using FMI, DifferentialEquations
-fmu.executionConfig.loggingOn = true
-solution = simulate(fmu, (0.0, 3.0); recordValues = ["sticking", "counter"])
+
+# using FMI, DifferentialEquations
+# fmu.executionConfig.loggingOn = true
+# solution = simulate(fmu, (0.0, 3.0); recordValues = ["sticking", "counter"])
+
 # using Plots
 # plot(solution)
 # fmu.modelDescription.discreteStateValueReferences
