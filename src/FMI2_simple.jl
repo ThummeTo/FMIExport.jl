@@ -53,7 +53,7 @@ function reset(_component::fmi2Component)
     applyValues(component.addr, xc, ẋc, xd, u, y, p)
 end
 
-function evaluate(_component::fmi2Component, eventMode = false)
+function evaluate(_component::fmi2Component, eventMode=false)
     component = dereferenceInstance(_component)
 
     # eventMode = component.state == fmi2ComponentStateEventMode
@@ -301,7 +301,38 @@ function simple_fmi2SetupExperiment(
 )
     component = dereferenceInstance(_component)
 
-    # ToDo
+    # build CS problem 
+    tspan = (startTime, stopTimeDefined ? stopTime : typemax(fmi2Real))
+
+    component, x0 = prepareSolveFMU(
+        component.fmu,
+        component,
+        :ME;
+        parameters=parameters,
+        t_start=tspan[1],
+        t_stop=tspan[end],
+        # x0=x0,
+        # inputs=inputs,
+        # instantiate=instantiate,
+        # freeInstance=freeInstance,
+        # terminate=terminate,
+        # reset=reset,
+        # setup=setup,
+    )
+    component.problem = setupODEProblem(component, x0, tspan)
+
+    component.callback = setupCallbacks(
+        component,
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+        t_start,
+        t_stop,
+        nothing,
+    )
 
     return fmi2StatusOK
 end
@@ -439,76 +470,16 @@ function simple_fmi2DoStep(
         return fmi2StatusError
     end
 
-    remainingStepSize = communicationStepSize
-    component.t = currentCommunicationPoint
+    # ToDo: cleanup allocations
+    x0 = component.x
+    tspan = (currentCommunicationPoint, currentCommunicationPoint + communicationStepSize)
+    solveKwargs = Dict{Symbol,Any}()
+    tspan = setupSolver!(component.fmu, tspan, solveKwargs)
 
-    for _ = 1:100
-        evaluate(_component)
-        xc, _, xd, u, _, p = extractValues(_component)
-        z_start = copy(component.z)
+    component.solution.states = solve(component.problem; callback=component.callback, solveKwargs...)
 
-        xc_end = fmi2IntegrateContinuousRK4(
-            _component,
-            component.t,
-            fmi2Real.(xc),
-            xd,
-            u,
-            p,
-            remainingStepSize,
-        )
-        xcdot_end, xd, u, p, z_end = fmi2EvaluateContinuousCandidate(
-            _component,
-            component.t + remainingStepSize,
-            xc_end,
-            xd,
-            u,
-            p,
-        )
-
-        if fmi2EventIndicatorCrossed(z_start, z_end)
-            eventStepSize = fmi2FindEventTime(
-                _component,
-                component.t,
-                fmi2Real.(xc),
-                xd,
-                u,
-                p,
-                remainingStepSize,
-                z_start,
-            )
-            eventTime = component.t + eventStepSize
-            xc_event = fmi2IntegrateContinuousRK4(
-                _component,
-                component.t,
-                fmi2Real.(xc),
-                xd,
-                u,
-                p,
-                eventStepSize,
-            )
-
-            xcdot_event, xd, u, p, _ = fmi2EvaluateContinuousCandidate(
-                _component,
-                eventTime,
-                xc_event,
-                xd,
-                u,
-                p,
-            )
-            component.t = eventTime
-            evaluate(_component, true)
-
-            remainingStepSize -= eventStepSize
-            if remainingStepSize <= eps(fmi2Real)
-                evaluate(_component)
-                break
-            end
-        else
-            component.t = currentCommunicationPoint + communicationStepSize
-            evaluate(_component)
-            break
-        end
-    end
+    component.t = component.solution.states.t[end]
+    component.x = component.solution.states.x[end]
 
     return fmi2StatusOK
 end
@@ -966,11 +937,11 @@ end
     eventFct                    # (t, xc, ẋc, xd, u, p) -> e
 """
 function fmi2CreateSimple(;
-    initializationFct = nothing,
-    evaluationFct = nothing,
-    outputFct = nothing,
-    eventFct = nothing,
-    type = fmi2TypeModelExchange,
+    initializationFct=nothing,
+    evaluationFct=nothing,
+    outputFct=nothing,
+    eventFct=nothing,
+    type=fmi2TypeModelExchange,
 )
 
     global FMIBUILD_FMU
@@ -987,7 +958,7 @@ function fmi2CreateSimple(;
     global FMU_NUM_EVENTS
     global FMU_NUM_PARAMETERS
 
-    FMIBUILD_FMU = fmi2Create(; type = type)
+    FMIBUILD_FMU = fmi2Create(; type=type)
 
     FMU_FCT_INIT = initializationFct
     FMU_FCT_EVALUATE = evaluationFct
