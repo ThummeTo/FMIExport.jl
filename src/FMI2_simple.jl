@@ -53,7 +53,7 @@ function reset(_component::fmi2Component)
     applyValues(component.addr, xc, ẋc, xd, u, y, p)
 end
 
-function evaluate(_component::fmi2Component, eventMode = false)
+function evaluate(_component::fmi2Component, eventMode=false)
     component = dereferenceInstance(_component)
 
     # eventMode = component.state == fmi2ComponentStateEventMode
@@ -195,7 +195,7 @@ function simple_fmi2Instantiate(
     component.loggingOn = (loggingOn == fmi2True)
     component.callbackFunctions = unsafe_load(functions)
     component.instanceName = unsafe_string(instanceName)
-    component.type = component.fmu.type
+    component.type = fmuType
 
     component.addr = pointer_from_objref(component)
     push!(FMIBUILD_FMU.components, component)
@@ -221,7 +221,7 @@ function embedded_fmi2Instantiate(
     component.loggingOn = (loggingOn == fmi2True ? true : false)
     component.callbackFunctions = unsafe_load(functions)
     component.instanceName = unsafe_string(instanceName)
-    component.type = component.fmu.type
+    component.type = fmuType
 
     component.addr = FMICore.fmi2Instantiate(
         FMIBUILD_FMU.cFunctionPtrs["EMBEDDED_fmi2Instantiate"],
@@ -312,14 +312,14 @@ function simple_fmi2SetupExperiment(
         component.fmu,
         component,
         :ME;
-        t_start = tspan[1],
-        t_stop = tspan[end],
-        tolerance = toleranceValue,
-        instantiate = false,
-        freeInstance = false,
-        terminate = false,
-        reset = false,
-        setup = false,
+        t_start=tspan[1],
+        t_stop=tspan[end],
+        tolerance=toleranceValue,
+        instantiate=false,
+        freeInstance=false,
+        terminate=false,
+        reset=false,
+        setup=false,
     )
     #component.t = tspan[1]
 
@@ -434,14 +434,21 @@ function simple_fmi2DoStep(
     solveKwargs = Dict{Symbol,Any}()
     tspan = FMIBase.setupSolver!(component.fmu, tspan, solveKwargs)
 
+    # ToDo: this should be a little more light weight, check what actually
+    # needs to be done for every doStep, and which parts can be reused.
     component.problem = FMIBase.setupODEProblem(component, x0, tspan)
     component.state = fmi2ComponentStateContinuousTimeMode
-    component.solution.states = FMIBase.SciMLBase.solve(
-        component.problem,
-        OrdinaryDiffEq.Tsit5();
-        callback = FMIBase.SciMLBase.CallbackSet(component.callback...),
-        solveKwargs...,
-    )
+    component.type = fmi2TypeModelExchange
+    try
+        component.solution.states = FMIBase.SciMLBase.solve(
+            component.problem,
+            OrdinaryDiffEq.Tsit5(); # ToDo: Make this a field of the FMUXInstance, to allow for other solvers.
+            callback=FMIBase.SciMLBase.CallbackSet(component.callback...),
+            solveKwargs...,
+        )
+    finally
+        component.type = fmi2TypeCoSimulation
+    end
 
     component.t = component.solution.states.t[end]
     component.x = fmi2Real.(component.solution.states.u[end])
@@ -907,11 +914,11 @@ end
     eventFct                    # (t, xc, ẋc, xd, u, p) -> e
 """
 function fmi2CreateSimple(;
-    initializationFct = nothing,
-    evaluationFct = nothing,
-    outputFct = nothing,
-    eventFct = nothing,
-    type = fmi2TypeModelExchange,
+    initializationFct=nothing,
+    evaluationFct=nothing,
+    outputFct=nothing,
+    eventFct=nothing,
+    type=fmi2TypeModelExchange,
 )
 
     global FMIBUILD_FMU
@@ -928,7 +935,7 @@ function fmi2CreateSimple(;
     global FMU_NUM_EVENTS
     global FMU_NUM_PARAMETERS
 
-    FMIBUILD_FMU = fmi2Create(; type = type)
+    FMIBUILD_FMU = createFMU2(; type=type)
 
     FMU_FCT_INIT = initializationFct
     FMU_FCT_EVALUATE = evaluationFct
@@ -946,47 +953,48 @@ function fmi2CreateSimple(;
     FMU_NUM_EVENTS = length(e)
     FMU_NUM_PARAMETERS = length(p)
 
-    fmi2SetFctGetVersion(FMIBUILD_FMU, simple_fmi2GetVersion)
-    fmi2SetFctGetTypesPlatform(FMIBUILD_FMU, simple_fmi2GetTypesPlatform)
-    fmi2SetFctInstantiate(FMIBUILD_FMU, simple_fmi2Instantiate)
-    fmi2SetFctFreeInstance(FMIBUILD_FMU, simple_fmi2FreeInstance)
-    fmi2SetFctSetDebugLogging(FMIBUILD_FMU, simple_fmi2SetDebugLogging)
-    fmi2SetFctSetupExperiment(FMIBUILD_FMU, simple_fmi2SetupExperiment)
-    fmi2SetFctEnterInitializationMode(FMIBUILD_FMU, simple_fmi2EnterInitializationMode)
-    fmi2SetFctExitInitializationMode(FMIBUILD_FMU, simple_fmi2ExitInitializationMode)
-    fmi2SetFctTerminate(FMIBUILD_FMU, simple_fmi2Terminate)
-    fmi2SetFctReset(FMIBUILD_FMU, simple_fmi2Reset)
-    fmi2SetFctGetReal(FMIBUILD_FMU, simple_fmi2GetReal)
-    fmi2SetFctGetInteger(FMIBUILD_FMU, simple_fmi2GetInteger)
-    fmi2SetFctGetBoolean(FMIBUILD_FMU, simple_fmi2GetBoolean)
-    fmi2SetFctGetString(FMIBUILD_FMU, simple_fmi2GetString)
-    fmi2SetFctSetReal(FMIBUILD_FMU, simple_fmi2SetReal)
-    fmi2SetFctSetInteger(FMIBUILD_FMU, simple_fmi2SetInteger)
-    fmi2SetFctSetBoolean(FMIBUILD_FMU, simple_fmi2SetBoolean)
-    fmi2SetFctSetString(FMIBUILD_FMU, simple_fmi2SetString)
-    fmi2SetFctSetTime(FMIBUILD_FMU, simple_fmi2SetTime)
-    fmi2SetFctSetContinuousStates(FMIBUILD_FMU, simple_fmi2SetContinuousStates)
-    fmi2SetFctEnterEventMode(FMIBUILD_FMU, simple_fmi2EnterEventMode)
-    fmi2SetFctNewDiscreteStates(FMIBUILD_FMU, simple_fmi2NewDiscreteStates)
-    fmi2SetFctEnterContinuousTimeMode(FMIBUILD_FMU, simple_fmi2EnterContinuousTimeMode)
-    fmi2SetFctCompletedIntegratorStep(FMIBUILD_FMU, simple_fmi2CompletedIntegratorStep)
-    fmi2SetFctGetDerivatives(FMIBUILD_FMU, simple_fmi2GetDerivatives)
-    fmi2SetFctGetEventIndicators(FMIBUILD_FMU, simple_fmi2GetEventIndicators)
-    fmi2SetFctGetContinuousStates(FMIBUILD_FMU, simple_fmi2GetContinuousStates)
-    fmi2SetFctGetNominalsOfContinuousStates(
+    setFctGetVersion(FMIBUILD_FMU, simple_fmi2GetVersion)
+    setFctGetTypesPlatform(FMIBUILD_FMU, simple_fmi2GetTypesPlatform)
+    setFctInstantiate(FMIBUILD_FMU, simple_fmi2Instantiate)
+    setFctFreeInstance(FMIBUILD_FMU, simple_fmi2FreeInstance)
+    setFctSetDebugLogging(FMIBUILD_FMU, simple_fmi2SetDebugLogging)
+    setFctSetupExperiment(FMIBUILD_FMU, simple_fmi2SetupExperiment)
+    setFctEnterInitializationMode(FMIBUILD_FMU, simple_fmi2EnterInitializationMode)
+    setFctExitInitializationMode(FMIBUILD_FMU, simple_fmi2ExitInitializationMode)
+    setFctTerminate(FMIBUILD_FMU, simple_fmi2Terminate)
+    setFctReset(FMIBUILD_FMU, simple_fmi2Reset)
+    setFctGetReal(FMIBUILD_FMU, simple_fmi2GetReal)
+    setFctGetInteger(FMIBUILD_FMU, simple_fmi2GetInteger)
+    setFctGetBoolean(FMIBUILD_FMU, simple_fmi2GetBoolean)
+    setFctGetString(FMIBUILD_FMU, simple_fmi2GetString)
+    setFctSetReal(FMIBUILD_FMU, simple_fmi2SetReal)
+    setFctSetInteger(FMIBUILD_FMU, simple_fmi2SetInteger)
+    setFctSetBoolean(FMIBUILD_FMU, simple_fmi2SetBoolean)
+    setFctSetString(FMIBUILD_FMU, simple_fmi2SetString)
+    setFctSetTime(FMIBUILD_FMU, simple_fmi2SetTime)
+    setFctSetContinuousStates(FMIBUILD_FMU, simple_fmi2SetContinuousStates)
+    setFctEnterEventMode(FMIBUILD_FMU, simple_fmi2EnterEventMode)
+    setFctNewDiscreteStates(FMIBUILD_FMU, simple_fmi2NewDiscreteStates)
+    setFctEnterContinuousTimeMode(FMIBUILD_FMU, simple_fmi2EnterContinuousTimeMode)
+    setFctCompletedIntegratorStep(FMIBUILD_FMU, simple_fmi2CompletedIntegratorStep)
+    setFctGetDerivatives(FMIBUILD_FMU, simple_fmi2GetDerivatives)
+    setFctGetEventIndicators(FMIBUILD_FMU, simple_fmi2GetEventIndicators)
+    setFctGetContinuousStates(FMIBUILD_FMU, simple_fmi2GetContinuousStates)
+    setFctGetNominalsOfContinuousStates(
         FMIBUILD_FMU,
         simple_fmi2GetNominalsOfContinuousStates,
     )
 
-    fmi2SetFctSetRealInputDerivatives(FMIBUILD_FMU, simple_fmi2SetRealInputDerivatives)
-    fmi2SetFctGetRealOutputDerivatives(FMIBUILD_FMU, simple_fmi2GetRealOutputDerivatives)
-    fmi2SetFctDoStep(FMIBUILD_FMU, simple_fmi2DoStep)
-    fmi2SetFctCancelStep(FMIBUILD_FMU, simple_fmi2CancelStep)
-    fmi2SetFctGetStatus(FMIBUILD_FMU, simple_fmi2GetStatus)
-    fmi2SetFctGetRealStatus(FMIBUILD_FMU, simple_fmi2GetRealStatus)
-    fmi2SetFctGetIntegerStatus(FMIBUILD_FMU, simple_fmi2GetIntegerStatus)
-    fmi2SetFctGetBooleanStatus(FMIBUILD_FMU, simple_fmi2GetBooleanStatus)
-    fmi2SetFctGetStringStatus(FMIBUILD_FMU, simple_fmi2GetStringStatus)
+    setFctSetRealInputDerivatives(FMIBUILD_FMU, simple_fmi2SetRealInputDerivatives)
+    setFctGetRealOutputDerivatives(FMIBUILD_FMU, simple_fmi2GetRealOutputDerivatives)
+    setFctDoStep(FMIBUILD_FMU, simple_fmi2DoStep)
+    setFctCancelStep(FMIBUILD_FMU, simple_fmi2CancelStep)
+    setFctGetStatus(FMIBUILD_FMU, simple_fmi2GetStatus)
+    setFctGetRealStatus(FMIBUILD_FMU, simple_fmi2GetRealStatus)
+    setFctGetIntegerStatus(FMIBUILD_FMU, simple_fmi2GetIntegerStatus)
+    setFctGetBooleanStatus(FMIBUILD_FMU, simple_fmi2GetBooleanStatus)
+    setFctGetStringStatus(FMIBUILD_FMU, simple_fmi2GetStringStatus)
 
     return FMIBUILD_FMU
 end
+export fmi2CreateSimple

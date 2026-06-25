@@ -4,7 +4,7 @@
 #
 using FMIExport.FMICore: fmi2ScalarVariable
 
-md = fmi2CreateModelDescription()
+md = createModelDescription()
 var = fmi2ModelDescriptionAddRealStateAndDerivative(md, "mass.s")
 @test typeof(var) == Tuple{fmi2ScalarVariable,fmi2ScalarVariable}
 @test var[1].name == "mass.s"
@@ -31,7 +31,7 @@ cs = fmi2ModelDescriptionAddCoSimulation(md, "mass_cs")
 @test cs.canSerializeFMUstate == false
 @test cs.providesDirectionalDerivative == false
 
-fmu = fmi2Create(; type = FMIExport.FMICore.fmi2TypeCoSimulation)
+fmu = createFMU2(; type = FMIExport.FMICore.fmi2TypeCoSimulation)
 cs = fmi2AddCoSimulation(fmu, "simple_cs"; canInterpolateInputs = false)
 @test fmu.type == FMIExport.FMICore.fmi2TypeCoSimulation
 @test fmu.modelDescription.coSimulation === cs

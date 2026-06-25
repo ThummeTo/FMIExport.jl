@@ -3,7 +3,7 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-using FMIExport: fmi2SetFctGetReal, fmi2CreateEmbedded
+using FMIExport: setFctGetReal, createFMU2Embedded
 using FMIExport.FMIBase.FMICore: fmi2Real, fmi2Component, fmi2StatusOK, fmi2ValueReference
 using FMIExport.FMIBase.FMICore:
     fmi2CausalityParameter, fmi2VariabilityTunable, fmi2InitialExact
@@ -53,7 +53,7 @@ FMIBUILD_CONSTRUCTOR = function (resPath)
     fmu = loadFMU(joinpath(resPath, "SpringDamperPendulum1D.fmu"))
 
     # create a FMU that embedds the existing FMU
-    fmu = fmi2CreateEmbedded(fmu)
+    fmu = createFMU2Embedded(fmu)
 
     fmu.modelDescription.modelName = "Manipulation"
     fmu.modelDescription.modelExchange.modelIdentifier = "Manipulation"
@@ -68,7 +68,7 @@ FMIBUILD_CONSTRUCTOR = function (resPath)
     originalGetReal = fmu.cGetReal
 
     # now we overwrite the original function
-    fmi2SetFctGetReal(fmu, myGetReal!)
+    setFctGetReal(fmu, myGetReal!)
 
     return fmu
 end

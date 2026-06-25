@@ -5,12 +5,12 @@
 
 using FMIExport: Dense, Chain
 using FMIExport:
-    fmi2SetFctGetDerivatives,
-    fmi2SetFctGetReal,
-    fmi2SetFctSetReal,
-    fmi2SetFctSetTime,
-    fmi2SetFctSetContinuousStates
-using FMIExport: fmi2CreateEmbedded
+    setFctGetDerivatives,
+    setFctGetReal,
+    setFctSetReal,
+    setFctSetTime,
+    setFctSetContinuousStates
+using FMIExport: createFMU2Embedded
 using FMIExport: fmi2AddRealParameter
 using FMIExport.FMIBase.FMICore: fmi2Real, fmi2Component, fmi2StatusOK, fmi2ValueReference
 using FMIExport.FMIBase.FMICore:
@@ -365,7 +365,7 @@ FMIBUILD_CONSTRUCTOR = function (resPath)
     fmu = loadFMU(joinpath(resPath, "SpringDamperPendulum1D.fmu"))
 
     # create a FMU that embedds the existing FMU
-    fmu = fmi2CreateEmbedded(fmu)
+    fmu = createFMU2Embedded(fmu)
 
     fmu.modelDescription.modelName = "NeuralFMU"
     fmu.modelDescription.modelExchange.modelIdentifier = "NeuralFMU"
@@ -384,11 +384,11 @@ FMIBUILD_CONSTRUCTOR = function (resPath)
     originalSetContinuousStates = fmu.cSetContinuousStates
 
     # now we overwrite the original functions
-    fmi2SetFctGetDerivatives(fmu, myGetDerivatives!)
-    fmi2SetFctGetReal(fmu, myGetReal!)
-    fmi2SetFctSetReal(fmu, mySetReal)
-    fmi2SetFctSetTime(fmu, mySetTime)
-    fmi2SetFctSetContinuousStates(fmu, mySetContinuousStates)
+    setFctGetDerivatives(fmu, myGetDerivatives!)
+    setFctGetReal(fmu, myGetReal!)
+    setFctSetReal(fmu, mySetReal)
+    setFctSetTime(fmu, mySetTime)
+    setFctSetContinuousStates(fmu, mySetContinuousStates)
 
     # additional parameters 
     ANN_PARAMETERS = Array{fmi2ValueReference,1}()
