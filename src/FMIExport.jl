@@ -22,6 +22,7 @@ module FMIExport
 using FMIBase
 using FMIBase.FMICore
 using FMIBase.FMICore: FMI2_SCALAR_VARIABLE_ATTRIBUTE_STRUCT
+import OrdinaryDiffEq
 
 include("FMI2_md.jl")
 export fmi2CreateModelDescription
@@ -289,13 +290,7 @@ function fmi2SetFctSetRealInputDerivatives(fmu::FMU2, fun)
     c_fun = @cfunction(
         $fun,
         fmi2Status,
-        (
-            fmi2Component,
-            Ptr{fmi2ValueReference},
-            Csize_t,
-            Ptr{fmi2Integer},
-            Ptr{fmi2Real},
-        )
+        (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2Integer}, Ptr{fmi2Real})
     )
     fmu.cSetRealInputDerivatives = c_fun.ptr
 end
@@ -304,20 +299,13 @@ function fmi2SetFctGetRealOutputDerivatives(fmu::FMU2, fun)
     c_fun = @cfunction(
         $fun,
         fmi2Status,
-        (
-            fmi2Component,
-            Ptr{fmi2ValueReference},
-            Csize_t,
-            Ptr{fmi2Integer},
-            Ptr{fmi2Real},
-        )
+        (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2Integer}, Ptr{fmi2Real})
     )
     fmu.cGetRealOutputDerivatives = c_fun.ptr
 end
 
 function fmi2SetFctDoStep(fmu::FMU2, fun)
-    c_fun =
-        @cfunction($fun, fmi2Status, (fmi2Component, fmi2Real, fmi2Real, fmi2Boolean))
+    c_fun = @cfunction($fun, fmi2Status, (fmi2Component, fmi2Real, fmi2Real, fmi2Boolean))
     fmu.cDoStep = c_fun.ptr
 end
 
@@ -337,14 +325,12 @@ function fmi2SetFctGetRealStatus(fmu::FMU2, fun)
 end
 
 function fmi2SetFctGetIntegerStatus(fmu::FMU2, fun)
-    c_fun =
-        @cfunction($fun, fmi2Status, (fmi2Component, fmi2StatusKind, Ptr{fmi2Integer}))
+    c_fun = @cfunction($fun, fmi2Status, (fmi2Component, fmi2StatusKind, Ptr{fmi2Integer}))
     fmu.cGetIntegerStatus = c_fun.ptr
 end
 
 function fmi2SetFctGetBooleanStatus(fmu::FMU2, fun)
-    c_fun =
-        @cfunction($fun, fmi2Status, (fmi2Component, fmi2StatusKind, Ptr{fmi2Boolean}))
+    c_fun = @cfunction($fun, fmi2Status, (fmi2Component, fmi2StatusKind, Ptr{fmi2Boolean}))
     fmu.cGetBooleanStatus = c_fun.ptr
 end
 

@@ -27,10 +27,10 @@ function myGetReal!(
 
     # if we have a pointer to an array, we must interprete it as array to access elements
     if isa(value, Ptr{fmi2Real})
-        value = unsafe_wrap(Array{fmi2Real}, value, nvr, own=false)
+        value = unsafe_wrap(Array{fmi2Real}, value, nvr, own = false)
     end
     if isa(vr, Ptr{fmi2ValueReference})
-        vr = unsafe_wrap(Array{fmi2ValueReference}, vr, nvr, own=false)
+        vr = unsafe_wrap(Array{fmi2ValueReference}, vr, nvr, own = false)
     end
 
     # now, we add noise (just for fun!)
@@ -97,7 +97,7 @@ fmu = FMIBUILD_CONSTRUCTOR(dirname(sourceFMU))
 # using Plots
 # plot(solution)
 
-tmpDir = mktempdir(; prefix="fmibuildjl_test_", cleanup=false)
+tmpDir = mktempdir(; prefix = "fmibuildjl_test_", cleanup = false)
 @info "Saving example files at: $(tmpDir)"
 fmu_save_path = joinpath(tmpDir, "Manipulation.fmu")
 
@@ -107,8 +107,8 @@ import FMIBuild: saveFMU
 saveFMU(
     fmu,
     fmu_save_path;
-    resources=Dict(sourceFMU => "SpringDamperPendulum1D.fmu"),
-    debug=true, # (debug=true allows debug messages, but is slow during execution!)
+    resources = Dict(sourceFMU => "SpringDamperPendulum1D.fmu"),
+    debug = true, # (debug=true allows debug messages, but is slow during execution!)
 )
 unloadFMU(fmu)
 

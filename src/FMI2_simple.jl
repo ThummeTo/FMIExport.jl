@@ -53,7 +53,7 @@ function reset(_component::fmi2Component)
     applyValues(component.addr, xc, ẋc, xd, u, y, p)
 end
 
-function evaluate(_component::fmi2Component, eventMode=false)
+function evaluate(_component::fmi2Component, eventMode = false)
     component = dereferenceInstance(_component)
 
     # eventMode = component.state == fmi2ComponentStateEventMode
@@ -98,6 +98,7 @@ function evaluate(_component::fmi2Component, eventMode=false)
     end
 end
 
+# ToDo: this function should be more efficient
 function applyValues(_component::fmi2Component, xc, ẋc, xd, u, y, p)
     component = dereferenceInstance(_component)
 
@@ -134,6 +135,7 @@ function applyValues(_component::fmi2Component, xc, ẋc, xd, u, y, p)
     nothing
 end
 
+# ToDo: this function should be more efficient
 function extractValues(_component::fmi2Component)
     component = dereferenceInstance(_component)
 
@@ -302,35 +304,39 @@ function simple_fmi2SetupExperiment(
     component = dereferenceInstance(_component)
 
     # build CS problem 
-    tspan = (startTime, stopTimeDefined ? stopTime : typemax(fmi2Real))
+    t_stop = stopTimeDefined == fmi2True ? stopTime : typemax(fmi2Real)
+    tspan = (Float64(startTime), Float64(t_stop))
+    toleranceValue = toleranceDefined == fmi2True ? tolerance : nothing
 
-    component, x0 = prepareSolveFMU(
+    component, x0 = FMIImport.prepareSolveFMU(
         component.fmu,
         component,
         :ME;
-        parameters=parameters,
-        t_start=tspan[1],
-        t_stop=tspan[end],
-        # x0=x0,
-        # inputs=inputs,
-        # instantiate=instantiate,
-        # freeInstance=freeInstance,
-        # terminate=terminate,
-        # reset=reset,
-        # setup=setup,
+        t_start = tspan[1],
+        t_stop = tspan[end],
+        tolerance = toleranceValue,
+        instantiate = false,
+        freeInstance = false,
+        terminate = false,
+        reset = false,
+        setup = false,
     )
-    component.problem = setupODEProblem(component, x0, tspan)
+    #component.t = tspan[1]
 
-    component.callback = setupCallbacks(
+    # todo handle t_stop, tspan and toleranceValue
+
+    component.problem = FMIBase.setupODEProblem(component, x0, tspan)
+
+    component.callback = FMIBase.setupCallbacks(
         component,
+        fmi2ValueReference[],
         nothing,
+        false,
         nothing,
+        fmi2ValueReference[],
         nothing,
-        nothing,
-        nothing,
-        nothing,
-        t_start,
-        t_stop,
+        tspan[1],
+        tspan[end],
         nothing,
     )
 
@@ -350,6 +356,9 @@ function simple_fmi2ExitInitializationMode(_component::fmi2Component)
 
     component.state = fmi2ComponentStateEventMode
 
+    # get initialization values 
+    reset(_component)
+
     return fmi2StatusOK
 end
 
@@ -362,10 +371,7 @@ function simple_fmi2SetRealInputDerivatives(
 )
     component = dereferenceInstance(_component)
 
-    logWarning(
-        component,
-        "fmi2SetRealInputDerivatives: Not supported by this FMU.",
-    )
+    logWarning(component, "fmi2SetRealInputDerivatives: Not supported by this FMU.")
 
     return fmi2StatusWarning
 end
@@ -379,82 +385,9 @@ function simple_fmi2GetRealOutputDerivatives(
 )
     component = dereferenceInstance(_component)
 
-    logWarning(
-        component,
-        "fmi2GetRealOutputDerivatives: Not supported by this FMU.",
-    )
+    logWarning(component, "fmi2GetRealOutputDerivatives: Not supported by this FMU.")
 
     return fmi2StatusWarning
-end
-
-# Checks whether any event indicator changed its sign over an integration interval.
-function fmi2EventIndicatorCrossed(z_left, z_right)
-    if isnothing(z_left) || isnothing(z_right) || length(z_left) != length(z_right)
-        return false
-    end
-
-    return any(sign.(z_left) .!= sign.(z_right))
-end
-
-# Evaluates the ME equations at a temporary continuous state and returns derivatives and events.
-function fmi2EvaluateContinuousCandidate(_component::fmi2Component, t, xc, xd, u, p)
-    component = dereferenceInstance(_component)
-
-    _, xcdot, _, _, y, _ = extractValues(_component)
-    component.t = t
-    applyValues(_component, fmi2Real.(xc), xcdot, xd, u, y, p)
-    evaluate(_component)
-
-    _, xcdot, xd, u, _, p = extractValues(_component)
-    return fmi2Real.(xcdot), xd, u, p, copy(component.z)
-end
-
-# Advances the continuous states with RK4 while reusing the FMU's ME derivative callback.
-function fmi2IntegrateContinuousRK4(_component::fmi2Component, t, xc, xd, u, p, h)
-    k1, _, _, _, _ = fmi2EvaluateContinuousCandidate(_component, t, xc, xd, u, p)
-    k2, _, _, _, _ = fmi2EvaluateContinuousCandidate(
-        _component,
-        t + h / 2,
-        xc .+ (h / 2) .* k1,
-        xd,
-        u,
-        p,
-    )
-    k3, _, _, _, _ = fmi2EvaluateContinuousCandidate(
-        _component,
-        t + h / 2,
-        xc .+ (h / 2) .* k2,
-        xd,
-        u,
-        p,
-    )
-    k4, _, _, _, _ =
-        fmi2EvaluateContinuousCandidate(_component, t + h, xc .+ h .* k3, xd, u, p)
-
-    return fmi2Real.(xc .+ (h / 6) .* (k1 .+ 2 .* k2 .+ 2 .* k3 .+ k4))
-end
-
-# Locates the first event in a communication step by bisection on the event indicators.
-function fmi2FindEventTime(_component::fmi2Component, t, xc, xd, u, p, h, z_start)
-    t_left = 0.0
-    t_right = h
-    z_left = z_start
-
-    for _ = 1:40
-        t_mid = (t_left + t_right) / 2
-        xc_mid = fmi2IntegrateContinuousRK4(_component, t, xc, xd, u, p, t_mid)
-        _, _, _, _, z_mid =
-            fmi2EvaluateContinuousCandidate(_component, t + t_mid, xc_mid, xd, u, p)
-
-        if fmi2EventIndicatorCrossed(z_left, z_mid)
-            t_right = t_mid
-        else
-            t_left = t_mid
-            z_left = z_mid
-        end
-    end
-
-    return t_right
 end
 
 function simple_fmi2DoStep(
@@ -470,16 +403,53 @@ function simple_fmi2DoStep(
         return fmi2StatusError
     end
 
-    # ToDo: cleanup allocations
+    if !isapprox(currentCommunicationPoint, component.t)
+        logWarning(
+            component,
+            "fmi2DoStep: currentCommunicationPoint=$(currentCommunicationPoint), but current FMU instance time is $(component.t).",
+        )
+    end
+
+    if isnothing(component.x) || isnothing(component.problem)
+        logWarning(
+            component,
+            "fmi2DoStep: Called without proper fmi2SetupExperiment, trying to set up experiment automatically.",
+        )
+        status = simple_fmi2SetupExperiment(
+            _component,
+            fmi2False,
+            0.0,
+            currentCommunicationPoint,
+            fmi2True,
+            currentCommunicationPoint + communicationStepSize,
+        )
+
+        if status != fmi2StatusOK
+            return status
+        end
+    end
+
     x0 = component.x
     tspan = (currentCommunicationPoint, currentCommunicationPoint + communicationStepSize)
     solveKwargs = Dict{Symbol,Any}()
-    tspan = setupSolver!(component.fmu, tspan, solveKwargs)
+    tspan = FMIBase.setupSolver!(component.fmu, tspan, solveKwargs)
 
-    component.solution.states = solve(component.problem; callback=component.callback, solveKwargs...)
+    component.problem = FMIBase.setupODEProblem(component, x0, tspan)
+    component.state = fmi2ComponentStateContinuousTimeMode
+    component.solution.states = FMIBase.SciMLBase.solve(
+        component.problem,
+        OrdinaryDiffEq.Tsit5();
+        callback = FMIBase.SciMLBase.CallbackSet(component.callback...),
+        solveKwargs...,
+    )
 
     component.t = component.solution.states.t[end]
-    component.x = component.solution.states.x[end]
+    component.x = fmi2Real.(component.solution.states.u[end])
+
+    # overwrite with new values
+    _, xcdot, xd, u, y, p = extractValues(_component)
+    applyValues(_component, component.x, xcdot, xd, u, y, p)
+    evaluate(_component)
 
     return fmi2StatusOK
 end
@@ -792,7 +762,7 @@ function simple_fmi2NewDiscreteStates(
     eventInfo.valuesOfContinuousStatesChanged =
         component.eventInfo.valuesOfContinuousStatesChanged
     eventInfo.nextEventTimeDefined = fmi2False # [ToDo]
-    eventInfo.nextEventTime = 0.0 # [ToDo]
+    eventInfo.nextEventTime = 0.0 # [ToDo] support for time events
     unsafe_store!(_fmi2eventInfo, eventInfo)
 
     # reset 
@@ -937,11 +907,11 @@ end
     eventFct                    # (t, xc, ẋc, xd, u, p) -> e
 """
 function fmi2CreateSimple(;
-    initializationFct=nothing,
-    evaluationFct=nothing,
-    outputFct=nothing,
-    eventFct=nothing,
-    type=fmi2TypeModelExchange,
+    initializationFct = nothing,
+    evaluationFct = nothing,
+    outputFct = nothing,
+    eventFct = nothing,
+    type = fmi2TypeModelExchange,
 )
 
     global FMIBUILD_FMU
@@ -958,7 +928,7 @@ function fmi2CreateSimple(;
     global FMU_NUM_EVENTS
     global FMU_NUM_PARAMETERS
 
-    FMIBUILD_FMU = fmi2Create(; type=type)
+    FMIBUILD_FMU = fmi2Create(; type = type)
 
     FMU_FCT_INIT = initializationFct
     FMU_FCT_EVALUATE = evaluationFct
