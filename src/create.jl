@@ -6,7 +6,7 @@
 """ 
 ToDo
 """
-function createFMU2(modelName::String=""; type=fmi2TypeModelExchange)
+function createFMU2(modelName::String = ""; type = fmi2TypeModelExchange)
     fmu = FMU2()
 
     fmu.modelName = modelName
@@ -22,7 +22,7 @@ export createFMU2
 """ 
 ToDo
 """
-function createFMU2Embedded(fmu::FMU; type=fmi2TypeModelExchange)
+function createFMU2Embedded(fmu::FMU; type = fmi2TypeModelExchange)
     global FMIBUILD_FMU
 
     FMIBUILD_FMU = fmu

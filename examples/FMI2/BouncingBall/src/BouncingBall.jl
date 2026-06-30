@@ -170,12 +170,7 @@ FMIBUILD_CONSTRUCTOR = function (resPath = "")
 
     # parameters [5]
     addRealParameter(fmu, "m"; start = DEFAULT_PARAMS[1], description = "Mass of ball")
-    addRealParameter(
-        fmu,
-        "r";
-        start = DEFAULT_PARAMS[2],
-        description = "Radius of ball",
-    )
+    addRealParameter(fmu, "r"; start = DEFAULT_PARAMS[2], description = "Radius of ball")
     addRealParameter(
         fmu,
         "d";
@@ -188,12 +183,7 @@ FMIBUILD_CONSTRUCTOR = function (resPath = "")
         start = DEFAULT_PARAMS[4],
         description = "Minimal ball velocity to enter on-ground-state",
     )
-    addRealParameter(
-        fmu,
-        "g";
-        start = DEFAULT_PARAMS[5],
-        description = "Gravity constant",
-    )
+    addRealParameter(fmu, "g"; start = DEFAULT_PARAMS[5], description = "Gravity constant")
 
     addEventIndicator(fmu)
 

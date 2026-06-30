@@ -3,12 +3,13 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-using FMIBase.EzXML
+using FMIImport.FMIBase.EzXML
 import UUIDs
 import Dates
 
-import FMIBase.FMICore: fmi2ModelDescriptionModelExchange, fmi2ModelDescriptionCoSimulation
-import FMIBase.FMICore:
+import FMIImport.FMIBase.FMICore:
+    fmi2ModelDescriptionModelExchange, fmi2ModelDescriptionCoSimulation
+import FMIImport.FMIBase.FMICore:
     fmi2RealAttributesExt,
     fmi2IntegerAttributesExt,
     fmi2BooleanAttributesExt,
@@ -27,10 +28,7 @@ function createModelDescription(::FMU2)
 end
 export createModelDescription
 
-function addModelExchange(
-    md::fmi2ModelDescription,
-    modelIdentifier::String=md.modelName,
-)
+function addModelExchange(md::fmi2ModelDescription, modelIdentifier::String = md.modelName)
     if isnothing(md.modelExchange)
         md.modelExchange = fmi2ModelDescriptionModelExchange()
     end
@@ -44,13 +42,13 @@ export addModelExchange
 
 function addCoSimulation(
     md::fmi2ModelDescription,
-    modelIdentifier::String=md.modelName;
-    canHandleVariableCommunicationStepSize::Union{Bool,Nothing}=true,
-    canInterpolateInputs::Union{Bool,Nothing}=nothing,
-    maxOutputDerivativeOrder::Union{UInt,Nothing}=nothing,
-    canGetAndSetFMUstate::Union{Bool,Nothing}=false,
-    canSerializeFMUstate::Union{Bool,Nothing}=false,
-    providesDirectionalDerivative::Union{Bool,Nothing}=false,
+    modelIdentifier::String = md.modelName;
+    canHandleVariableCommunicationStepSize::Union{Bool,Nothing} = true,
+    canInterpolateInputs::Union{Bool,Nothing} = nothing,
+    maxOutputDerivativeOrder::Union{UInt,Nothing} = nothing,
+    canGetAndSetFMUstate::Union{Bool,Nothing} = false,
+    canSerializeFMUstate::Union{Bool,Nothing} = false,
+    providesDirectionalDerivative::Union{Bool,Nothing} = false,
 )
     if isnothing(md.coSimulation)
         md.coSimulation = fmi2ModelDescriptionCoSimulation()
@@ -74,36 +72,30 @@ export addCoSimulation
 function addEvent(md::fmi2ModelDescription)
     md.numberOfEventIndicators += 1
 end
-addEvent(fmu::FMU2, args...; kwargs...) =
-    addEvent(fmu.modelDescription, args...; kwargs...)
+addEvent(fmu::FMU2, args...; kwargs...) = addEvent(fmu.modelDescription, args...; kwargs...)
 export addEvent
 
-function fmi2GetIndexOfScalarVariable(md::fmi2ModelDescription, sv::fmi2ScalarVariable)
+function getIndexOfScalarVariable(md::fmi2ModelDescription, sv::fmi2ScalarVariable)
     for i = 1:length(md.modelVariables)
         if md.modelVariables[i] == sv
             return UInt(i)
         end
     end
-    @assert false "fmi2GetIndexOfScalarVariable(...): Scalar variable is not part of the model variables."
+    @assert false "getIndexOfScalarVariable(...): Scalar variable is not part of the model variables."
 end
-export fmi2GetIndexOfScalarVariable
+export getIndexOfScalarVariable
 
 function addRealState(
     md::fmi2ModelDescription,
     name::String;
-    start::Union{Real,Nothing}=nothing,
+    start::Union{Real,Nothing} = nothing,
     kwargs...,
 )
 
     _Real = fmi2RealAttributesExt()
     _Real.start = start
-    sv = addModelVariable(
-        md,
-        name;
-        attribute=_Real,
-        initial=fmi2InitialExact,
-        kwargs...,
-    )
+    sv =
+        addModelVariable(md, name; attribute = _Real, initial = fmi2InitialExact, kwargs...)
 
     push!(md.stateValueReferences, sv.valueReference)
     push!(md.stringValueReferences, sv.name => sv.valueReference)
@@ -117,8 +109,8 @@ export addRealState
 function addRealDerivative(
     md::fmi2ModelDescription,
     name::String;
-    start::Union{Real,Nothing}=nothing,
-    derivative::Union{UInt,Nothing}=nothing,
+    start::Union{Real,Nothing} = nothing,
+    derivative::Union{UInt,Nothing} = nothing,
     kwargs...,
 )
 
@@ -126,8 +118,8 @@ function addRealDerivative(
     _Real.start = start
     _Real.derivative = derivative
 
-    sv = addModelVariable(md, name; attribute=_Real, kwargs...)
-    index = fmi2GetIndexOfScalarVariable(md, sv)
+    sv = addModelVariable(md, name; attribute = _Real, kwargs...)
+    index = getIndexOfScalarVariable(md, sv)
 
     addModelStructureDerivatives(md, index)
     addModelStructureInitialUnknowns(md, index)
@@ -144,27 +136,22 @@ export addRealDerivative
 function addRealStateAndDerivative(
     md::fmi2ModelDescription,
     stateName::String,
-    derivativeName::String="der(" * stateName * ")";
-    stateDescr::Union{String,Nothing}=nothing,
-    derivativeDescr::Union{String,Nothing}=nothing,
-    stateStart::Union{Real,Nothing}=nothing,
-    derivativeStart::Union{Real,Nothing}=nothing,
+    derivativeName::String = "der(" * stateName * ")";
+    stateDescr::Union{String,Nothing} = nothing,
+    derivativeDescr::Union{String,Nothing} = nothing,
+    stateStart::Union{Real,Nothing} = nothing,
+    derivativeStart::Union{Real,Nothing} = nothing,
 )
 
-    state = addRealState(
-        md,
-        stateName;
-        description=stateDescr,
-        start=stateStart,
-    )
-    stateIndex = fmi2GetIndexOfScalarVariable(md, state)
+    state = addRealState(md, stateName; description = stateDescr, start = stateStart)
+    stateIndex = getIndexOfScalarVariable(md, state)
 
     derivative = addRealDerivative(
         md,
         derivativeName;
-        derivative=stateIndex,
-        description=derivativeDescr,
-        start=derivativeStart,
+        derivative = stateIndex,
+        description = derivativeDescr,
+        start = derivativeStart,
     )
 
     return state, derivative
@@ -177,7 +164,7 @@ export addRealStateAndDerivative, addStateAndDerivative
 function addRealInput(
     md::fmi2ModelDescription,
     name::String;
-    start::Union{Real,Nothing}=nothing,
+    start::Union{Real,Nothing} = nothing,
     kwargs...,
 )
 
@@ -187,8 +174,8 @@ function addRealInput(
     sv = addModelVariable(
         md,
         name;
-        attribute=_Real,
-        causality=fmi2CausalityInput,
+        attribute = _Real,
+        causality = fmi2CausalityInput,
         kwargs...,
     )
 
@@ -205,7 +192,7 @@ export addRealInput, addInput
 function addRealOutput(
     md::fmi2ModelDescription,
     name::String;
-    start::Union{Real,Nothing}=nothing,
+    start::Union{Real,Nothing} = nothing,
     kwargs...,
 )
 
@@ -215,11 +202,11 @@ function addRealOutput(
     sv = addModelVariable(
         md,
         name;
-        attribute=_Real,
-        causality=fmi2CausalityOutput,
+        attribute = _Real,
+        causality = fmi2CausalityOutput,
         kwargs...,
     )
-    index = fmi2GetIndexOfScalarVariable(md, sv)
+    index = getIndexOfScalarVariable(md, sv)
 
     addModelStructureOutputs(md, index)
     addModelStructureInitialUnknowns(md, index)
@@ -237,8 +224,8 @@ export addRealOutput, addOutput
 function addRealParameter(
     md::fmi2ModelDescription,
     name::String;
-    start::Union{Real,Nothing}=nothing,
-    variability::fmi2Variability=fmi2VariabilityFixed,
+    start::Union{Real,Nothing} = nothing,
+    variability::fmi2Variability = fmi2VariabilityFixed,
     kwargs...,
 )
 
@@ -248,9 +235,9 @@ function addRealParameter(
     sv = addModelVariable(
         md,
         name;
-        attribute=_Real,
-        causality=fmi2CausalityParameter,
-        variability=variability,
+        attribute = _Real,
+        causality = fmi2CausalityParameter,
+        variability = variability,
         kwargs...,
     )
 
@@ -267,7 +254,7 @@ export addRealParameter, addParameter
 function addIntegerDiscreteState(
     md::fmi2ModelDescription,
     name::String;
-    start::Union{Real,Nothing}=nothing,
+    start::Union{Real,Nothing} = nothing,
     kwargs...,
 )
 
@@ -277,8 +264,8 @@ function addIntegerDiscreteState(
     sv = addModelVariable(
         md,
         name;
-        attribute=_Integer,
-        variability=fmi2VariabilityDiscrete,
+        attribute = _Integer,
+        variability = fmi2VariabilityDiscrete,
         kwargs...,
     )
 
@@ -307,13 +294,13 @@ Nothing = Skip entry
 function addModelVariable(
     md::fmi2ModelDescription,
     name::String;
-    description::Union{String,Nothing}=nothing,
-    valueReference::Union{fmi2ValueReference,Symbol}=:auto,
-    causality::Union{fmi2Causality,Nothing}=nothing,
-    variability::Union{fmi2Variability,Nothing}=nothing,
-    initial::Union{fmi2Initial,Nothing}=nothing,
-    canHandleMultipleSetPerTimeInstant::Union{Bool,Nothing}=nothing,
-    attribute::Union{FMI2_SCALAR_VARIABLE_ATTRIBUTE_STRUCT,Nothing}=nothing,
+    description::Union{String,Nothing} = nothing,
+    valueReference::Union{fmi2ValueReference,Symbol} = :auto,
+    causality::Union{fmi2Causality,Nothing} = nothing,
+    variability::Union{fmi2Variability,Nothing} = nothing,
+    initial::Union{fmi2Initial,Nothing} = nothing,
+    canHandleMultipleSetPerTimeInstant::Union{Bool,Nothing} = nothing,
+    attribute::Union{FMI2_SCALAR_VARIABLE_ATTRIBUTE_STRUCT,Nothing} = nothing,
 )
 
     if valueReference === :auto
@@ -338,8 +325,8 @@ Nothing = Skip entry
 function addModelStructureOutputs(
     md::fmi2ModelDescription,
     index::UInt;
-    dependencies::Union{Array{UInt,1},Nothing}=nothing,
-    dependenciesKind::Union{Array{fmi2DependencyKind,1},Nothing}=nothing,
+    dependencies::Union{Array{UInt,1},Nothing} = nothing,
+    dependenciesKind::Union{Array{fmi2DependencyKind,1},Nothing} = nothing,
 )
 
     sd = fmi2VariableDependency(index)
@@ -362,8 +349,8 @@ Nothing = Skip entry
 function addModelStructureDerivatives(
     md::fmi2ModelDescription,
     index::UInt;
-    dependencies::Union{Array{UInt,1},Nothing}=nothing,
-    dependenciesKind::Union{Array{fmi2DependencyKind,1},Nothing}=nothing,
+    dependencies::Union{Array{UInt,1},Nothing} = nothing,
+    dependenciesKind::Union{Array{fmi2DependencyKind,1},Nothing} = nothing,
 )
 
     sd = fmi2VariableDependency(index)
@@ -386,8 +373,8 @@ Nothing = Skip entry
 function addModelStructureInitialUnknowns(
     md::fmi2ModelDescription,
     index::UInt;
-    dependencies::Union{Array{UInt,1},Nothing}=nothing,
-    dependenciesKind::Union{Array{fmi2DependencyKind,1},Nothing}=nothing,
+    dependencies::Union{Array{UInt,1},Nothing} = nothing,
+    dependenciesKind::Union{Array{fmi2DependencyKind,1},Nothing} = nothing,
 )
 
     sd = fmi2VariableDependency(index)

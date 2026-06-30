@@ -6,8 +6,8 @@
 module FMIExport
 
 using FMIImport.FMIBase
-using FMIBase.FMICore
-using FMIBase.FMICore: FMI2_SCALAR_VARIABLE_ATTRIBUTE_STRUCT
+using FMIImport.FMIBase.FMICore
+using FMIImport.FMIBase.FMICore: FMI2_SCALAR_VARIABLE_ATTRIBUTE_STRUCT
 import FMIImport
 import OrdinaryDiffEq
 

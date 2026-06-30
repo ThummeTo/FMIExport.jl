@@ -53,7 +53,7 @@ function reset(_component::fmi2Component)
     applyValues(component.addr, xc, ẋc, xd, u, y, p)
 end
 
-function evaluate(_component::fmi2Component, eventMode=false)
+function evaluate(_component::fmi2Component, eventMode = false)
     component = dereferenceInstance(_component)
 
     # eventMode = component.state == fmi2ComponentStateEventMode
@@ -312,14 +312,14 @@ function simple_fmi2SetupExperiment(
         component.fmu,
         component,
         :ME;
-        t_start=tspan[1],
-        t_stop=tspan[end],
-        tolerance=toleranceValue,
-        instantiate=false,
-        freeInstance=false,
-        terminate=false,
-        reset=false,
-        setup=false,
+        t_start = tspan[1],
+        t_stop = tspan[end],
+        tolerance = toleranceValue,
+        instantiate = false,
+        freeInstance = false,
+        terminate = false,
+        reset = false,
+        setup = false,
     )
     #component.t = tspan[1]
 
@@ -443,7 +443,7 @@ function simple_fmi2DoStep(
         component.solution.states = FMIBase.SciMLBase.solve(
             component.problem,
             OrdinaryDiffEq.Tsit5(); # ToDo: Make this a field of the FMUXInstance, to allow for other solvers.
-            callback=FMIBase.SciMLBase.CallbackSet(component.callback...),
+            callback = FMIBase.SciMLBase.CallbackSet(component.callback...),
             solveKwargs...,
         )
     finally
@@ -914,11 +914,11 @@ end
     eventFct                    # (t, xc, ẋc, xd, u, p) -> e
 """
 function createFMU2Simple(;
-    initializationFct=nothing,
-    evaluationFct=nothing,
-    outputFct=nothing,
-    eventFct=nothing,
-    type=fmi2TypeModelExchange,
+    initializationFct = nothing,
+    evaluationFct = nothing,
+    outputFct = nothing,
+    eventFct = nothing,
+    type = fmi2TypeModelExchange,
 )
 
     global FMIBUILD_FMU
@@ -935,7 +935,7 @@ function createFMU2Simple(;
     global FMU_NUM_EVENTS
     global FMU_NUM_PARAMETERS
 
-    FMIBUILD_FMU = createFMU2(; type=type)
+    FMIBUILD_FMU = createFMU2(; type = type)
 
     FMU_FCT_INIT = initializationFct
     FMU_FCT_EVALUATE = evaluationFct
@@ -953,6 +953,7 @@ function createFMU2Simple(;
     FMU_NUM_EVENTS = length(e)
     FMU_NUM_PARAMETERS = length(p)
 
+    # ToDo: only register subset of function pointers depending on the FMU type (ME or CS).
     setFctGetVersion(FMIBUILD_FMU, simple_fmi2GetVersion)
     setFctGetTypesPlatform(FMIBUILD_FMU, simple_fmi2GetTypesPlatform)
     setFctInstantiate(FMIBUILD_FMU, simple_fmi2Instantiate)
