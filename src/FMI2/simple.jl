@@ -913,7 +913,7 @@ end
     outputFct                   # (t, xc, ẋc, xd, u, p) -> y
     eventFct                    # (t, xc, ẋc, xd, u, p) -> e
 """
-function fmi2CreateSimple(;
+function createFMU2Simple(;
     initializationFct=nothing,
     evaluationFct=nothing,
     outputFct=nothing,
@@ -997,4 +997,4 @@ function fmi2CreateSimple(;
 
     return FMIBUILD_FMU
 end
-export fmi2CreateSimple
+export createFMU2Simple

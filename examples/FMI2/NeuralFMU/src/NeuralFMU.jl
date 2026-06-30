@@ -11,7 +11,7 @@ using FMIExport:
     setFctSetTime,
     setFctSetContinuousStates
 using FMIExport: createFMU2Embedded
-using FMIExport: fmi2AddRealParameter
+using FMIExport: addRealParameter
 using FMIExport.FMIBase.FMICore: fmi2Real, fmi2Component, fmi2StatusOK, fmi2ValueReference
 using FMIExport.FMIBase.FMICore:
     fmi2CausalityParameter, fmi2VariabilityTunable, fmi2InitialExact
@@ -398,7 +398,7 @@ FMIBUILD_CONSTRUCTOR = function (resPath)
         if isa(model[l], Dense)
             for i = 1:size(model[l].W)[1]
                 for j = 1:size(model[l].W)[2]
-                    fmi2AddRealParameter(
+                    addRealParameter(
                         fmu,
                         "layer$(l)_W$(i)_$(j)";
                         description = "ANN parameter in layer $l for weight matrix entry [$i,$j]",
@@ -411,7 +411,7 @@ FMIBUILD_CONSTRUCTOR = function (resPath)
                     push!(ANN_PARAMETERS, vr)
                     vr += fmi2ValueReference(1)
                 end
-                fmi2AddRealParameter(
+                addRealParameter(
                     fmu,
                     "layer$(l)_b$(i)";
                     description = "ANN parameter in layer $l for bias vector entry [$i]",

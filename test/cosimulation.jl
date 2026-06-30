@@ -5,15 +5,15 @@ evalf(t, xc, xcdot, xd, u, p, eventMode) = (xc, [2.0], xd, p)
 outf(t, xc, xcdot, xd, u, p) = xc
 eventf(t, xc, xcdot, xd, u, p) = Float64[]
 
-fmu = fmi2CreateSimple(
+fmu = createFMU2Simple(
     initializationFct = init,
     evaluationFct = evalf,
     outputFct = outf,
     eventFct = eventf,
     type = FC.fmi2TypeCoSimulation,
 )
-fmi2AddStateAndDerivative(fmu, "x")
-fmi2AddOutput(fmu, "y")
+addStateAndDerivative(fmu, "x")
+addOutput(fmu, "y")
 
 callbacks = FC.fmi2CallbackFunctions(C_NULL, C_NULL, C_NULL, C_NULL, C_NULL)
 callbacks_ref = Ref(callbacks)

@@ -4,35 +4,35 @@
 #
 using FMIExport.FMICore: fmi2ScalarVariable
 
-md = createModelDescription()
-var = fmi2ModelDescriptionAddRealStateAndDerivative(md, "mass.s")
+fmu = createFMU2(; type = FMIExport.FMICore.fmi2TypeCoSimulation)
+md = createModelDescription(fmu)
+var = addRealStateAndDerivative(md, "mass.s")
 @test typeof(var) == Tuple{fmi2ScalarVariable,fmi2ScalarVariable}
 @test var[1].name == "mass.s"
 @test var[1].valueReference == 1
 @test var[2].name == "der(mass.s)"
 @test var[2].valueReference == 2
 
-var = fmi2ModelDescriptionAddRealStateAndDerivative(md, "mass.v")
+var = addRealStateAndDerivative(md, "mass.v")
 @test typeof(var) == Tuple{fmi2ScalarVariable,fmi2ScalarVariable}
 @test var[1].name == "mass.v"
 @test var[1].valueReference == 3
 @test var[2].name == "der(mass.v)"
 @test var[2].valueReference == 4
 
-var = fmi2ModelDescriptionAddRealOutput(md, "mass.f")
+var = addRealOutput(md, "mass.f")
 @test typeof(var) == fmi2ScalarVariable
 @test var.name == "mass.f"
 @test var.valueReference == 5
 
-cs = fmi2ModelDescriptionAddCoSimulation(md, "mass_cs")
+cs = addCoSimulation(md, "mass_cs")
 @test cs.modelIdentifier == "mass_cs"
 @test cs.canHandleVariableCommunicationStepSize == true
 @test cs.canGetAndSetFMUstate == false
 @test cs.canSerializeFMUstate == false
 @test cs.providesDirectionalDerivative == false
 
-fmu = createFMU2(; type = FMIExport.FMICore.fmi2TypeCoSimulation)
-cs = fmi2AddCoSimulation(fmu, "simple_cs"; canInterpolateInputs = false)
+cs = addCoSimulation(fmu, "simple_cs"; canInterpolateInputs = false)
 @test fmu.type == FMIExport.FMICore.fmi2TypeCoSimulation
 @test fmu.modelDescription.coSimulation === cs
 @test cs.modelIdentifier == "simple_cs"

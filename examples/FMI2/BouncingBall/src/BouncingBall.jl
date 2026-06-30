@@ -115,7 +115,7 @@ end
 # this function is called, as soon as the DLL is loaded and Julia is initialized 
 # must return a FMU2-instance to work with
 FMIBUILD_CONSTRUCTOR = function (resPath = "")
-    fmu = fmi2CreateSimple(
+    fmu = createFMU2Simple(
         initializationFct = FMU_FCT_INIT,
         evaluationFct = FMU_FCT_EVALUATE,
         outputFct = FMU_FCT_OUTPUT,
@@ -125,18 +125,18 @@ FMIBUILD_CONSTRUCTOR = function (resPath = "")
     fmu.modelDescription.modelName = "BouncingBall"
 
     # modes 
-    fmi2ModelDescriptionAddModelExchange(fmu.modelDescription)
-    fmi2ModelDescriptionAddCoSimulation(fmu.modelDescription)
+    addModelExchange(fmu.modelDescription)
+    addCoSimulation(fmu.modelDescription)
 
     # states [2]
-    fmi2AddStateAndDerivative(
+    addStateAndDerivative(
         fmu,
         "ball.s";
         stateStart = DEFAULT_X0[1],
         stateDescr = "Absolute position of ball center of mass",
         derivativeDescr = "Absolute velocity of ball center of mass",
     )
-    fmi2AddStateAndDerivative(
+    addStateAndDerivative(
         fmu,
         "ball.v";
         stateStart = DEFAULT_X0[2],
@@ -145,57 +145,57 @@ FMIBUILD_CONSTRUCTOR = function (resPath = "")
     )
 
     # discrete state [2]
-    fmi2AddIntegerDiscreteState(
+    addIntegerDiscreteState(
         fmu,
         "sticking";
         description = "Indicator (boolean) if the mass is sticking on the ground, as soon as abs(v) < v_min",
     )
-    fmi2AddIntegerDiscreteState(
+    addIntegerDiscreteState(
         fmu,
         "counter";
         description = "Number of collision with the floor.",
     )
 
     # outputs [2]
-    fmi2AddRealOutput(
+    addRealOutput(
         fmu,
         "ball.s_out";
         description = "Absolute position of ball center of mass",
     )
-    fmi2AddRealOutput(
+    addRealOutput(
         fmu,
         "ball.v_out";
         description = "Absolute velocity of ball center of mass",
     )
 
     # parameters [5]
-    fmi2AddRealParameter(fmu, "m"; start = DEFAULT_PARAMS[1], description = "Mass of ball")
-    fmi2AddRealParameter(
+    addRealParameter(fmu, "m"; start = DEFAULT_PARAMS[1], description = "Mass of ball")
+    addRealParameter(
         fmu,
         "r";
         start = DEFAULT_PARAMS[2],
         description = "Radius of ball",
     )
-    fmi2AddRealParameter(
+    addRealParameter(
         fmu,
         "d";
         start = DEFAULT_PARAMS[3],
         description = "Collision damping constant (velocity fraction after hitting the ground)",
     )
-    fmi2AddRealParameter(
+    addRealParameter(
         fmu,
         "v_min";
         start = DEFAULT_PARAMS[4],
         description = "Minimal ball velocity to enter on-ground-state",
     )
-    fmi2AddRealParameter(
+    addRealParameter(
         fmu,
         "g";
         start = DEFAULT_PARAMS[5],
         description = "Gravity constant",
     )
 
-    fmi2AddEventIndicator(fmu)
+    addEventIndicator(fmu)
 
     return fmu
 end
