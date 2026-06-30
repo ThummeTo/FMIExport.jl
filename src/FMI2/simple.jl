@@ -293,6 +293,11 @@ function simple_fmi2SetDebugLogging(
     return fmi2StatusOK
 end
 
+const FMIIMPORT_CS_ERROR = "FMIImport required for CS FMU export. Load it first with `using FMIImport`."
+
+_prepare_cs_fmu(args...; kwargs...) = throw(ArgumentError(FMIIMPORT_CS_ERROR))
+_enable_cs_export(args...) = throw(ArgumentError(FMIIMPORT_CS_ERROR))
+
 function simple_fmi2SetupExperiment(
     _component::fmi2Component,
     toleranceDefined::fmi2Boolean,
@@ -308,7 +313,7 @@ function simple_fmi2SetupExperiment(
     tspan = (Float64(startTime), Float64(t_stop))
     toleranceValue = toleranceDefined == fmi2True ? tolerance : nothing
 
-    component, x0 = FMIImport.prepareSolveFMU(
+    component, x0 = _prepare_cs_fmu(
         component.fmu,
         component,
         :ME;
@@ -936,6 +941,10 @@ function createFMU2Simple(;
     global FMU_NUM_PARAMETERS
 
     FMIBUILD_FMU = createFMU2(; type = type)
+
+    if type == fmi2TypeCoSimulation
+        _enable_cs_export(FMIBUILD_FMU)
+    end
 
     FMU_FCT_INIT = initializationFct
     FMU_FCT_EVALUATE = evaluationFct

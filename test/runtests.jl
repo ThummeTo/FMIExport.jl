@@ -288,6 +288,10 @@ end
             include("model_description.jl")
         end
 
+        @testset "Optional FMIImport dependency" begin
+            include("optional_fmiimport.jl")
+        end
+
         @testset "Co-Simulation" begin
             include("cosimulation.jl")
         end

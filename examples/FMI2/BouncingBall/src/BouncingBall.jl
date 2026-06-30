@@ -7,6 +7,7 @@
 # https://github.com/modelica/Reference-FMUs/blob/main/BouncingBall/model.c
 
 using FMIExport
+using FMIImport
 using FMIExport.FMIBase.FMICore: fmi2True, fmi2False, fmi2Integer
 
 # a minimum height to reset the ball after event

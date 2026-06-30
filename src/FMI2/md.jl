@@ -3,13 +3,12 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-using FMIImport.FMIBase.EzXML
+using FMIBase.EzXML
 import UUIDs
 import Dates
 
-import FMIImport.FMIBase.FMICore:
-    fmi2ModelDescriptionModelExchange, fmi2ModelDescriptionCoSimulation
-import FMIImport.FMIBase.FMICore:
+import FMIBase.FMICore: fmi2ModelDescriptionModelExchange, fmi2ModelDescriptionCoSimulation
+import FMIBase.FMICore:
     fmi2RealAttributesExt,
     fmi2IntegerAttributesExt,
     fmi2BooleanAttributesExt,
