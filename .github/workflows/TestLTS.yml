@@ -22,6 +22,10 @@ jobs:
         julia-arch: [x64]
         os: [windows-latest, ubuntu-latest]
         experimental: [false]
+        test-group: [core, bouncing-ball, manipulation, neural-fmu]
+
+    env:
+      FMIEXPORT_TEST_GROUP: ${{ matrix.test-group }}
 
     steps:
       # Checks-out your repository

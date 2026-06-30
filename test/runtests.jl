@@ -284,28 +284,40 @@ end
     if Sys.iswindows() || Sys.islinux()
         @info "Automated testing is supported on Windows/Linux"
 
-        @testset "Model Description" begin
-            include("model_description.jl")
+        test_group = get(ENV, "FMIEXPORT_TEST_GROUP", "all")
+        valid_test_groups = ("all", "core", "bouncing-ball", "manipulation", "neural-fmu")
+        @assert test_group in valid_test_groups "Unknown FMIEXPORT_TEST_GROUP: $(test_group)"
+
+        if test_group in ("all", "core")
+            @testset "Model Description" begin
+                include("model_description.jl")
+            end
+
+            @testset "Optional FMIImport dependency" begin
+                include("optional_fmiimport.jl")
+            end
+
+            @testset "Co-Simulation" begin
+                include("cosimulation.jl")
+            end
         end
 
-        @testset "Optional FMIImport dependency" begin
-            include("optional_fmiimport.jl")
+        if test_group in ("all", "bouncing-ball")
+            @testset "Bouncing Ball" begin
+                include(joinpath("bouncing_ball", "bouncing_ball.jl"))
+            end
         end
 
-        @testset "Co-Simulation" begin
-            include("cosimulation.jl")
+        if test_group in ("all", "manipulation")
+            @testset "FMU Manipulation" begin
+                include(joinpath("manipulation", "manipulation.jl"))
+            end
         end
 
-        @testset "Bouncing Ball" begin
-            include(joinpath("bouncing_ball", "bouncing_ball.jl"))
-        end
-
-        @testset "FMU Manipulation" begin
-            include(joinpath("manipulation", "manipulation.jl"))
-        end
-
-        @testset "Neural FMU" begin
-            include(joinpath("neuralFMU", "neuralFMU.jl"))
+        if test_group in ("all", "neural-fmu")
+            @testset "Neural FMU" begin
+                include(joinpath("neuralFMU", "neuralFMU.jl"))
+            end
         end
 
     elseif Sys.isapple()
