@@ -43,22 +43,15 @@ jobs:
       - name: Set up julia-cache
         uses: julia-actions/cache@v3
 
-     # Set up cache
-      - name: "Set up cache"
-        uses: actions/cache@v5
-        env:
-          cache-name: cache-artifacts
-        with:
-          path: ~/.julia/artifacts
-          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-test-${{ env.cache-name }}-
-            ${{ runner.os }}-test-
-            ${{ runner.os }}-
-
       # Build package
       - name: "Build package"
         uses: julia-actions/julia-buildpkg@v1
+
+      - name: "Report disk usage"
+        if: runner.os == 'Linux'
+        run: |
+          df -h
+          du -sh ~/.julia ~/.julia/artifacts || true
 
       # Run the tests
       - name: "Run tests"
