@@ -108,6 +108,7 @@ saveFMU(
     fmu,
     fmu_save_path;
     resources = Dict(sourceFMU => "SpringDamperPendulum1D.fmu"),
+    cpu_target = "generic", # portable and substantially lighter to compile
     debug = true, # (debug=true allows debug messages, but is slow during execution!)
 )
 unloadFMU(fmu)

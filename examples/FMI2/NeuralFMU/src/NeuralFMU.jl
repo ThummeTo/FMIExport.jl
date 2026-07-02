@@ -473,6 +473,7 @@ saveFMU(
     fmu,
     fmu_save_path;
     compress = false,
+    cpu_target = "generic", # portable and substantially lighter to compile
     debug = true, # (debug=true allows debug messages, but is slow during execution!)
     resources = Dict(sourceFMU => "SpringDamperPendulum1D.fmu"),
 )
