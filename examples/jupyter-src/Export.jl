@@ -4,15 +4,17 @@
 #
 
 using FMIExport
+using FMIImport
 using FMIExport.FMIBase.FMICore: fmi2True, fmi2False, fmi2Integer
 
 # a minimum height to reset the ball after event
-EPS = 1e-8
+const EPS = 1e-8
 
 # ball position, velocity (initial)
-DEFAULT_X0 = [1.0, 0.0]
+const DEFAULT_X0 = [1.0, 0.0]
+
 # ball mass, ball radius, ball collision damping, ball minimum velocity, gravity constant 
-DEFAULT_PARAMS = [1.0, 0.1, 0.9, 1e-3, 9.81]
+const DEFAULT_PARAMS = [1.0, 0.1, 0.9, 1e-3, 9.81]
 
 FMU_FCT_INIT = function()
    
@@ -110,36 +112,36 @@ FMU_FCT_OUTPUT = function(t, x_c, ẋ_c, x_d, u, p)
 end
 
 FMIBUILD_CONSTRUCTOR = function(resPath="")
-    fmu = fmi2CreateSimple(initializationFct=FMU_FCT_INIT,
+    fmu = createFMU2Simple("BouncingBall";
+                        initializationFct=FMU_FCT_INIT,
                         evaluationFct=FMU_FCT_EVALUATE,
                         outputFct=FMU_FCT_OUTPUT,
                         eventFct=FMU_FCT_EVENT)
 
-    fmu.modelDescription.modelName = "BouncingBall"
-
     # modes 
-    fmi2ModelDescriptionAddModelExchange(fmu.modelDescription, "BouncingBall")
+    addModelExchange(fmu)
+    addCoSimulation(fmu)
 
     # states [2]
-    fmi2AddStateAndDerivative(fmu, "ball.s"; stateStart=DEFAULT_X0[1], stateDescr="Absolute position of ball center of mass", derivativeDescr="Absolute velocity of ball center of mass")
-    fmi2AddStateAndDerivative(fmu, "ball.v"; stateStart=DEFAULT_X0[2], stateDescr="Absolute velocity of ball center of mass", derivativeDescr="Absolute acceleration of ball center of mass")
+    addStateAndDerivative(fmu, "ball.s"; stateStart=DEFAULT_X0[1], stateDescr="Absolute position of ball center of mass", derivativeDescr="Absolute velocity of ball center of mass")
+    addStateAndDerivative(fmu, "ball.v"; stateStart=DEFAULT_X0[2], stateDescr="Absolute velocity of ball center of mass", derivativeDescr="Absolute acceleration of ball center of mass")
 
     # discrete state [2]
-    fmi2AddIntegerDiscreteState(fmu, "sticking"; description="Indicator (boolean) if the mass is sticking on the ground, as soon as abs(v) < v_min")
-    fmi2AddIntegerDiscreteState(fmu, "counter"; description="Number of collision with the floor.")
+    addIntegerDiscreteState(fmu, "sticking"; description="Indicator (boolean) if the mass is sticking on the ground, as soon as abs(v) < v_min")
+    addIntegerDiscreteState(fmu, "counter"; description="Number of collision with the floor.")
 
     # outputs [2]
-    fmi2AddRealOutput(fmu, "ball.s_out"; description="Absolute position of ball center of mass")
-    fmi2AddRealOutput(fmu, "ball.v_out"; description="Absolute velocity of ball center of mass")
+    addRealOutput(fmu, "ball.s_out"; description="Absolute position of ball center of mass")
+    addRealOutput(fmu, "ball.v_out"; description="Absolute velocity of ball center of mass")
 
     # parameters [5]
-    fmi2AddRealParameter(fmu, "m";     start=DEFAULT_PARAMS[1], description="Mass of ball")
-    fmi2AddRealParameter(fmu, "r";     start=DEFAULT_PARAMS[2], description="Radius of ball")
-    fmi2AddRealParameter(fmu, "d";     start=DEFAULT_PARAMS[3], description="Collision damping constant (velocity fraction after hitting the ground)")
-    fmi2AddRealParameter(fmu, "v_min"; start=DEFAULT_PARAMS[4], description="Minimal ball velocity to enter on-ground-state")
-    fmi2AddRealParameter(fmu, "g";     start=DEFAULT_PARAMS[5], description="Gravity constant")
+    addRealParameter(fmu, "m";     start=DEFAULT_PARAMS[1], description="Mass of ball")
+    addRealParameter(fmu, "r";     start=DEFAULT_PARAMS[2], description="Radius of ball")
+    addRealParameter(fmu, "d";     start=DEFAULT_PARAMS[3], description="Collision damping constant (velocity fraction after hitting the ground)")
+    addRealParameter(fmu, "v_min"; start=DEFAULT_PARAMS[4], description="Minimal ball velocity to enter on-ground-state")
+    addRealParameter(fmu, "g";     start=DEFAULT_PARAMS[5], description="Gravity constant")
 
-    fmi2AddEventIndicator(fmu)
+    addEventIndicator(fmu)
 
     return fmu
 end
@@ -158,9 +160,11 @@ using FMIBuild: saveFMU                    # <= this must be excluded during exp
 # The following line is a end-marker for excluded code for the FMU compilation process!
 ### FMIBUILD_NO_EXPORT_END ###
 
-using FMI, DifferentialEquations
+using FMIImport, DifferentialEquations, Plots
 fmu.executionConfig.loggingOn = true
-solution = simulate(fmu, (0.0, 3.0); recordValues=["sticking", "counter"])
 
-using Plots
-plot(solution)
+solution = simulateME(fmu, (0.0, 3.0); recordValues=["ball.s", "counter"], saveat=0.0:0.01:3.0)
+plot(solution; states=false) # don't plot states
+
+solution = simulateCS(fmu, (0.0, 3.0); recordValues=["ball.s", "counter"], saveat=0.0:0.01:3.0)
+plot(solution; states=false)
