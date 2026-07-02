@@ -42,10 +42,10 @@ To keep dependencies nice and clean, the original package [*FMI.jl*](https://git
 - [*FMIZoo.jl*](https://github.com/ThummeTo/FMIZoo.jl): A collection of testing and example FMUs
 
 ## What Platforms are supported?
-[*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl) is tested (and testing) under Julia *v1.6 (LTS)* and *v1 (latest)* on Windows *latest*. `x64` architectures are tested. Ubuntu is under development and near completion.
+[*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl) is tested (and testing) under Julia *v1.10 (LTS)* and *v1 (latest)* on Windows *latest* and Ubuntu *latest*. `x64` architectures are tested. 
 
 ## Known limitations
-- Currently it is not possible to hold more than one sysimg in a Julia session, so it is not possible to load FMUs generated with [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl) into [*FMI.jl*](https://github.com/ThummeTo/FMI.jl) using `fmiLoad(...)`. However, FMUs created with `fmiCreate` can be used in [*FMI.jl*](https://github.com/ThummeTo/FMI.jl) without the need to export and re-import it, the FMU behaves like any other FMU loaded via `fmiLoad`.
+- Currently it is not possible to hold more than one sysimg in a Julia session, so it is not possible to load FMUs generated with [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl) into [*FMI.jl*](https://github.com/ThummeTo/FMI.jl) using `loadFMU(...)`. However, FMUs created with `createFMU{X}` can be used in [*FMI.jl*](https://github.com/ThummeTo/FMI.jl) without the need to export and re-import it, the FMU behaves like any other FMU loaded via `loadFMU`.
 
 ## How to cite?
 Tobias Thummerer, Johannes Stoljar and Lars Mikelsons. 2022. **NeuralFMU: presenting a workflow for integrating hybrid NeuralODEs into real-world applications.** Electronics 11, 19, 3202. [DOI: 10.3390/electronics11193202](https://doi.org/10.3390/electronics11193202)

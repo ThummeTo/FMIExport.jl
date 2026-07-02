@@ -5,13 +5,13 @@
 
 using FMIExport: Dense, Chain
 using FMIExport:
-    fmi2SetFctGetDerivatives,
-    fmi2SetFctGetReal,
-    fmi2SetFctSetReal,
-    fmi2SetFctSetTime,
-    fmi2SetFctSetContinuousStates
-using FMIExport: fmi2CreateEmbedded
-using FMIExport: fmi2AddRealParameter
+    setFctGetDerivatives,
+    setFctGetReal,
+    setFctSetReal,
+    setFctSetTime,
+    setFctSetContinuousStates
+using FMIExport: createFMU2Embedded
+using FMIExport: addRealParameter
 using FMIExport.FMIBase.FMICore: fmi2Real, fmi2Component, fmi2StatusOK, fmi2ValueReference
 using FMIExport.FMIBase.FMICore:
     fmi2CausalityParameter, fmi2VariabilityTunable, fmi2InitialExact
@@ -365,7 +365,7 @@ FMIBUILD_CONSTRUCTOR = function (resPath)
     fmu = loadFMU(joinpath(resPath, "SpringDamperPendulum1D.fmu"))
 
     # create a FMU that embedds the existing FMU
-    fmu = fmi2CreateEmbedded(fmu)
+    fmu = createFMU2Embedded(fmu)
 
     fmu.modelDescription.modelName = "NeuralFMU"
     fmu.modelDescription.modelExchange.modelIdentifier = "NeuralFMU"
@@ -384,11 +384,11 @@ FMIBUILD_CONSTRUCTOR = function (resPath)
     originalSetContinuousStates = fmu.cSetContinuousStates
 
     # now we overwrite the original functions
-    fmi2SetFctGetDerivatives(fmu, myGetDerivatives!)
-    fmi2SetFctGetReal(fmu, myGetReal!)
-    fmi2SetFctSetReal(fmu, mySetReal)
-    fmi2SetFctSetTime(fmu, mySetTime)
-    fmi2SetFctSetContinuousStates(fmu, mySetContinuousStates)
+    setFctGetDerivatives(fmu, myGetDerivatives!)
+    setFctGetReal(fmu, myGetReal!)
+    setFctSetReal(fmu, mySetReal)
+    setFctSetTime(fmu, mySetTime)
+    setFctSetContinuousStates(fmu, mySetContinuousStates)
 
     # additional parameters 
     ANN_PARAMETERS = Array{fmi2ValueReference,1}()
@@ -398,7 +398,7 @@ FMIBUILD_CONSTRUCTOR = function (resPath)
         if isa(model[l], Dense)
             for i = 1:size(model[l].W)[1]
                 for j = 1:size(model[l].W)[2]
-                    fmi2AddRealParameter(
+                    addRealParameter(
                         fmu,
                         "layer$(l)_W$(i)_$(j)";
                         description = "ANN parameter in layer $l for weight matrix entry [$i,$j]",
@@ -411,7 +411,7 @@ FMIBUILD_CONSTRUCTOR = function (resPath)
                     push!(ANN_PARAMETERS, vr)
                     vr += fmi2ValueReference(1)
                 end
-                fmi2AddRealParameter(
+                addRealParameter(
                     fmu,
                     "layer$(l)_b$(i)";
                     description = "ANN parameter in layer $l for bias vector entry [$i]",

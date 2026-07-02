@@ -15,7 +15,7 @@ import FMIBase.FMICore:
     fmi2StringAttributesExt,
     fmi2EnumerationAttributesExt
 
-function fmi2CreateModelDescription()
+function createModelDescription(::FMU2)
     md = fmi2ModelDescription()
     md.guid = UUIDs.uuid1()
     md.generationDateAndTime = Dates.now()
@@ -25,31 +25,66 @@ function fmi2CreateModelDescription()
 
     return md
 end
+export createModelDescription
 
-function fmi2ModelDescriptionAddModelExchange(
-    md::fmi2ModelDescription,
-    modelIdentifier::String,
-)
+function addModelExchange(md::fmi2ModelDescription, modelIdentifier::String = md.modelName)
     if isnothing(md.modelExchange)
         md.modelExchange = fmi2ModelDescriptionModelExchange()
     end
     md.modelExchange.modelIdentifier = modelIdentifier
 end
+# ToDo: this receipt could be for FMU instead of FMU2,
+# this should be changed for all receipts in this file.
+addModelExchange(fmu::FMU2, args...; kwargs...) =
+    addModelExchange(fmu.modelDescription, args...; kwargs...)
+export addModelExchange
 
-function fmi2ModelDescriptionAddEvent(md::fmi2ModelDescription)
+function addCoSimulation(
+    md::fmi2ModelDescription,
+    modelIdentifier::String = md.modelName;
+    canHandleVariableCommunicationStepSize::Union{Bool,Nothing} = true,
+    canInterpolateInputs::Union{Bool,Nothing} = nothing,
+    maxOutputDerivativeOrder::Union{UInt,Nothing} = nothing,
+    canGetAndSetFMUstate::Union{Bool,Nothing} = false,
+    canSerializeFMUstate::Union{Bool,Nothing} = false,
+    providesDirectionalDerivative::Union{Bool,Nothing} = false,
+)
+    if isnothing(md.coSimulation)
+        md.coSimulation = fmi2ModelDescriptionCoSimulation()
+    end
+
+    md.coSimulation.modelIdentifier = modelIdentifier
+    md.coSimulation.canHandleVariableCommunicationStepSize =
+        canHandleVariableCommunicationStepSize
+    md.coSimulation.canInterpolateInputs = canInterpolateInputs
+    md.coSimulation.maxOutputDerivativeOrder = maxOutputDerivativeOrder
+    md.coSimulation.canGetAndSetFMUstate = canGetAndSetFMUstate
+    md.coSimulation.canSerializeFMUstate = canSerializeFMUstate
+    md.coSimulation.providesDirectionalDerivative = providesDirectionalDerivative
+
+    return md.coSimulation
+end
+addCoSimulation(fmu::FMU2, args...; kwargs...) =
+    addCoSimulation(fmu.modelDescription, args...; kwargs...)
+export addCoSimulation
+
+function addEvent(md::fmi2ModelDescription)
     md.numberOfEventIndicators += 1
 end
+addEvent(fmu::FMU2, args...; kwargs...) = addEvent(fmu.modelDescription, args...; kwargs...)
+export addEvent
 
-function fmi2GetIndexOfScalarVariable(md::fmi2ModelDescription, sv::fmi2ScalarVariable)
+function getIndexOfScalarVariable(md::fmi2ModelDescription, sv::fmi2ScalarVariable)
     for i = 1:length(md.modelVariables)
         if md.modelVariables[i] == sv
             return UInt(i)
         end
     end
-    @assert false "fmi2GetIndexOfScalarVariable(...): Scalar variable is not part of the model variables."
+    @assert false "getIndexOfScalarVariable(...): Scalar variable is not part of the model variables."
 end
+export getIndexOfScalarVariable
 
-function fmi2ModelDescriptionAddRealState(
+function addRealState(
     md::fmi2ModelDescription,
     name::String;
     start::Union{Real,Nothing} = nothing,
@@ -58,21 +93,19 @@ function fmi2ModelDescriptionAddRealState(
 
     _Real = fmi2RealAttributesExt()
     _Real.start = start
-    sv = fmi2ModelDescriptionAddModelVariable(
-        md,
-        name;
-        attribute = _Real,
-        initial = fmi2InitialExact,
-        kwargs...,
-    )
+    sv =
+        addModelVariable(md, name; attribute = _Real, initial = fmi2InitialExact, kwargs...)
 
     push!(md.stateValueReferences, sv.valueReference)
     push!(md.stringValueReferences, sv.name => sv.valueReference)
 
     return sv
 end
+addRealState(fmu::FMU2, args...; kwargs...) =
+    addRealState(fmu.modelDescription, args...; kwargs...)
+export addRealState
 
-function fmi2ModelDescriptionAddRealDerivative(
+function addRealDerivative(
     md::fmi2ModelDescription,
     name::String;
     start::Union{Real,Nothing} = nothing,
@@ -84,19 +117,22 @@ function fmi2ModelDescriptionAddRealDerivative(
     _Real.start = start
     _Real.derivative = derivative
 
-    sv = fmi2ModelDescriptionAddModelVariable(md, name; attribute = _Real, kwargs...)
-    index = fmi2GetIndexOfScalarVariable(md, sv)
+    sv = addModelVariable(md, name; attribute = _Real, kwargs...)
+    index = getIndexOfScalarVariable(md, sv)
 
-    fmi2ModelDescriptionAddModelStructureDerivatives(md, index)
-    fmi2ModelDescriptionAddModelStructureInitialUnknowns(md, index)
+    addModelStructureDerivatives(md, index)
+    addModelStructureInitialUnknowns(md, index)
 
     push!(md.derivativeValueReferences, sv.valueReference)
     push!(md.stringValueReferences, sv.name => sv.valueReference)
 
     return sv
 end
+addRealDerivative(fmu::FMU2, args...; kwargs...) =
+    addRealDerivative(fmu.modelDescription, args...; kwargs...)
+export addRealDerivative
 
-function fmi2ModelDescriptionAddRealStateAndDerivative(
+function addRealStateAndDerivative(
     md::fmi2ModelDescription,
     stateName::String,
     derivativeName::String = "der(" * stateName * ")";
@@ -106,15 +142,10 @@ function fmi2ModelDescriptionAddRealStateAndDerivative(
     derivativeStart::Union{Real,Nothing} = nothing,
 )
 
-    state = fmi2ModelDescriptionAddRealState(
-        md,
-        stateName;
-        description = stateDescr,
-        start = stateStart,
-    )
-    stateIndex = fmi2GetIndexOfScalarVariable(md, state)
+    state = addRealState(md, stateName; description = stateDescr, start = stateStart)
+    stateIndex = getIndexOfScalarVariable(md, state)
 
-    derivative = fmi2ModelDescriptionAddRealDerivative(
+    derivative = addRealDerivative(
         md,
         derivativeName;
         derivative = stateIndex,
@@ -124,8 +155,12 @@ function fmi2ModelDescriptionAddRealStateAndDerivative(
 
     return state, derivative
 end
+addRealStateAndDerivative(fmu::FMU2, args...; kwargs...) =
+    addRealStateAndDerivative(fmu.modelDescription, args...; kwargs...)
+const addStateAndDerivative = addRealStateAndDerivative
+export addRealStateAndDerivative, addStateAndDerivative
 
-function fmi2ModelDescriptionAddRealInput(
+function addRealInput(
     md::fmi2ModelDescription,
     name::String;
     start::Union{Real,Nothing} = nothing,
@@ -135,7 +170,7 @@ function fmi2ModelDescriptionAddRealInput(
     _Real = fmi2RealAttributesExt()
     _Real.start = start
 
-    sv = fmi2ModelDescriptionAddModelVariable(
+    sv = addModelVariable(
         md,
         name;
         attribute = _Real,
@@ -148,8 +183,12 @@ function fmi2ModelDescriptionAddRealInput(
 
     return sv
 end
+addRealInput(fmu::FMU2, args...; kwargs...) =
+    addRealInput(fmu.modelDescription, args...; kwargs...)
+const addInput = addRealInput
+export addRealInput, addInput
 
-function fmi2ModelDescriptionAddRealOutput(
+function addRealOutput(
     md::fmi2ModelDescription,
     name::String;
     start::Union{Real,Nothing} = nothing,
@@ -159,25 +198,29 @@ function fmi2ModelDescriptionAddRealOutput(
     _Real = fmi2RealAttributesExt()
     _Real.start = start
 
-    sv = fmi2ModelDescriptionAddModelVariable(
+    sv = addModelVariable(
         md,
         name;
         attribute = _Real,
         causality = fmi2CausalityOutput,
         kwargs...,
     )
-    index = fmi2GetIndexOfScalarVariable(md, sv)
+    index = getIndexOfScalarVariable(md, sv)
 
-    fmi2ModelDescriptionAddModelStructureOutputs(md, index)
-    fmi2ModelDescriptionAddModelStructureInitialUnknowns(md, index)
+    addModelStructureOutputs(md, index)
+    addModelStructureInitialUnknowns(md, index)
 
     push!(md.outputValueReferences, sv.valueReference)
     push!(md.stringValueReferences, sv.name => sv.valueReference)
 
     return sv
 end
+addRealOutput(fmu::FMU2, args...; kwargs...) =
+    addRealOutput(fmu.modelDescription, args...; kwargs...)
+const addOutput = addRealOutput
+export addRealOutput, addOutput
 
-function fmi2ModelDescriptionAddRealParameter(
+function addRealParameter(
     md::fmi2ModelDescription,
     name::String;
     start::Union{Real,Nothing} = nothing,
@@ -188,7 +231,7 @@ function fmi2ModelDescriptionAddRealParameter(
     _Real = fmi2RealAttributesExt()
     _Real.start = start
 
-    sv = fmi2ModelDescriptionAddModelVariable(
+    sv = addModelVariable(
         md,
         name;
         attribute = _Real,
@@ -202,8 +245,12 @@ function fmi2ModelDescriptionAddRealParameter(
 
     return sv
 end
+addRealParameter(fmu::FMU2, args...; kwargs...) =
+    addRealParameter(fmu.modelDescription, args...; kwargs...)
+const addParameter = addRealParameter
+export addRealParameter, addParameter
 
-function fmi2ModelDescriptionAddIntegerDiscreteState(
+function addIntegerDiscreteState(
     md::fmi2ModelDescription,
     name::String;
     start::Union{Real,Nothing} = nothing,
@@ -213,7 +260,7 @@ function fmi2ModelDescriptionAddIntegerDiscreteState(
     _Integer = fmi2IntegerAttributesExt()
     _Integer.start = start
 
-    sv = fmi2ModelDescriptionAddModelVariable(
+    sv = addModelVariable(
         md,
         name;
         attribute = _Integer,
@@ -226,18 +273,24 @@ function fmi2ModelDescriptionAddIntegerDiscreteState(
 
     return sv
 end
+addIntegerDiscreteState(fmu::FMU2, args...; kwargs...) =
+    addIntegerDiscreteState(fmu.modelDescription, args...; kwargs...)
+export addIntegerDiscreteState
 
-function fmi2ModelDescriptionAddEventIndicator(md::fmi2ModelDescription)
+function addEventIndicator(md::fmi2ModelDescription)
     if isnothing(md.numberOfEventIndicators)
         md.numberOfEventIndicators = 0
     end
     md.numberOfEventIndicators += 1
 end
+addEventIndicator(fmu::FMU2, args...; kwargs...) =
+    addEventIndicator(fmu.modelDescription, args...; kwargs...)
+export addEventIndicator
 
 """
 Nothing = Skip entry 
 """
-function fmi2ModelDescriptionAddModelVariable(
+function addModelVariable(
     md::fmi2ModelDescription,
     name::String;
     description::Union{String,Nothing} = nothing,
@@ -261,11 +314,14 @@ function fmi2ModelDescriptionAddModelVariable(
     push!(md.modelVariables, sv)
     return sv
 end
+addModelVariable(fmu::FMU2, args...; kwargs...) =
+    addModelVariable(fmu.modelDescription, args...; kwargs...)
+export addModelVariable
 
 """
 Nothing = Skip entry 
 """
-function fmi2ModelDescriptionAddModelStructureOutputs(
+function addModelStructureOutputs(
     md::fmi2ModelDescription,
     index::UInt;
     dependencies::Union{Array{UInt,1},Nothing} = nothing,
@@ -282,11 +338,14 @@ function fmi2ModelDescriptionAddModelStructureOutputs(
     push!(md.modelStructure.outputs, sd)
     return sd
 end
+addModelStructureOutputs(fmu::FMU2, args...; kwargs...) =
+    addModelStructureOutputs(fmu.modelDescription, args...; kwargs...)
+export addModelStructureOutputs
 
 """
 Nothing = Skip entry 
 """
-function fmi2ModelDescriptionAddModelStructureDerivatives(
+function addModelStructureDerivatives(
     md::fmi2ModelDescription,
     index::UInt;
     dependencies::Union{Array{UInt,1},Nothing} = nothing,
@@ -303,11 +362,14 @@ function fmi2ModelDescriptionAddModelStructureDerivatives(
     push!(md.modelStructure.derivatives, sd)
     return sd
 end
+addModelStructureDerivatives(fmu::FMU2, args...; kwargs...) =
+    addModelStructureDerivatives(fmu.modelDescription, args...; kwargs...)
+export addModelStructureDerivatives
 
 """
 Nothing = Skip entry 
 """
-function fmi2ModelDescriptionAddModelStructureInitialUnknowns(
+function addModelStructureInitialUnknowns(
     md::fmi2ModelDescription,
     index::UInt;
     dependencies::Union{Array{UInt,1},Nothing} = nothing,
@@ -324,3 +386,6 @@ function fmi2ModelDescriptionAddModelStructureInitialUnknowns(
     push!(md.modelStructure.initialUnknowns, sd)
     return sd
 end
+addModelStructureInitialUnknowns(fmu::FMU2, args...; kwargs...) =
+    addModelStructureInitialUnknowns(fmu.modelDescription, args...; kwargs...)
+export addModelStructureInitialUnknowns

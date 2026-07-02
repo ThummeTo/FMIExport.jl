@@ -5,7 +5,7 @@
 
 fmu_save_path = nothing
 
-# export FMU script, currently only available on Windows
+# export FMU script, currently only available on Windows and Linux
 if Sys.iswindows() || Sys.islinux()
     include(
         joinpath(
@@ -31,15 +31,7 @@ end
 t_start = 0.0
 t_stop = 3.0
 
-run_fmpy_test(
-    "bouncing_ball",
-    "fmpy-bouncing_ball.py",
-    "fmpy-bouncing_ball.config",
-    fmu_save_path;
-    t_start = t_start,
-    t_stop = t_stop,
-    cleanup_fmu = Sys.iswindows() || Sys.islinux(),
-) do fmpy_simulation_results, t_start, t_stop
+function check_bouncing_ball_reference(fmpy_simulation_results, t_start, t_stop)
     default_fmpy_result_check(fmpy_simulation_results, t_start, t_stop)
 
     ts = collect(result_set[1] for result_set in fmpy_simulation_results)
@@ -62,4 +54,34 @@ run_fmpy_test(
     @test isapprox(ts[301], t_stop; atol = atol)
     @test isapprox(ss[301], 0.287215; atol = atol)
     @test isapprox(vs[301], -1.97912; atol = atol)
+end
+
+@testset "Model Exchange" begin
+    run_fmpy_test(
+        "bouncing_ball",
+        "fmpy-bouncing_ball.py",
+        "fmpy-bouncing_ball_ME.config",
+        fmu_save_path;
+        t_start = t_start,
+        t_stop = t_stop,
+        cleanup_fmu = false,
+        config_lines = ["ModelExchange"],
+    ) do fmpy_simulation_results, t_start, t_stop
+        check_bouncing_ball_reference(fmpy_simulation_results, t_start, t_stop)
+    end
+end
+
+@testset "Co-Simulation" begin
+    run_fmpy_test(
+        "bouncing_ball",
+        "fmpy-bouncing_ball.py",
+        "fmpy-bouncing_ball_CS.config",
+        fmu_save_path;
+        t_start = t_start,
+        t_stop = t_stop,
+        cleanup_fmu = Sys.iswindows() || Sys.islinux(),
+        config_lines = ["CoSimulation", "0.001"],
+    ) do fmpy_simulation_results, t_start, t_stop
+        check_bouncing_ball_reference(fmpy_simulation_results, t_start, t_stop)
+    end
 end

@@ -7,6 +7,7 @@
 # https://github.com/modelica/Reference-FMUs/blob/main/BouncingBall/model.c
 
 using FMIExport
+using FMIImport
 using FMIExport.FMIBase.FMICore: fmi2True, fmi2False, fmi2Integer
 
 # a minimum height to reset the ball after event
@@ -115,7 +116,7 @@ end
 # this function is called, as soon as the DLL is loaded and Julia is initialized 
 # must return a FMU2-instance to work with
 FMIBUILD_CONSTRUCTOR = function (resPath = "")
-    fmu = fmi2CreateSimple(
+    fmu = createFMU2Simple(
         initializationFct = FMU_FCT_INIT,
         evaluationFct = FMU_FCT_EVALUATE,
         outputFct = FMU_FCT_OUTPUT,
@@ -125,17 +126,18 @@ FMIBUILD_CONSTRUCTOR = function (resPath = "")
     fmu.modelDescription.modelName = "BouncingBall"
 
     # modes 
-    fmi2ModelDescriptionAddModelExchange(fmu.modelDescription, "BouncingBall")
+    addModelExchange(fmu.modelDescription)
+    addCoSimulation(fmu.modelDescription)
 
     # states [2]
-    fmi2AddStateAndDerivative(
+    addStateAndDerivative(
         fmu,
         "ball.s";
         stateStart = DEFAULT_X0[1],
         stateDescr = "Absolute position of ball center of mass",
         derivativeDescr = "Absolute velocity of ball center of mass",
     )
-    fmi2AddStateAndDerivative(
+    addStateAndDerivative(
         fmu,
         "ball.v";
         stateStart = DEFAULT_X0[2],
@@ -144,57 +146,47 @@ FMIBUILD_CONSTRUCTOR = function (resPath = "")
     )
 
     # discrete state [2]
-    fmi2AddIntegerDiscreteState(
+    addIntegerDiscreteState(
         fmu,
         "sticking";
         description = "Indicator (boolean) if the mass is sticking on the ground, as soon as abs(v) < v_min",
     )
-    fmi2AddIntegerDiscreteState(
+    addIntegerDiscreteState(
         fmu,
         "counter";
         description = "Number of collision with the floor.",
     )
 
     # outputs [2]
-    fmi2AddRealOutput(
+    addRealOutput(
         fmu,
         "ball.s_out";
         description = "Absolute position of ball center of mass",
     )
-    fmi2AddRealOutput(
+    addRealOutput(
         fmu,
         "ball.v_out";
         description = "Absolute velocity of ball center of mass",
     )
 
     # parameters [5]
-    fmi2AddRealParameter(fmu, "m"; start = DEFAULT_PARAMS[1], description = "Mass of ball")
-    fmi2AddRealParameter(
-        fmu,
-        "r";
-        start = DEFAULT_PARAMS[2],
-        description = "Radius of ball",
-    )
-    fmi2AddRealParameter(
+    addRealParameter(fmu, "m"; start = DEFAULT_PARAMS[1], description = "Mass of ball")
+    addRealParameter(fmu, "r"; start = DEFAULT_PARAMS[2], description = "Radius of ball")
+    addRealParameter(
         fmu,
         "d";
         start = DEFAULT_PARAMS[3],
         description = "Collision damping constant (velocity fraction after hitting the ground)",
     )
-    fmi2AddRealParameter(
+    addRealParameter(
         fmu,
         "v_min";
         start = DEFAULT_PARAMS[4],
         description = "Minimal ball velocity to enter on-ground-state",
     )
-    fmi2AddRealParameter(
-        fmu,
-        "g";
-        start = DEFAULT_PARAMS[5],
-        description = "Gravity constant",
-    )
+    addRealParameter(fmu, "g"; start = DEFAULT_PARAMS[5], description = "Gravity constant")
 
-    fmi2AddEventIndicator(fmu)
+    addEventIndicator(fmu)
 
     return fmu
 end
@@ -224,7 +216,7 @@ fmu_save_path = joinpath(tmpDir, "BouncingBall.fmu")
 # this must be excluded during export -done by FMIBUILD_NO_EXPORT marker-, because FMIBuild cannot execute itself (but it is able to build)
 using FMIBuild: saveFMU
 # this must be excluded during export -done by FMIBUILD_NO_EXPORT marker-, because saveFMU would start an infinite build loop with itself
-saveFMU(fmu, fmu_save_path; debug = true, compress = false)    # (debug=true allows debug messages, but is slow during execution!)
+saveFMU(fmu, fmu_save_path; debug = true, compress = false)
 
 # The following line is a end-marker for excluded code for the FMU compilation process!
 ### FMIBUILD_NO_EXPORT_END ###

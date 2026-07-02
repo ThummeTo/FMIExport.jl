@@ -143,6 +143,7 @@ function run_fmpy_test(
     t_start,
     t_stop,
     cleanup_fmu = true,
+    config_lines = String[],
     timeout_minutes = 5.0,
 )
     run_fmpy_test(
@@ -154,6 +155,7 @@ function run_fmpy_test(
         t_start = t_start,
         t_stop = t_stop,
         cleanup_fmu = cleanup_fmu,
+        config_lines = config_lines,
         timeout_minutes = timeout_minutes,
     )
 end
@@ -167,6 +169,7 @@ function run_fmpy_test(
     t_start,
     t_stop,
     cleanup_fmu = true,
+    config_lines = String[],
     timeout_minutes = 5.0,
 )
     test_path = joinpath(pwd(), test_dir)
@@ -183,6 +186,9 @@ function run_fmpy_test(
             println(io, fmu_save_path)
             println(io, t_start)
             println(io, t_stop)
+            for line in config_lines
+                println(io, line)
+            end
         end
 
         for file in (lockfile, logfile, outlog)
@@ -278,20 +284,40 @@ end
     if Sys.iswindows() || Sys.islinux()
         @info "Automated testing is supported on Windows/Linux"
 
-        @testset "Model Description" begin
-            include("model_description.jl")
+        test_group = get(ENV, "FMIEXPORT_TEST_GROUP", "all")
+        valid_test_groups = ("all", "core", "bouncing-ball", "manipulation", "neural-fmu")
+        @assert test_group in valid_test_groups "Unknown FMIEXPORT_TEST_GROUP: $(test_group)"
+
+        if test_group in ("all", "core")
+            @testset "Model Description" begin
+                include("model_description.jl")
+            end
+
+            @testset "Optional FMIImport dependency" begin
+                include("optional_fmiimport.jl")
+            end
+
+            @testset "Co-Simulation" begin
+                include("cosimulation.jl")
+            end
         end
 
-        @testset "Bouncing Ball" begin
-            include(joinpath("bouncing_ball", "bouncing_ball.jl"))
+        if test_group in ("all", "bouncing-ball")
+            @testset "Bouncing Ball" begin
+                include(joinpath("bouncing_ball", "bouncing_ball.jl"))
+            end
         end
 
-        @testset "FMU Manipulation" begin
-            include(joinpath("manipulation", "manipulation.jl"))
+        if test_group in ("all", "manipulation")
+            @testset "FMU Manipulation" begin
+                include(joinpath("manipulation", "manipulation.jl"))
+            end
         end
 
-        @testset "Neural FMU" begin
-            include(joinpath("neuralFMU", "neuralFMU.jl"))
+        if test_group in ("all", "neural-fmu")
+            @testset "Neural FMU" begin
+                include(joinpath("neuralFMU", "neuralFMU.jl"))
+            end
         end
 
     elseif Sys.isapple()
