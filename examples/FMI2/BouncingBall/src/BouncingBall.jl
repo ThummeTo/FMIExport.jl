@@ -216,13 +216,7 @@ fmu_save_path = joinpath(tmpDir, "BouncingBall.fmu")
 # this must be excluded during export -done by FMIBUILD_NO_EXPORT marker-, because FMIBuild cannot execute itself (but it is able to build)
 using FMIBuild: saveFMU
 # this must be excluded during export -done by FMIBUILD_NO_EXPORT marker-, because saveFMU would start an infinite build loop with itself
-saveFMU(
-    fmu,
-    fmu_save_path;
-    debug = true,
-    compress = false,
-    cpu_target = "generic", # portable and substantially lighter to compile
-)
+saveFMU(fmu, fmu_save_path; debug = true, compress = false)
 
 # The following line is a end-marker for excluded code for the FMU compilation process!
 ### FMIBUILD_NO_EXPORT_END ###
