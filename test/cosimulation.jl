@@ -48,3 +48,11 @@ c = FC.fmi2Instantiate(
 component = FMIExport.dereferenceInstance(c)
 @test component.t == 0.25
 @test component.values[fmu.modelDescription.stateValueReferences[1]] == 1.5
+
+createFMU2Simple(
+    initializationFct = init,
+    evaluationFct = evalf,
+    outputFct = outf,
+    eventFct = eventf,
+)
+@test FMIExport.FMU_FCT_SOLVER() === nothing
