@@ -15,6 +15,11 @@ import FMIBase.FMICore:
     fmi2StringAttributesExt,
     fmi2EnumerationAttributesExt
 
+"""
+    createModelDescription(::FMU2)
+
+Create an empty FMI 2 model description with generated GUID, generation timestamp, and initialized value-reference bookkeeping.
+"""
 function createModelDescription(::FMU2)
     md = fmi2ModelDescription()
     md.guid = UUIDs.uuid1()
@@ -27,6 +32,11 @@ function createModelDescription(::FMU2)
 end
 export createModelDescription
 
+"""
+    addModelExchange(md::fmi2ModelDescription, modelIdentifier=md.modelName)
+
+Add or update the Model Exchange capability entry of an FMI 2 model description.
+"""
 function addModelExchange(md::fmi2ModelDescription, modelIdentifier::String = md.modelName)
     if isnothing(md.modelExchange)
         md.modelExchange = fmi2ModelDescriptionModelExchange()
@@ -39,6 +49,11 @@ addModelExchange(fmu::FMU2, args...; kwargs...) =
     addModelExchange(fmu.modelDescription, args...; kwargs...)
 export addModelExchange
 
+"""
+    addCoSimulation(md::fmi2ModelDescription, modelIdentifier=md.modelName; kwargs...)
+
+Add or update the Co-Simulation capability entry of an FMI 2 model description.
+"""
 function addCoSimulation(
     md::fmi2ModelDescription,
     modelIdentifier::String = md.modelName;
@@ -68,12 +83,22 @@ addCoSimulation(fmu::FMU2, args...; kwargs...) =
     addCoSimulation(fmu.modelDescription, args...; kwargs...)
 export addCoSimulation
 
+"""
+    addEvent(md::fmi2ModelDescription)
+
+Increase the number of event indicators stored in an FMI 2 model description.
+"""
 function addEvent(md::fmi2ModelDescription)
     md.numberOfEventIndicators += 1
 end
 addEvent(fmu::FMU2, args...; kwargs...) = addEvent(fmu.modelDescription, args...; kwargs...)
 export addEvent
 
+"""
+    getIndexOfScalarVariable(md::fmi2ModelDescription, sv::fmi2ScalarVariable)
+
+Return the one-based FMI model-variable index for `sv` in `md`.
+"""
 function getIndexOfScalarVariable(md::fmi2ModelDescription, sv::fmi2ScalarVariable)
     for i = 1:length(md.modelVariables)
         if md.modelVariables[i] == sv
@@ -84,6 +109,11 @@ function getIndexOfScalarVariable(md::fmi2ModelDescription, sv::fmi2ScalarVariab
 end
 export getIndexOfScalarVariable
 
+"""
+    addRealState(md::fmi2ModelDescription, name; start=nothing, kwargs...)
+
+Add a real continuous state variable to an FMI 2 model description.
+"""
 function addRealState(
     md::fmi2ModelDescription,
     name::String;
@@ -105,6 +135,11 @@ addRealState(fmu::FMU2, args...; kwargs...) =
     addRealState(fmu.modelDescription, args...; kwargs...)
 export addRealState
 
+"""
+    addRealDerivative(md::fmi2ModelDescription, name; start=nothing, derivative=nothing, kwargs...)
+
+Add a real derivative variable and corresponding model-structure entries to an FMI 2 model description.
+"""
 function addRealDerivative(
     md::fmi2ModelDescription,
     name::String;
@@ -132,6 +167,11 @@ addRealDerivative(fmu::FMU2, args...; kwargs...) =
     addRealDerivative(fmu.modelDescription, args...; kwargs...)
 export addRealDerivative
 
+"""
+    addRealStateAndDerivative(md::fmi2ModelDescription, stateName, derivativeName="der(" * stateName * ")"; kwargs...)
+
+Add a real state and its derivative variable to an FMI 2 model description.
+"""
 function addRealStateAndDerivative(
     md::fmi2ModelDescription,
     stateName::String,
@@ -160,6 +200,11 @@ addRealStateAndDerivative(fmu::FMU2, args...; kwargs...) =
 const addStateAndDerivative = addRealStateAndDerivative
 export addRealStateAndDerivative, addStateAndDerivative
 
+"""
+    addRealInput(md::fmi2ModelDescription, name; start=nothing, kwargs...)
+
+Add a real input variable to an FMI 2 model description.
+"""
 function addRealInput(
     md::fmi2ModelDescription,
     name::String;
@@ -188,6 +233,11 @@ addRealInput(fmu::FMU2, args...; kwargs...) =
 const addInput = addRealInput
 export addRealInput, addInput
 
+"""
+    addRealOutput(md::fmi2ModelDescription, name; start=nothing, kwargs...)
+
+Add a real output variable and corresponding model-structure entries to an FMI 2 model description.
+"""
 function addRealOutput(
     md::fmi2ModelDescription,
     name::String;
@@ -220,6 +270,11 @@ addRealOutput(fmu::FMU2, args...; kwargs...) =
 const addOutput = addRealOutput
 export addRealOutput, addOutput
 
+"""
+    addRealParameter(md::fmi2ModelDescription, name; start=nothing, variability=fmi2VariabilityFixed, kwargs...)
+
+Add a real parameter variable to an FMI 2 model description.
+"""
 function addRealParameter(
     md::fmi2ModelDescription,
     name::String;
@@ -250,6 +305,11 @@ addRealParameter(fmu::FMU2, args...; kwargs...) =
 const addParameter = addRealParameter
 export addRealParameter, addParameter
 
+"""
+    addIntegerDiscreteState(md::fmi2ModelDescription, name; start=nothing, kwargs...)
+
+Add an integer discrete state variable to an FMI 2 model description.
+"""
 function addIntegerDiscreteState(
     md::fmi2ModelDescription,
     name::String;
@@ -277,6 +337,11 @@ addIntegerDiscreteState(fmu::FMU2, args...; kwargs...) =
     addIntegerDiscreteState(fmu.modelDescription, args...; kwargs...)
 export addIntegerDiscreteState
 
+"""
+    addEventIndicator(md::fmi2ModelDescription)
+
+Increase the number of event indicators in an FMI 2 model description.
+"""
 function addEventIndicator(md::fmi2ModelDescription)
     if isnothing(md.numberOfEventIndicators)
         md.numberOfEventIndicators = 0

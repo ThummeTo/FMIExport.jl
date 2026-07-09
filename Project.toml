@@ -1,6 +1,6 @@
 name = "FMIExport"
 uuid = "31b88311-cab6-44ed-ba9c-fe5a9abbd67a"
-version = "0.6.0"
+version = "0.6.1"
 authors = ["TT <tobias.thummerer@informatik.uni-augsburg.de>", "LM <lars.mikelsons@informatik.uni-augsburg.de>"]
 
 [deps]

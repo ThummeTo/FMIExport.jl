@@ -326,10 +326,14 @@ const _SET_FCT_NAMES = (
     :setFctGetStringStatus,
 )
 
+# auto creating doc strings
 for name in _SET_FCT_NAMES
-    legacy_name = Symbol("fmi2", uppercasefirst(String(name)))
-    @eval begin
-        export $legacy_name
-        const $legacy_name = $name
-    end
+    callback_field = Symbol("c", replace(String(name), "setFct" => ""))
+    doc = """
+        $(name)(fmu, fun)
+
+    Register `fun` as the FMI 2 callback stored in `fmu.$(callback_field)`.
+    """
+    @eval @doc $doc $name
 end
+
