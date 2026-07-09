@@ -453,7 +453,7 @@ function simple_fmi2DoStep(
     try
         component.solution.states = FMIBase.SciMLBase.solve(
             component.problem,
-            solver,
+            solver;
             callback = FMIBase.SciMLBase.CallbackSet(component.callback...),
             solveKwargs...,
         )

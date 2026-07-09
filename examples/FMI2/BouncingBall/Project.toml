@@ -10,5 +10,5 @@ FMIImport = "9fcbc62e-52a0-44e9-a616-1359a0008194"
 OrdinaryDiffEqTsit5 = "b1df2697-797e-41e3-8120-5422d3b24e4a"
 
 [compat]
-OrdinaryDiffEqTsit5 = "2.0.2"
+OrdinaryDiffEqTsit5 = "2.0.2" # because there is a precompilation bug in 2.1.0
 julia = "1.10"
