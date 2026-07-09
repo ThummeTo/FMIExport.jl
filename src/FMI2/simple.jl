@@ -56,7 +56,7 @@ function reset(_component::fmi2Component)
     applyValues(component.addr, xc, ẋc, xd, u, y, p)
 end
 
-function evaluate(_component::fmi2Component, eventMode = false)
+function evaluate(_component::fmi2Component, eventMode=false)
     component = dereferenceInstance(_component)
 
     # eventMode = component.state == fmi2ComponentStateEventMode
@@ -320,14 +320,14 @@ function simple_fmi2SetupExperiment(
         component.fmu,
         component,
         :ME;
-        t_start = tspan[1],
-        t_stop = tspan[end],
-        tolerance = toleranceValue,
-        instantiate = false,
-        freeInstance = false,
-        terminate = false,
-        reset = false,
-        setup = false,
+        t_start=tspan[1],
+        t_stop=tspan[end],
+        tolerance=toleranceValue,
+        instantiate=false,
+        freeInstance=false,
+        terminate=false,
+        reset=false,
+        setup=false,
     )
     #component.t = tspan[1]
 
@@ -454,7 +454,7 @@ function simple_fmi2DoStep(
         component.solution.states = FMIBase.SciMLBase.solve(
             component.problem,
             solver;
-            callback = FMIBase.SciMLBase.CallbackSet(component.callback...),
+            callback=FMIBase.SciMLBase.CallbackSet(component.callback...),
             solveKwargs...,
         )
     finally
@@ -926,13 +926,13 @@ end
     solverFct                   # () -> AbstractODEAlgorithm
 """
 function createFMU2Simple(
-    modelName::String = "";
-    initializationFct = nothing,
-    evaluationFct = nothing,
-    outputFct = nothing,
-    eventFct = nothing,
-    solverFct = nothing,
-    type = fmi2TypeModelExchange,
+    modelName::String="";
+    initializationFct=nothing,
+    evaluationFct=nothing,
+    outputFct=nothing,
+    eventFct=nothing,
+    solverFct=nothing,
+    type=fmi2TypeModelExchange,
 )
 
     global FMIBUILD_FMU
@@ -950,17 +950,27 @@ function createFMU2Simple(
     global FMU_NUM_EVENTS
     global FMU_NUM_PARAMETERS
 
-    FMIBUILD_FMU = createFMU2(modelName; type = type)
+    FMIBUILD_FMU = createFMU2(modelName; type=type)
 
     if type == fmi2TypeCoSimulation
         _enable_cs_export(FMIBUILD_FMU)
     end
 
-    FMU_FCT_INIT = initializationFct
-    FMU_FCT_EVALUATE = evaluationFct
-    FMU_FCT_OUTPUT = outputFct
-    FMU_FCT_EVENT = eventFct
-    FMU_FCT_SOLVER = solverFct
+    if !isnothing(initializationFct)
+        FMU_FCT_INIT = initializationFct
+    end
+    if !isnothing(evaluationFct)
+        FMU_FCT_EVALUATE = evaluationFct
+    end
+    if !isnothing(outputFct)
+        FMU_FCT_OUTPUT = outputFct
+    end
+    if !isnothing(eventFct)
+        FMU_FCT_EVENT = eventFct
+    end
+    if !isnothing(solverFct)
+        FMU_FCT_SOLVER = solverFct
+    end
 
     t, xc, ẋc, xd, u, p = FMU_FCT_INIT()
     y = FMU_FCT_OUTPUT(t, xc, ẋc, xd, u, p)
