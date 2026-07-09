@@ -123,14 +123,13 @@ end
 # must return a FMU2-instance to work with
 FMIBUILD_CONSTRUCTOR = function (resPath = "")
     fmu = createFMU2Simple(
+        "BouncingBall";
         initializationFct = FMU_FCT_INIT,
         evaluationFct = FMU_FCT_EVALUATE,
         outputFct = FMU_FCT_OUTPUT,
         eventFct = FMU_FCT_EVENT,
         solverFct = FMU_FCT_SOLVER,
     )
-
-    fmu.modelDescription.modelName = "BouncingBall"
 
     # modes 
     addModelExchange(fmu)
