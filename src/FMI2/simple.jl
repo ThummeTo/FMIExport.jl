@@ -26,6 +26,9 @@ end
 FMU_FCT_EVENT = function (t, xc, ẋc, xd, u, p)
     return []
 end
+FMU_FCT_SOLVER = function ()
+    return nothing
+end
 
 ##############
 
@@ -53,7 +56,7 @@ function reset(_component::fmi2Component)
     applyValues(component.addr, xc, ẋc, xd, u, y, p)
 end
 
-function evaluate(_component::fmi2Component, eventMode = false)
+function evaluate(_component::fmi2Component, eventMode=false)
     component = dereferenceInstance(_component)
 
     # eventMode = component.state == fmi2ComponentStateEventMode
@@ -317,14 +320,14 @@ function simple_fmi2SetupExperiment(
         component.fmu,
         component,
         :ME;
-        t_start = tspan[1],
-        t_stop = tspan[end],
-        tolerance = toleranceValue,
-        instantiate = false,
-        freeInstance = false,
-        terminate = false,
-        reset = false,
-        setup = false,
+        t_start=tspan[1],
+        t_stop=tspan[end],
+        tolerance=toleranceValue,
+        instantiate=false,
+        freeInstance=false,
+        terminate=false,
+        reset=false,
+        setup=false,
     )
     #component.t = tspan[1]
 
@@ -439,6 +442,9 @@ function simple_fmi2DoStep(
     solveKwargs = Dict{Symbol,Any}()
     tspan = FMIBase.setupSolver!(component.fmu, tspan, solveKwargs)
 
+    solver = FMU_FCT_SOLVER()
+    @assert !isnothing(solver) "For CS-FMUs, you need to overwrite `FMU_FCT_SOLVER()` to specify a solver!"
+
     # ToDo: this should be a little more light weight, check what actually
     # needs to be done for every doStep, and which parts can be reused.
     component.problem = FMIBase.setupODEProblem(component, x0, tspan)
@@ -447,8 +453,8 @@ function simple_fmi2DoStep(
     try
         component.solution.states = FMIBase.SciMLBase.solve(
             component.problem,
-            OrdinaryDiffEq.Tsit5(); # ToDo: Make this a field of the FMUXInstance, to allow for other solvers.
-            callback = FMIBase.SciMLBase.CallbackSet(component.callback...),
+            solver,
+            callback=FMIBase.SciMLBase.CallbackSet(component.callback...),
             solveKwargs...,
         )
     finally
@@ -919,12 +925,12 @@ end
     eventFct                    # (t, xc, ẋc, xd, u, p) -> e
 """
 function createFMU2Simple(
-    modelName::String = "";
-    initializationFct = nothing,
-    evaluationFct = nothing,
-    outputFct = nothing,
-    eventFct = nothing,
-    type = fmi2TypeModelExchange,
+    modelName::String="";
+    initializationFct=nothing,
+    evaluationFct=nothing,
+    outputFct=nothing,
+    eventFct=nothing,
+    type=fmi2TypeModelExchange,
 )
 
     global FMIBUILD_FMU
@@ -941,7 +947,7 @@ function createFMU2Simple(
     global FMU_NUM_EVENTS
     global FMU_NUM_PARAMETERS
 
-    FMIBUILD_FMU = createFMU2(modelName; type = type)
+    FMIBUILD_FMU = createFMU2(modelName; type=type)
 
     if type == fmi2TypeCoSimulation
         _enable_cs_export(FMIBUILD_FMU)
