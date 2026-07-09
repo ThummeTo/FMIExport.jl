@@ -18,6 +18,7 @@ fmu = createFMU2Simple(
     evaluationFct = evalf,
     outputFct = outf,
     eventFct = eventf,
+    solverFct = solverf,
     type = FC.fmi2TypeCoSimulation,
 )
 addStateAndDerivative(fmu, "x")
