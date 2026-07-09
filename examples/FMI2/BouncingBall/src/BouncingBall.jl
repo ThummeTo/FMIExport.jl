@@ -121,76 +121,77 @@ end
 
 # this function is called, as soon as the DLL is loaded and Julia is initialized 
 # must return a FMU2-instance to work with
-FMIBUILD_CONSTRUCTOR = function (resPath="")
+FMIBUILD_CONSTRUCTOR = function (resPath = "")
     fmu = createFMU2Simple(
-        initializationFct=FMU_FCT_INIT,
-        evaluationFct=FMU_FCT_EVALUATE,
-        outputFct=FMU_FCT_OUTPUT,
-        eventFct=FMU_FCT_EVENT,
+        initializationFct = FMU_FCT_INIT,
+        evaluationFct = FMU_FCT_EVALUATE,
+        outputFct = FMU_FCT_OUTPUT,
+        eventFct = FMU_FCT_EVENT,
+        solverFct = FMU_FCT_SOLVER,
     )
 
     fmu.modelDescription.modelName = "BouncingBall"
 
     # modes 
-    addModelExchange(fmu.modelDescription)
-    addCoSimulation(fmu.modelDescription)
+    addModelExchange(fmu)
+    addCoSimulation(fmu)
 
     # states [2]
     addStateAndDerivative(
         fmu,
         "ball.s";
-        stateStart=DEFAULT_X0[1],
-        stateDescr="Absolute position of ball center of mass",
-        derivativeDescr="Absolute velocity of ball center of mass",
+        stateStart = DEFAULT_X0[1],
+        stateDescr = "Absolute position of ball center of mass",
+        derivativeDescr = "Absolute velocity of ball center of mass",
     )
     addStateAndDerivative(
         fmu,
         "ball.v";
-        stateStart=DEFAULT_X0[2],
-        stateDescr="Absolute velocity of ball center of mass",
-        derivativeDescr="Absolute acceleration of ball center of mass",
+        stateStart = DEFAULT_X0[2],
+        stateDescr = "Absolute velocity of ball center of mass",
+        derivativeDescr = "Absolute acceleration of ball center of mass",
     )
 
     # discrete state [2]
     addIntegerDiscreteState(
         fmu,
         "sticking";
-        description="Indicator (boolean) if the mass is sticking on the ground, as soon as abs(v) < v_min",
+        description = "Indicator (boolean) if the mass is sticking on the ground, as soon as abs(v) < v_min",
     )
     addIntegerDiscreteState(
         fmu,
         "counter";
-        description="Number of collision with the floor.",
+        description = "Number of collision with the floor.",
     )
 
     # outputs [2]
     addRealOutput(
         fmu,
         "ball.s_out";
-        description="Absolute position of ball center of mass",
+        description = "Absolute position of ball center of mass",
     )
     addRealOutput(
         fmu,
         "ball.v_out";
-        description="Absolute velocity of ball center of mass",
+        description = "Absolute velocity of ball center of mass",
     )
 
     # parameters [5]
-    addRealParameter(fmu, "m"; start=DEFAULT_PARAMS[1], description="Mass of ball")
-    addRealParameter(fmu, "r"; start=DEFAULT_PARAMS[2], description="Radius of ball")
+    addRealParameter(fmu, "m"; start = DEFAULT_PARAMS[1], description = "Mass of ball")
+    addRealParameter(fmu, "r"; start = DEFAULT_PARAMS[2], description = "Radius of ball")
     addRealParameter(
         fmu,
         "d";
-        start=DEFAULT_PARAMS[3],
-        description="Collision damping constant (velocity fraction after hitting the ground)",
+        start = DEFAULT_PARAMS[3],
+        description = "Collision damping constant (velocity fraction after hitting the ground)",
     )
     addRealParameter(
         fmu,
         "v_min";
-        start=DEFAULT_PARAMS[4],
-        description="Minimal ball velocity to enter on-ground-state",
+        start = DEFAULT_PARAMS[4],
+        description = "Minimal ball velocity to enter on-ground-state",
     )
-    addRealParameter(fmu, "g"; start=DEFAULT_PARAMS[5], description="Gravity constant")
+    addRealParameter(fmu, "g"; start = DEFAULT_PARAMS[5], description = "Gravity constant")
 
     addEventIndicator(fmu)
 
@@ -215,14 +216,14 @@ fmu = FMIBUILD_CONSTRUCTOR()
 # fmu.modelDescription.discreteStateValueReferences
 # fmu.modelDescription.outputValueReferences
 
-tmpDir = mktempdir(; prefix="fmibuildjl_test_", cleanup=false)
+tmpDir = mktempdir(; prefix = "fmibuildjl_test_", cleanup = false)
 @info "Saving example files at: $(tmpDir)"
 fmu_save_path = joinpath(tmpDir, "BouncingBall.fmu")
 
 # this must be excluded during export -done by FMIBUILD_NO_EXPORT marker-, because FMIBuild cannot execute itself (but it is able to build)
 using FMIBuild: saveFMU
 # this must be excluded during export -done by FMIBUILD_NO_EXPORT marker-, because saveFMU would start an infinite build loop with itself
-saveFMU(fmu, fmu_save_path; debug=true, compress=false)
+saveFMU(fmu, fmu_save_path; debug = true, compress = false)
 
 # The following line is a end-marker for excluded code for the FMU compilation process!
 ### FMIBUILD_NO_EXPORT_END ###

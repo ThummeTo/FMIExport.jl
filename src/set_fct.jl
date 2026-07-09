@@ -336,4 +336,3 @@ for name in _SET_FCT_NAMES
     """
     @eval @doc $doc $name
 end
-

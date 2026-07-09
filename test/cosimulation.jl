@@ -1,9 +1,17 @@
+#
+# Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons
+# Licensed under the MIT license. See LICENSE file in the project root for details.
+#
+
+import OrdinaryDiffEqTsit5: Tsit5
+
 FC = FMIExport.FMICore
 
 init() = (0.0, [1.0], [2.0], [], [], [])
 evalf(t, xc, xcdot, xd, u, p, eventMode) = (xc, [2.0], xd, p)
 outf(t, xc, xcdot, xd, u, p) = xc
 eventf(t, xc, xcdot, xd, u, p) = Float64[]
+solverf() = Tsit5()
 
 fmu = createFMU2Simple(
     initializationFct = init,
