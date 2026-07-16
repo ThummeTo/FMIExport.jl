@@ -14,6 +14,7 @@ FMU_NUM_INPUTS = 0
 FMU_NUM_EVENTS = 0
 FMU_NUM_PARAMETERS = 0
 
+# define placeholder functions
 FMU_FCT_INIT = function ()
     return ([], [], [], [], [], [])
 end
@@ -26,6 +27,16 @@ end
 FMU_FCT_EVENT = function (t, xc, ẋc, xd, u, p)
     return []
 end
+FMU_FCT_SOLVER = function ()
+    return nothing
+end
+
+# define placeholders as default functions
+const DEFAULT_FMU_FCT_INIT = FMU_FCT_INIT
+const DEFAULT_FMU_FCT_EVALUATE = FMU_FCT_EVALUATE
+const DEFAULT_FMU_FCT_OUTPUT = FMU_FCT_OUTPUT
+const DEFAULT_FMU_FCT_EVENT = FMU_FCT_EVENT
+const DEFAULT_FMU_FCT_SOLVER = FMU_FCT_SOLVER
 
 ##############
 
@@ -439,6 +450,9 @@ function simple_fmi2DoStep(
     solveKwargs = Dict{Symbol,Any}()
     tspan = FMIBase.setupSolver!(component.fmu, tspan, solveKwargs)
 
+    solver = FMU_FCT_SOLVER()
+    @assert !isnothing(solver) "For CS-FMUs, you need to overwrite `FMU_FCT_SOLVER()` to specify a solver!"
+
     # ToDo: this should be a little more light weight, check what actually
     # needs to be done for every doStep, and which parts can be reused.
     component.problem = FMIBase.setupODEProblem(component, x0, tspan)
@@ -447,7 +461,7 @@ function simple_fmi2DoStep(
     try
         component.solution.states = FMIBase.SciMLBase.solve(
             component.problem,
-            OrdinaryDiffEq.Tsit5(); # ToDo: Make this a field of the FMUXInstance, to allow for other solvers.
+            solver;
             callback = FMIBase.SciMLBase.CallbackSet(component.callback...),
             solveKwargs...,
         )
@@ -917,13 +931,15 @@ end
     evaluationFct               # (t, xc, ẋc, xd, u, p, event) -> (xc, ẋc, xd, p)
     outputFct                   # (t, xc, ẋc, xd, u, p) -> y
     eventFct                    # (t, xc, ẋc, xd, u, p) -> e
+    solverFct                   # () -> AbstractODEAlgorithm
 """
 function createFMU2Simple(
     modelName::String = "";
-    initializationFct = nothing,
-    evaluationFct = nothing,
-    outputFct = nothing,
-    eventFct = nothing,
+    initializationFct = DEFAULT_FMU_FCT_INIT,
+    evaluationFct = DEFAULT_FMU_FCT_EVALUATE,
+    outputFct = DEFAULT_FMU_FCT_OUTPUT,
+    eventFct = DEFAULT_FMU_FCT_EVENT,
+    solverFct = DEFAULT_FMU_FCT_SOLVER,
     type = fmi2TypeModelExchange,
 )
 
@@ -933,6 +949,7 @@ function createFMU2Simple(
     global FMU_FCT_EVALUATE
     global FMU_FCT_OUTPUT
     global FMU_FCT_EVENT
+    global FMU_FCT_SOLVER
 
     global FMU_NUM_STATES
     global FMU_NUM_DISCRETE_STATES
@@ -947,10 +964,11 @@ function createFMU2Simple(
         _enable_cs_export(FMIBUILD_FMU)
     end
 
-    FMU_FCT_INIT = initializationFct
-    FMU_FCT_EVALUATE = evaluationFct
-    FMU_FCT_OUTPUT = outputFct
-    FMU_FCT_EVENT = eventFct
+    FMU_FCT_INIT = isnothing(initializationFct) ? DEFAULT_FMU_FCT_INIT : initializationFct
+    FMU_FCT_EVALUATE = isnothing(evaluationFct) ? DEFAULT_FMU_FCT_EVALUATE : evaluationFct
+    FMU_FCT_OUTPUT = isnothing(outputFct) ? DEFAULT_FMU_FCT_OUTPUT : outputFct
+    FMU_FCT_EVENT = isnothing(eventFct) ? DEFAULT_FMU_FCT_EVENT : eventFct
+    FMU_FCT_SOLVER = isnothing(solverFct) ? DEFAULT_FMU_FCT_SOLVER : solverFct
 
     t, xc, ẋc, xd, u, p = FMU_FCT_INIT()
     y = FMU_FCT_OUTPUT(t, xc, ẋc, xd, u, p)

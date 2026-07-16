@@ -108,7 +108,7 @@ saveFMU(
     fmu,
     fmu_save_path;
     resources = Dict(sourceFMU => "SpringDamperPendulum1D.fmu"),
-    debug = true, # (debug=true allows debug messages, but is slow during execution!)
+    debug = true, # debug=true allows debug messages, but is slow during execution!
 )
 unloadFMU(fmu)
 

@@ -113,21 +113,27 @@ FMU_FCT_EVENT = function (t, x_c, ẋ_c, x_d, u, p)
     return z
 end
 
+# for CS-FMUs, we add a function to define the FMU default solver
+import OrdinaryDiffEqTsit5: Tsit5
+FMU_FCT_SOLVER = function ()
+    return Tsit5()
+end
+
 # this function is called, as soon as the DLL is loaded and Julia is initialized 
 # must return a FMU2-instance to work with
 FMIBUILD_CONSTRUCTOR = function (resPath = "")
     fmu = createFMU2Simple(
+        "BouncingBall";
         initializationFct = FMU_FCT_INIT,
         evaluationFct = FMU_FCT_EVALUATE,
         outputFct = FMU_FCT_OUTPUT,
         eventFct = FMU_FCT_EVENT,
+        solverFct = FMU_FCT_SOLVER,
     )
 
-    fmu.modelDescription.modelName = "BouncingBall"
-
     # modes 
-    addModelExchange(fmu.modelDescription)
-    addCoSimulation(fmu.modelDescription)
+    addModelExchange(fmu)
+    addCoSimulation(fmu)
 
     # states [2]
     addStateAndDerivative(
@@ -217,6 +223,8 @@ fmu_save_path = joinpath(tmpDir, "BouncingBall.fmu")
 using FMIBuild: saveFMU
 # this must be excluded during export -done by FMIBUILD_NO_EXPORT marker-, because saveFMU would start an infinite build loop with itself
 saveFMU(fmu, fmu_save_path; debug = true, compress = false)
+
+unloadFMU(fmu)
 
 # The following line is a end-marker for excluded code for the FMU compilation process!
 ### FMIBUILD_NO_EXPORT_END ###

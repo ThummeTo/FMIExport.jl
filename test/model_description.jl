@@ -5,6 +5,13 @@
 
 using FMIExport.FMICore: fmi2ScalarVariable
 
+named_fmu = createFMU2("Mass"; type = FMIExport.FMICore.fmi2TypeCoSimulation)
+@test named_fmu.modelDescription.modelName == "Mass"
+addModelExchange(named_fmu)
+@test named_fmu.modelDescription.modelExchange.modelIdentifier == "Mass"
+addCoSimulation(named_fmu)
+@test named_fmu.modelDescription.coSimulation.modelIdentifier == "Mass"
+
 fmu = createFMU2(; type = FMIExport.FMICore.fmi2TypeCoSimulation)
 md = createModelDescription(fmu)
 var = addRealStateAndDerivative(md, "mass.s")
