@@ -20,8 +20,9 @@ import FMIBase.FMICore:
 
 Create an empty FMI 2 model description with generated GUID, generation timestamp, and initialized value-reference bookkeeping.
 """
-function createModelDescription(::FMU2)
+function createModelDescription(fmu::FMU2)
     md = fmi2ModelDescription()
+    md.modelName = fmu.modelName
     md.guid = UUIDs.uuid1()
     md.generationDateAndTime = Dates.now()
     md.variableNamingConvention = fmi2VariableNamingConventionStructured
