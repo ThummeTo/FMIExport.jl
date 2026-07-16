@@ -111,12 +111,18 @@ FMU_FCT_OUTPUT = function(t, x_c, ẋ_c, x_d, u, p)
     return y
 end
 
+import OrdinaryDiffEqTsit5: Tsit5
+FMU_FCT_SOLVER = function ()
+    return Tsit5()
+end
+
 FMIBUILD_CONSTRUCTOR = function(resPath="")
     fmu = createFMU2Simple("BouncingBall";
                         initializationFct=FMU_FCT_INIT,
                         evaluationFct=FMU_FCT_EVALUATE,
                         outputFct=FMU_FCT_OUTPUT,
-                        eventFct=FMU_FCT_EVENT)
+                        eventFct=FMU_FCT_EVENT,
+                        solverFct=FMU_FCT_SOLVER)
 
     # modes 
     addModelExchange(fmu)
@@ -160,10 +166,14 @@ using FMIBuild: saveFMU                    # <= this must be excluded during exp
 # The following line is a end-marker for excluded code for the FMU compilation process!
 ### FMIBUILD_NO_EXPORT_END ###
 
-using FMIImport, DifferentialEquations, Plots
+using FMIImport, Plots
 fmu.executionConfig.loggingOn = true
 
-solution = simulateME(fmu, (0.0, 3.0); recordValues=["ball.s", "counter"], saveat=0.0:0.01:3.0)
+solution = simulateME(fmu, (0.0, 3.0); 
+    recordValues=["ball.s", "counter"], 
+    saveat=0.0:0.01:3.0, 
+    solver=Tsit5(), # instead of specifying a solver by hand, you can import DifferentialEquations.jl and use auto-picking a solver
+)
 plot(solution; states=false) # don't plot states
 
 solution = simulateCS(fmu, (0.0, 3.0); recordValues=["ball.s", "counter"], saveat=0.0:0.01:3.0)

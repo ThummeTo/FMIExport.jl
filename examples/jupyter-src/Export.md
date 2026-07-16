@@ -205,6 +205,23 @@ end
 
 
 
+Because we want to export ME as well as CS, we need to specify an ODE solver for the CS FMU. This is not necessary, if you are only using ME.
+
+
+```julia
+import OrdinaryDiffEqTsit5: Tsit5
+FMU_FCT_SOLVER = function ()
+    return Tsit5()
+end
+```
+
+
+
+
+    #9 (generic function with 1 method)
+
+
+
 ### FMU constructor
 After defining the mathematical behavior for our FMU, we need to define a constructor - so a function that is called if the FMU is loaded. Within, we define all the variables we want to be part of the *model description*, technically an XML that exposes the model structure and variables. This XML is parsed by importing tools to simulate FMUs appropriately and to provide helpful information.
 
@@ -215,7 +232,8 @@ FMIBUILD_CONSTRUCTOR = function(resPath="")
                         initializationFct=FMU_FCT_INIT,
                         evaluationFct=FMU_FCT_EVALUATE,
                         outputFct=FMU_FCT_OUTPUT,
-                        eventFct=FMU_FCT_EVENT)
+                        eventFct=FMU_FCT_EVENT,
+                        solverFct=FMU_FCT_SOLVER)
 
     # modes 
     addModelExchange(fmu)
@@ -249,7 +267,7 @@ end
 
 
 
-    #9 (generic function with 2 methods)
+    #11 (generic function with 2 methods)
 
 
 
@@ -273,7 +291,7 @@ using FMIBuild: saveFMU                    # <= this must be excluded during exp
 ### FMIBUILD_NO_EXPORT_END ###
 ```
 
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mSaving example files at: C:\Users\RUNNER~1\AppData\Local\Temp\fmibuildjl_test_7uutmb
+    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mSaving example files at: C:\Users\RUNNER~1\AppData\Local\Temp\fmibuildjl_test_LM6OI5
     
 
 ## Simulate the FMU 
@@ -283,7 +301,7 @@ Interestingly, there is actually no need to *compile* a FMU if you want to use i
 
 
 ```julia
-using FMIImport, DifferentialEquations, Plots
+using FMIImport, Plots
 fmu.executionConfig.loggingOn = true
 ```
 
@@ -298,7 +316,11 @@ Now we can simulate the FMU in ME ...
 
 
 ```julia
-solution = simulateME(fmu, (0.0, 3.0); recordValues=["ball.s", "counter"], saveat=0.0:0.01:3.0)
+solution = simulateME(fmu, (0.0, 3.0); 
+    recordValues=["ball.s", "counter"], 
+    saveat=0.0:0.01:3.0, 
+    solver=Tsit5(), # instead of specifying a solver by hand, you can import DifferentialEquations.jl and use auto-picking a solver
+)
 plot(solution; states=false) # don't plot states
 ```
 
@@ -310,11 +332,11 @@ plot(solution; states=false) # don't plot states
 
     [34mSimulating ME-FMU ...   0%|█                             |  ETA: N/A[39m
 
-    [34mSimulating ME-FMU ... 100%|██████████████████████████████| Time: 0:00:19[39m
+    [34mSimulating ME-FMU ... 100%|██████████████████████████████| Time: 0:00:11[39m
     
 
-    [33m[1m┌ [22m[39m[33m[1mWarning: [22m[39mUnknown instance at Ptr{Nothing} @0x00000128cd91db10.
-    [33m[1m└ [22m[39m[90m@ FMIExport D:\a\FMIExport.jl\FMIExport.jl\src\FMI2\simple.jl:40[39m
+    [33m[1m┌ [22m[39m[33m[1mWarning: [22m[39mUnknown instance at Ptr{Nothing} @0x000002088f638010.
+    [33m[1m└ [22m[39m[90m@ FMIExport D:\a\FMIExport.jl\FMIExport.jl\src\FMI2\simple.jl:51[39m
     
 
 
@@ -334,13 +356,13 @@ plot(solution; states=false)
 
     [33m[1m┌ [22m[39m[33m[1mWarning: [22m[39mfmi2Instantiate!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl.
     [33m[1m└ [22m[39m[90m@ FMIBase C:\Users\runneradmin\.julia\packages\FMIBase\723V5\src\printing.jl:30[39m
-    [34mSim. CS-FMU ...   0%|█                                   |  ETA: 0:18:02[39m
+    [34mSim. CS-FMU ...   0%|█                                   |  ETA: 0:14:29[39m
 
-    [34mSim. CS-FMU ... 100%|████████████████████████████████████| Time: 0:00:03[39m
+    [34mSim. CS-FMU ... 100%|████████████████████████████████████| Time: 0:00:02[39m
     
 
-    [33m[1m┌ [22m[39m[33m[1mWarning: [22m[39mUnknown instance at Ptr{Nothing} @0x00000128cdfc9f90.
-    [33m[1m└ [22m[39m[90m@ FMIExport D:\a\FMIExport.jl\FMIExport.jl\src\FMI2\simple.jl:40[39m
+    [33m[1m┌ [22m[39m[33m[1mWarning: [22m[39mUnknown instance at Ptr{Nothing} @0x000002088e290910.
+    [33m[1m└ [22m[39m[90m@ FMIExport D:\a\FMIExport.jl\FMIExport.jl\src\FMI2\simple.jl:51[39m
     
 
 
