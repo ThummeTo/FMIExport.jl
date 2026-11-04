@@ -7,5 +7,5 @@ OrdinaryDiffEqTsit5 = "b1df2697-797e-41e3-8120-5422d3b24e4a"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-FMIBuild = "0.7.2"
+FMIBuild = "1"
 julia = "1.10"

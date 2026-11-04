@@ -6,7 +6,7 @@
 using FMIExport
 using Test
 
-function test_fmu_file(fmu_save_path, minimum_size; size_unit = :MiB)
+function test_fmu_file(fmu_save_path, minimum_size; size_unit=:MiB)
     @test isfile(fmu_save_path)
 
     divisor = if size_unit == :MiB
@@ -24,6 +24,31 @@ function test_fmu_file(fmu_save_path, minimum_size; size_unit = :MiB)
     end
 end
 
+# runs the export script of an example (in its own module), returns the exported FMU's path,
+# the example exports the FMI version set in its constant `FMI_VERSION`
+function export_example(name::AbstractString, fmi_version::Integer)
+    # the FMU is built from the script file itself, so the version is set in a copy
+    example_dir =
+        cp(joinpath(@__DIR__, "..", "examples", name), joinpath(mktempdir(), name))
+    script = joinpath(example_dir, "src", "$(name).jl")
+    pattern = r"^const FMI_VERSION = \d+"m
+    code = read(script, String)
+    @assert occursin(pattern, code) "Example `$(name)` has no constant `FMI_VERSION`."
+    write(script, replace(code, pattern => "const FMI_VERSION = $(fmi_version)"))
+
+    example = Module(Symbol(name, "Example"))
+    Base.include(example, script)
+    # `fmu_save_path` is defined by the script, so it is only visible in the latest world age
+    return Base.invokelatest(getglobal, example, :fmu_save_path)
+end
+
+# analytic solution [s, v] of the FMIZoo model SpringPendulum1D (mass m = 1 starting at rest at
+# s = 0.5, attached to a spring c = 10 with rest length 1 fixed at 0.1), with scaled acceleration
+function spring_pendulum_solution(t, acceleration_scale)
+    ω = sqrt(10.0 * acceleration_scale)
+    return [1.1 - 0.6 * cos(ω * t), 0.6 * ω * sin(ω * t)]
+end
+
 function default_fmpy_result_check(fmpy_simulation_results, t_start, t_stop)
     tar = round(Int, (t_stop - t_start) * 100 + 1)
     @test abs(length(fmpy_simulation_results) - tar) <= 1
@@ -32,10 +57,10 @@ end
 function compare_fmpy_results_to_reference_solution(
     fmpy_simulation_results,
     reference_solution;
-    fmpy_value_indices = nothing,
-    reference_value_indices = nothing,
-    atol = 1e-2,
-    rtol = 1e-2,
+    fmpy_value_indices=nothing,
+    reference_value_indices=nothing,
+    atol=1e-2,
+    rtol=1e-2,
 )
     @test !isnothing(reference_solution.values)
     if isnothing(reference_solution.values)
@@ -80,10 +105,10 @@ end
 function compare_fmpy_results_to_reference_states(
     fmpy_simulation_results,
     reference_solution;
-    fmpy_value_indices = nothing,
-    state_indices = nothing,
-    atol = 1e-2,
-    rtol = 1e-2,
+    fmpy_value_indices=nothing,
+    state_indices=nothing,
+    atol=1e-2,
+    rtol=1e-2,
 )
     @test !isnothing(reference_solution.states)
     if isnothing(reference_solution.states)
@@ -125,7 +150,7 @@ end
 function compare_fmpy_results_to_expected_rows(
     fmpy_simulation_results,
     expected_rows;
-    atol = 1e-2,
+    atol=1e-2,
 )
     for (index, expected_row) in expected_rows
         @test length(fmpy_simulation_results) >= index
@@ -142,9 +167,9 @@ function run_fmpy_test(
     fmu_save_path::AbstractString;
     t_start,
     t_stop,
-    cleanup_fmu = true,
-    config_lines = String[],
-    timeout_minutes = 5.0,
+    cleanup_fmu=true,
+    config_lines=String[],
+    timeout_minutes=5.0,
 )
     run_fmpy_test(
         default_fmpy_result_check,
@@ -152,11 +177,11 @@ function run_fmpy_test(
         script_name,
         config_name,
         fmu_save_path;
-        t_start = t_start,
-        t_stop = t_stop,
-        cleanup_fmu = cleanup_fmu,
-        config_lines = config_lines,
-        timeout_minutes = timeout_minutes,
+        t_start=t_start,
+        t_stop=t_stop,
+        cleanup_fmu=cleanup_fmu,
+        config_lines=config_lines,
+        timeout_minutes=timeout_minutes,
     )
 end
 
@@ -168,9 +193,9 @@ function run_fmpy_test(
     fmu_save_path::AbstractString;
     t_start,
     t_stop,
-    cleanup_fmu = true,
-    config_lines = String[],
-    timeout_minutes = 5.0,
+    cleanup_fmu=true,
+    config_lines=String[],
+    timeout_minutes=5.0,
 )
     test_path = joinpath(pwd(), test_dir)
     lockfile = joinpath(test_path, "lockfile.txt")
@@ -202,7 +227,7 @@ function run_fmpy_test(
         flush(stderr)
 
         fmpy_cmd =
-            pipeline(`python $script_file $config_file`; stdout = outlog, stderr = outlog)
+            pipeline(`python $script_file $config_file`; stdout=outlog, stderr=outlog)
         fmpy_success = success(fmpy_cmd)
         if !fmpy_success
             println("FMPy process exited with an error; see captured output below.")
@@ -219,8 +244,8 @@ function run_fmpy_test(
         if isfile(lockfile)
             println(
                 "FMPy-Task still running, will wait for termination or a maximum time of " *
-                string(round((time_wait_max - time()) / 60.0, digits = 2)) *
-                " minutes from now.",
+                    string(round((time_wait_max - time()) / 60.0, digits=2)) *
+                    " minutes from now.",
             )
         end
         while isfile(lockfile) && time() < time_wait_max
@@ -251,7 +276,7 @@ function run_fmpy_test(
                 end
 
                 if !isnothing(fmpy_simulation_results) &&
-                   contains(line, "---end_of_fmpy-simulation_results---")
+                    contains(line, "---end_of_fmpy-simulation_results---")
                     break
                 elseif !isnothing(fmpy_simulation_results)
                     push!(fmpy_simulation_results, parse.(Float64, split(line, ";")))
@@ -280,17 +305,32 @@ function run_fmpy_test(
     end
 end
 
+# tests shared by FMI 2 and FMI 3, called once per FMI version
+include(joinpath("bouncing_ball", "bouncing_ball.jl"))
+include(joinpath("manipulation", "manipulation.jl"))
+include(joinpath("neuralFMU", "neuralFMU.jl"))
+
 @testset "FMIExport.jl" begin
     if Sys.iswindows() || Sys.islinux()
         @info "Automated testing is supported on Windows/Linux"
 
         test_group = get(ENV, "FMIEXPORT_TEST_GROUP", "all")
-        valid_test_groups = ("all", "core", "bouncing-ball", "manipulation", "neural-fmu")
+        valid_test_groups = (
+            "all",
+            "core",
+            "bouncing-ball",
+            "bouncing-ball-fmi3",
+            "manipulation",
+            "manipulation-fmi3",
+            "neural-fmu",
+            "neural-fmu-fmi3",
+        )
         @assert test_group in valid_test_groups "Unknown FMIEXPORT_TEST_GROUP: $(test_group)"
 
         if test_group in ("all", "core")
             @testset "Model Description" begin
-                include("model_description.jl")
+                include("FMI2/model_description.jl")
+                include("FMI3/model_description.jl")
             end
 
             @testset "Optional FMIImport dependency" begin
@@ -298,25 +338,23 @@ end
             end
 
             @testset "Co-Simulation" begin
-                include("cosimulation.jl")
+                include("FMI2/cosimulation.jl")
+                include("FMI3/cosimulation.jl")
             end
         end
 
-        if test_group in ("all", "bouncing-ball")
-            @testset "Bouncing Ball" begin
-                include(joinpath("bouncing_ball", "bouncing_ball.jl"))
-            end
-        end
-
-        if test_group in ("all", "manipulation")
-            @testset "FMU Manipulation" begin
-                include(joinpath("manipulation", "manipulation.jl"))
-            end
-        end
-
-        if test_group in ("all", "neural-fmu")
-            @testset "Neural FMU" begin
-                include(joinpath("neuralFMU", "neuralFMU.jl"))
+        for (group, name, test_example) in (
+            ("bouncing-ball", "Bouncing Ball", test_bouncing_ball),
+            ("manipulation", "FMU Manipulation", test_manipulation),
+            ("neural-fmu", "Neural FMU", test_neural_fmu),
+        )
+            for fmi_version in (2, 3)
+                # the test groups for FMI 3 have the suffix `-fmi3`
+                if test_group in ("all", fmi_version == 2 ? group : "$(group)-fmi3")
+                    @testset "$(name) (FMI$(fmi_version))" begin
+                        test_example(fmi_version)
+                    end
+                end
             end
         end
 

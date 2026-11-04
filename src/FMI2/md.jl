@@ -353,8 +353,18 @@ addEventIndicator(fmu::FMU2, args...; kwargs...) =
     addEventIndicator(fmu.modelDescription, args...; kwargs...)
 export addEventIndicator
 
+# FMI 2 value references are unique per base type (Enumerations are accessed via the Integer functions)
+baseType(::fmi2RealAttributesExt) = :Real
+baseType(::Union{fmi2IntegerAttributesExt,fmi2EnumerationAttributesExt}) = :Integer
+baseType(::fmi2BooleanAttributesExt) = :Boolean
+baseType(::fmi2StringAttributesExt) = :String
+baseType(::Nothing) = nothing # unknown
+# whether two variable attributes share the value references (unknown base types are treated as shared)
+sameBaseType(a, b) =
+    isnothing(baseType(a)) || isnothing(baseType(b)) || baseType(a) == baseType(b)
+
 """
-Nothing = Skip entry 
+Nothing = Skip entry
 """
 function addModelVariable(
     md::fmi2ModelDescription,
@@ -369,7 +379,17 @@ function addModelVariable(
 )
 
     if valueReference === :auto
-        valueReference = fmi2ValueReference(length(md.modelVariables) + 1)
+        # value references start at 1 and are unique for all base types (stricter than required),
+        # because simple FMUs store the values of all variables in one vector indexed by value reference
+        valueReference = nextValueReference(md, fmi2ValueReference(1))
+    else
+        for var in md.modelVariables
+            if var.valueReference == valueReference &&
+               sameBaseType(var.attribute, attribute)
+                @warn "addModelVariable(...): Value reference $(valueReference) is already used by variable `$(var.name)`, variable `$(name)` becomes an alias."
+                break
+            end
+        end
     end
 
     sv = fmi2ScalarVariable(name, valueReference, causality, variability, initial)

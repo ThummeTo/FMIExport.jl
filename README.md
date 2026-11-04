@@ -26,7 +26,7 @@
 (@v1) pkg> test FMIExport
 ```
 
-4\. Have a look inside the [examples folder](https://github.com/ThummeTo/FMIExport.jl/tree/main/examples/FMI2).
+4\. Have a look inside the [examples folder](https://github.com/ThummeTo/FMIExport.jl/tree/main/examples).
 
 ## What FMI.jl-Library should I use?
 ![FMI.jl Logo](https://github.com/ThummeTo/FMI.jl/blob/main/docs/src/assets/FMI_JL_family.png?raw=true "FMI.jl Family")

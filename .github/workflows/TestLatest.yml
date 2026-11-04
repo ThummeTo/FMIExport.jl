@@ -22,7 +22,7 @@ jobs:
         julia-arch: [x64]
         os: [windows-latest, ubuntu-latest]
         experimental: [false]
-        test-group: [core, bouncing-ball, manipulation, neural-fmu]
+        test-group: [core, bouncing-ball, bouncing-ball-fmi3, manipulation, manipulation-fmi3, neural-fmu, neural-fmu-fmi3]
 
     env:
       FMIEXPORT_TEST_GROUP: ${{ matrix.test-group }}
