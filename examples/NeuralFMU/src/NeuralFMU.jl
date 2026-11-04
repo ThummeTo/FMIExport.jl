@@ -4,72 +4,19 @@
 #
 
 # the FMI version of the exported FMU (2 or 3)
-const FMI_VERSION = 2
+const FMI_VERSION = 3
 
 using FMIExport: Dense, Chain
+using FMIExport: setFctGetDerivatives, setFctGetReal, setFctSetReal
 using FMIExport: setFctSetTime, setFctSetContinuousStates
-using FMIExport: createFMU2Embedded, createFMU3Embedded
-using FMIExport: addRealParameter, dereferenceInstance
-using FMIExport.FMIBase: fmiValueReference, logError, logWarning
-using FMIExport.FMIBase.FMICore:
-    fmi2Real,
-    fmi2Component,
-    fmi2StatusOK,
-    fmi2StatusError,
-    fmi2VariabilityTunable,
-    fmi2InitialExact
-using FMIExport.FMIBase.FMICore:
-    fmi3Float64,
-    fmi3Instance,
-    fmi3StatusOK,
-    fmi3StatusError,
-    fmi3VariabilityTunable,
-    fmi3InitialExact
+using FMIExport: addRealParameter
+using FMIExport.FMIBase: logError, logWarning
 using FMIImport: loadFMU, unloadFMU
 import FMIExport
 
-# types and functions that depend on the FMI version
-const fmiReal = FMI_VERSION == 2 ? fmi2Real : fmi3Float64
-const fmiComponent = FMI_VERSION == 2 ? fmi2Component : fmi3Instance
-const fmiStatusOK = FMI_VERSION == 2 ? fmi2StatusOK : fmi3StatusOK
-const fmiStatusError = FMI_VERSION == 2 ? fmi2StatusError : fmi3StatusError
-const fmiVariabilityTunable =
-    FMI_VERSION == 2 ? fmi2VariabilityTunable : fmi3VariabilityTunable
-const fmiInitialExact = FMI_VERSION == 2 ? fmi2InitialExact : fmi3InitialExact
-const createFMUEmbedded = FMI_VERSION == 2 ? createFMU2Embedded : createFMU3Embedded
-const setFctGetDerivatives =
-    FMI_VERSION == 2 ? FMIExport.setFctGetDerivatives :
-    FMIExport.setFctGetContinuousStateDerivatives
-const setFctGetReal =
-    FMI_VERSION == 2 ? FMIExport.setFctGetReal : FMIExport.setFctGetFloat64
-const setFctSetReal =
-    FMI_VERSION == 2 ? FMIExport.setFctSetReal : FMIExport.setFctSetFloat64
-const fmiGetDerivatives! =
-    FMI_VERSION == 2 ? FMIExport.FMICore.fmi2GetDerivatives! :
-    FMIExport.FMICore.fmi3GetContinuousStateDerivatives!
-const fmiSetTime =
-    FMI_VERSION == 2 ? FMIExport.FMICore.fmi2SetTime : FMIExport.FMICore.fmi3SetTime
-const fmiSetContinuousStates =
-    FMI_VERSION == 2 ? FMIExport.FMICore.fmi2SetContinuousStates :
-    FMIExport.FMICore.fmi3SetContinuousStates
-# the FMI 3 getter and setter have an additional argument for the number of values (equals `nvr` for scalar variables)
-fmiGetReal!(cfunc, c, vr, nvr, value) =
-    FMI_VERSION == 2 ? FMIExport.FMICore.fmi2GetReal!(cfunc, c, vr, nvr, value) :
-    FMIExport.FMICore.fmi3GetFloat64!(cfunc, c, vr, nvr, value, nvr)
-fmiSetReal(cfunc, c, vr, nvr, value) =
-    FMI_VERSION == 2 ? FMIExport.FMICore.fmi2SetReal(cfunc, c, vr, nvr, value) :
-    FMIExport.FMICore.fmi3SetFloat64(cfunc, c, vr, nvr, value, nvr)
-# field names that depend on the FMI version
-const cGetDerivatives =
-    FMI_VERSION == 2 ? :cGetDerivatives : :cGetContinuousStateDerivatives
-const cGetReal = FMI_VERSION == 2 ? :cGetReal : :cGetFloat64
-const cSetReal = FMI_VERSION == 2 ? :cSetReal : :cSetFloat64
-const canGetAndSetFMUState =
-    FMI_VERSION == 2 ? :canGetAndSetFMUstate : :canGetAndSetFMUState
-const canSerializeFMUState =
-    FMI_VERSION == 2 ? :canSerializeFMUstate : :canSerializeFMUState
-const providesDirectionalDerivatives =
-    FMI_VERSION == 2 ? :providesDirectionalDerivative : :providesDirectionalDerivatives
+# version-independent names (e.g. `fmiReal` or `createFMUEmbedded`) for the FMI version
+const FMISymbols = FMI_VERSION == 2 ? FMIExport.FMI2Symbols : FMIExport.FMI3Symbols
+using .FMISymbols
 
 fmu = nothing
 
@@ -202,7 +149,10 @@ function updateDerivatives(_component::fmiComponent, ndx::Csize_t)
         status = fmiGetDerivatives!(originalGetDerivatives, _component, DERIVATIVES, ndx)
 
         if status != fmiStatusOK
-            logError(dereferenceInstance(_component), "Getting the derivatives failed!")
+            logError(
+                FMIExport.dereferenceInstance(_component),
+                "Getting the derivatives failed!",
+            )
             return fmiStatusError
         end
 
@@ -287,7 +237,7 @@ function myGetReal!(
 
             if dind == 0
                 logError(
-                    dereferenceInstance(_component),
+                    FMIExport.dereferenceInstance(_component),
                     "Can not find value reference in derivatives for `$(vr[idDER])`.",
                 )
                 return fmiStatusError
@@ -350,7 +300,7 @@ function mySetReal(
     if len_valuesDER > 0
         # ToDo: Here, a reverse propagation (by optimization) through the ANN is necessary!
         logWarning(
-            dereferenceInstance(_component),
+            FMIExport.dereferenceInstance(_component),
             "Trying to set derivatives, this is badly implemented currently.",
         )
 
@@ -396,15 +346,18 @@ FMIBUILD_CONSTRUCTOR = function (resPath)
     fmu.modelDescription.modelExchange.modelIdentifier = "NeuralFMU"
 
     # deactivate special features, because they are not implemented yet
-    setproperty!(fmu.modelDescription.modelExchange, canGetAndSetFMUState, false)
-    setproperty!(fmu.modelDescription.modelExchange, canSerializeFMUState, false)
-    setproperty!(fmu.modelDescription.modelExchange, providesDirectionalDerivatives, false)
+    setCapabilities!(
+        fmu.modelDescription.modelExchange;
+        canGetAndSetFMUState = false,
+        canSerializeFMUState = false,
+        providesDirectionalDerivatives = false,
+    )
     fmu.modelDescription.coSimulation = nothing
 
     # save, where the original functions were stored, so we can access them in our new functions
-    originalGetDerivatives = getproperty(fmu, cGetDerivatives)
-    originalGetReal = getproperty(fmu, cGetReal)
-    originalSetReal = getproperty(fmu, cSetReal)
+    originalGetDerivatives = cGetDerivatives(fmu)
+    originalGetReal = cGetReal(fmu)
+    originalSetReal = cSetReal(fmu)
     originalSetTime = fmu.cSetTime
     originalSetContinuousStates = fmu.cSetContinuousStates
 

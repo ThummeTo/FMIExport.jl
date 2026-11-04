@@ -7,18 +7,14 @@
 # https://github.com/modelica/Reference-FMUs/blob/main/BouncingBall/model.c
 
 # the FMI version of the exported FMU (2 or 3)
-const FMI_VERSION = 2
+const FMI_VERSION = 3
 
 using FMIExport
 using FMIImport
-using FMIExport.FMIBase.FMICore:
-    fmi2True, fmi2False, fmi2Integer, fmi3True, fmi3False, fmi3Int32
 
-# types and functions that depend on the FMI version
-const fmiTrue = FMI_VERSION == 2 ? fmi2True : fmi3True
-const fmiFalse = FMI_VERSION == 2 ? fmi2False : fmi3False
-const fmiInteger = FMI_VERSION == 2 ? fmi2Integer : fmi3Int32
-const createFMUSimple = FMI_VERSION == 2 ? createFMU2Simple : createFMU3Simple
+# version-independent names (e.g. `fmiTrue` or `createFMUSimple`) for the FMI version
+const FMISymbols = FMI_VERSION == 2 ? FMIExport.FMI2Symbols : FMIExport.FMI3Symbols
+using .FMISymbols
 
 # a minimum height to reset the ball after event
 EPS = 1e-8

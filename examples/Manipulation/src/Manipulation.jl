@@ -4,32 +4,15 @@
 #
 
 # the FMI version of the exported FMU (2 or 3)
-const FMI_VERSION = 2
+const FMI_VERSION = 3
 
-using FMIExport: createFMU2Embedded, createFMU3Embedded, addRealOutput
-using FMIExport.FMIBase: fmiValueReference
-using FMIExport.FMIBase.FMICore: fmi2Real, fmi2Component, fmi3Float64, fmi3Instance
+using FMIExport: setFctGetReal, addRealOutput
 using FMIImport: loadFMU, unloadFMU
 import FMIExport
 
-# types and functions that depend on the FMI version
-const fmiReal = FMI_VERSION == 2 ? fmi2Real : fmi3Float64
-const fmiComponent = FMI_VERSION == 2 ? fmi2Component : fmi3Instance
-const createFMUEmbedded = FMI_VERSION == 2 ? createFMU2Embedded : createFMU3Embedded
-const setFctGetReal =
-    FMI_VERSION == 2 ? FMIExport.setFctGetReal : FMIExport.setFctGetFloat64
-# the FMI 3 getter has an additional argument for the number of values (equals `nvr` for scalar variables)
-fmiGetReal!(cfunc, c, vr, nvr, value) =
-    FMI_VERSION == 2 ? FMIExport.FMICore.fmi2GetReal!(cfunc, c, vr, nvr, value) :
-    FMIExport.FMICore.fmi3GetFloat64!(cfunc, c, vr, nvr, value, nvr)
-# field names that depend on the FMI version
-const cGetReal = FMI_VERSION == 2 ? :cGetReal : :cGetFloat64
-const canGetAndSetFMUState =
-    FMI_VERSION == 2 ? :canGetAndSetFMUstate : :canGetAndSetFMUState
-const canSerializeFMUState =
-    FMI_VERSION == 2 ? :canSerializeFMUstate : :canSerializeFMUState
-const providesDirectionalDerivatives =
-    FMI_VERSION == 2 ? :providesDirectionalDerivative : :providesDirectionalDerivatives
+# version-independent names (e.g. `fmiReal` or `createFMUEmbedded`) for the FMI version
+const FMISymbols = FMI_VERSION == 2 ? FMIExport.FMI2Symbols : FMIExport.FMI3Symbols
+using .FMISymbols
 
 # value reference of the additional output, it must not be used by the embedded FMU
 const NOISY_POSITION_VR = fmiValueReference(1)
@@ -89,9 +72,12 @@ FMIBUILD_CONSTRUCTOR = function (resPath)
     fmu.modelDescription.coSimulation = nothing # remove co simulation functionality
 
     # deactivate special features, because they are not implemented yet
-    setproperty!(fmu.modelDescription.modelExchange, canGetAndSetFMUState, false)
-    setproperty!(fmu.modelDescription.modelExchange, canSerializeFMUState, false)
-    setproperty!(fmu.modelDescription.modelExchange, providesDirectionalDerivatives, false)
+    setCapabilities!(
+        fmu.modelDescription.modelExchange;
+        canGetAndSetFMUState = false,
+        canSerializeFMUState = false,
+        providesDirectionalDerivatives = false,
+    )
 
     # add an output for the position of the mass (with noise)
     positionVR = fmu.modelDescription.stringValueReferences["mass.s"]
@@ -103,7 +89,7 @@ FMIBUILD_CONSTRUCTOR = function (resPath)
     )
 
     # save, where the original `fmi2GetReal` / `fmi3GetFloat64` function was stored, so we can access it in our new function
-    originalGetReal = getproperty(fmu, cGetReal)
+    originalGetReal = cGetReal(fmu)
 
     # now we overwrite the original function
     setFctGetReal(fmu, myGetReal!)

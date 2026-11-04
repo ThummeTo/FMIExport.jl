@@ -354,3 +354,28 @@ for name in names(@__MODULE__; all = true)
         @eval @doc $doc $name(::FMU3, ::Any)
     end
 end
+
+# the FMI 2 names, so code can be written for both FMI versions (see `FMI3Symbols`),
+# [Note] defined after the doc strings above are generated, because the callback fields differ
+
+"""
+    setFctGetReal(fmu::FMU3, fun)
+
+Register `fun` as the FMI 3 callback stored in `fmu.cGetFloat64`, the same as `setFctGetFloat64`.
+"""
+setFctGetReal(fmu::FMU3, fun) = setFctGetFloat64(fmu, fun)
+
+"""
+    setFctSetReal(fmu::FMU3, fun)
+
+Register `fun` as the FMI 3 callback stored in `fmu.cSetFloat64`, the same as `setFctSetFloat64`.
+"""
+setFctSetReal(fmu::FMU3, fun) = setFctSetFloat64(fmu, fun)
+
+"""
+    setFctGetDerivatives(fmu::FMU3, fun)
+
+Register `fun` as the FMI 3 callback stored in `fmu.cGetContinuousStateDerivatives`, the same as
+`setFctGetContinuousStateDerivatives`.
+"""
+setFctGetDerivatives(fmu::FMU3, fun) = setFctGetContinuousStateDerivatives(fmu, fun)

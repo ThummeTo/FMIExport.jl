@@ -6,7 +6,6 @@ authors = ["TT <tobias.thummerer@informatik.uni-augsburg.de>", "LM <lars.mikelso
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 FMIBase = "900ee838-d029-460e-b485-d98a826ceef2"
-OrdinaryDiffEqBDF = "6ad6398a-0878-4a85-9266-38940aa047c8"
 UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [weakdeps]
@@ -19,6 +18,5 @@ FMIImportExt = "FMIImport"
 Dates = "1"
 FMIBase = "1.6"
 FMIImport = "1.4.1"
-OrdinaryDiffEqBDF = "2.2.1"
 UUIDs = "1"
 julia = "1.10"
