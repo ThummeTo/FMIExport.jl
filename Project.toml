@@ -17,6 +17,6 @@ FMIImportExt = "FMIImport"
 [compat]
 Dates = "1"
 FMIBase = "1.6"
-FMIImport = "1.4.1"
+FMIImport = "1.4.2"
 UUIDs = "1"
 julia = "1.10"
