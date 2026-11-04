@@ -3,7 +3,7 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-using FMIExport.FMICore: fmi2ScalarVariable
+using FMIExport.FMICore: fmi2ScalarVariable, fmi2ValueReference
 
 named_fmu = createFMU2("Mass"; type = FMIExport.FMICore.fmi2TypeCoSimulation)
 @test named_fmu.modelDescription.modelName == "Mass"
@@ -45,3 +45,18 @@ cs = addCoSimulation(fmu, "simple_cs"; canInterpolateInputs = false)
 @test fmu.modelDescription.coSimulation === cs
 @test cs.modelIdentifier == "simple_cs"
 @test cs.canInterpolateInputs == false
+
+# automatic value references are the smallest unused ones (no overflow if the largest one is used)
+md = createModelDescription(createFMU2())
+addRealOutput(md, "a"; valueReference = fmi2ValueReference(1))
+addRealOutput(md, "z"; valueReference = typemax(fmi2ValueReference))
+@test addRealOutput(md, "b").valueReference == 2
+@test addRealOutput(md, "c").valueReference == 3
+
+# explicit value references create aliases within a base type, other base types have their own
+@test_logs (:warn, r"becomes an alias") addRealOutput(
+    md,
+    "a_alias";
+    valueReference = fmi2ValueReference(1),
+)
+@test_logs addIntegerDiscreteState(md, "n"; valueReference = fmi2ValueReference(1))

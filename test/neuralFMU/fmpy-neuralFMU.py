@@ -12,6 +12,7 @@ logfile = lines[1]
 fmufile = lines[2]
 t_start = float(lines[3])
 t_stop = float(lines[4])
+output = lines[5].split(',') if len(lines) > 5 else None
 
 f = open(lockfile, 'w+')
 f.write('FMPy_running')
@@ -31,6 +32,7 @@ with open(logfile, 'w+') as sys.stdout:
         stop_time=t_stop,
         record_events=False,
         solver='CVode',
+        output=output,
         )
     try:
         print("---begin_of_fmpy-simulation_results---")

@@ -3,26 +3,26 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
+# the FMI version of the exported FMU (2 or 3)
+const FMI_VERSION = 3
+
 using FMIExport: Dense, Chain
-using FMIExport:
-    setFctGetDerivatives,
-    setFctGetReal,
-    setFctSetReal,
-    setFctSetTime,
-    setFctSetContinuousStates
-using FMIExport: createFMU2Embedded
+using FMIExport: setFctGetDerivatives, setFctGetReal, setFctSetReal
+using FMIExport: setFctSetTime, setFctSetContinuousStates
 using FMIExport: addRealParameter
-using FMIExport.FMIBase.FMICore: fmi2Real, fmi2Component, fmi2StatusOK, fmi2ValueReference
-using FMIExport.FMIBase.FMICore:
-    fmi2CausalityParameter, fmi2VariabilityTunable, fmi2InitialExact
+using FMIExport.FMIBase: logError, logWarning
 using FMIImport: loadFMU, unloadFMU
 import FMIExport
 
+# version-independent names (e.g. `fmiReal` or `createFMUEmbedded`) for the FMI version
+const FMISymbols = FMI_VERSION == 2 ? FMIExport.FMI2Symbols : FMIExport.FMI3Symbols
+using .FMISymbols
+
 fmu = nothing
 
-originalGetDerivatives = nothing # function pointer to the original fmi2GetDerivatives! c-function
-originalGetReal = nothing # function pointer to the original fmi2GetReal c-function
-originalSetReal = nothing # function pointer to the original fmi2SetReal c-function
+originalGetDerivatives = nothing # function pointer to the original fmi2GetDerivatives / fmi3GetContinuousStateDerivatives c-function
+originalGetReal = nothing # function pointer to the original fmi2GetReal / fmi3GetFloat64 c-function
+originalSetReal = nothing # function pointer to the original fmi2SetReal / fmi3SetFloat64 c-function
 originalSetTime = nothing
 originalSetContinuousStates = nothing
 
@@ -95,20 +95,20 @@ end
 
 ANN_PARAMETERS = []
 
-# sort VRs/VALUEs into (FMU values, derivatives, ANN parameters) 
+# sort VRs/VALUEs into (FMU values, derivatives, ANN parameters)
 function sortVRs(fmu, vrs, values)
     global ANN_PARAMETERS
 
-    valuesFMU = Array{fmi2Real,1}()
-    vrsFMU = Array{fmi2ValueReference,1}()
+    valuesFMU = Array{fmiReal,1}()
+    vrsFMU = Array{fmiValueReference,1}()
     idxFMU = Array{Integer,1}()
 
-    valuesDER = Array{fmi2Real,1}()
-    vrsDER = Array{fmi2ValueReference,1}()
+    valuesDER = Array{fmiReal,1}()
+    vrsDER = Array{fmiValueReference,1}()
     idxDER = Array{Integer,1}()
 
-    valuesANN = Array{fmi2Real,1}()
-    vrsANN = Array{fmi2ValueReference,1}()
+    valuesANN = Array{fmiReal,1}()
+    vrsANN = Array{fmiValueReference,1}()
     idxANN = Array{Integer,1}()
 
     for i = 1:length(vrs)
@@ -136,26 +136,24 @@ function sortVRs(fmu, vrs, values)
 end
 
 global DERIVATIVES_VALID = false # whether derivative values are still up to date (or need recompute)
-global DERIVATIVES = Array{fmi2Real}(undef, 2)
-function updateDerivatives(_component::fmi2Component, ndx::Csize_t)
+global DERIVATIVES = Array{fmiReal}(undef, 2)
+function updateDerivatives(_component::fmiComponent, ndx::Csize_t)
 
     global DERIVATIVES_VALID, DERIVATIVES
-    global originalGetDerivatives, d
+    global originalGetDerivatives
 
-    status = fmi2StatusOK
+    status = fmiStatusOK
 
     if !DERIVATIVES_VALID
         # first, we do what the original function does
-        status = FMIExport.FMIBase.FMICore.fmi2GetDerivatives!(
-            originalGetDerivatives,
-            _component,
-            DERIVATIVES,
-            ndx,
-        )
+        status = fmiGetDerivatives!(originalGetDerivatives, _component, DERIVATIVES, ndx)
 
-        if status != fmi2StatusOK
-            logError(_component, "fmi2GetDerivatives failed!")
-            return fmi2StatusError
+        if status != fmiStatusOK
+            logError(
+                FMIExport.dereferenceInstance(_component),
+                "Getting the derivatives failed!",
+            )
+            return fmiStatusError
         end
 
         tmp = model(DERIVATIVES)
@@ -166,11 +164,11 @@ function updateDerivatives(_component::fmi2Component, ndx::Csize_t)
     return status
 end
 
-# custom function for fmi2GetReal!(fmi2Component, Union{Array{fmi2ValueReference}, Ptr{fmi2ValueReference}}, Csize_t, value::Union{Array{fmi2Real}, Ptr{fmi2Real}}::fmi2Status
-# for information on how the FMI2-functions are structured, have a look inside FMICore.jl/src/FMI2_c.jl or the FMI2.0.3-specification on fmi-standard.org
+# custom function for fmi2GetDerivatives!(fmi2Component, Union{AbstractArray{fmi2Real}, Ptr{fmi2Real}}, Csize_t)::fmi2Status (fmi3GetContinuousStateDerivatives! in FMI 3)
+# for information on how the FMI-functions are structured, have a look inside FMICore.jl/src/FMI2/cfunc.jl (and FMI3/cfunc.jl) or the FMI-specifications on fmi-standard.org
 function myGetDerivatives!(
-    _component::fmi2Component,
-    derivatives::Union{AbstractArray{fmi2Real},Ptr{fmi2Real}},
+    _component::fmiComponent,
+    derivatives::Union{AbstractArray{fmiReal},Ptr{fmiReal}},
     ndx::Csize_t,
 )
 
@@ -178,8 +176,8 @@ function myGetDerivatives!(
     status = updateDerivatives(_component, ndx)
 
     # if we have a pointer to an array, we must interprete it as array to access elements
-    if isa(derivatives, Ptr{fmi2Real})
-        derivatives = unsafe_wrap(Array{fmi2Real}, derivatives, ndx, own = false)
+    if isa(derivatives, Ptr{fmiReal})
+        derivatives = unsafe_wrap(Array{fmiReal}, derivatives, ndx, own = false)
     end
 
     derivatives[:] = DERIVATIVES[:]
@@ -188,30 +186,31 @@ function myGetDerivatives!(
     return status
 end
 
-# custom function for fmi2GetReal!(fmi2Component, Union{Array{fmi2ValueReference}, Ptr{fmi2ValueReference}}, Csize_t, value::Union{Array{fmi2Real}, Ptr{fmi2Real}}::fmi2Status
-# for information on how the FMI2-functions are structured, have a look inside FMICore.jl/src/FMI2_c.jl or the FMI2.0.3-specification on fmi-standard.org
+# custom function for fmi2GetReal!(fmi2Component, Union{AbstractArray{fmi2ValueReference}, Ptr{fmi2ValueReference}}, Csize_t, value::Union{AbstractArray{fmi2Real}, Ptr{fmi2Real}})::fmi2Status,
+# the FMI 3 counterpart fmi3GetFloat64! has the additional argument `nValues` (number of values)
 function myGetReal!(
-    _component::fmi2Component,
-    vr::Union{AbstractArray{fmi2ValueReference},Ptr{fmi2ValueReference}},
+    _component::fmiComponent,
+    vr::Union{AbstractArray{fmiValueReference},Ptr{fmiValueReference}},
     nvr::Csize_t,
-    value::Union{AbstractArray{fmi2Real},Ptr{fmi2Real}},
+    value::Union{AbstractArray{fmiReal},Ptr{fmiReal}},
+    nValues::Csize_t...,
 )
     global originalGetReal, fmu
     global DERIVATIVES
 
     # if we have a pointer to an array, we must interprete it as array to access elements
-    if isa(value, Ptr{fmi2Real})
-        value = unsafe_wrap(Array{fmi2Real}, value, nvr, own = false)
+    if isa(value, Ptr{fmiReal})
+        value = unsafe_wrap(Array{fmiReal}, value, nvr, own = false)
     end
 
-    if isa(vr, Ptr{fmi2ValueReference})
-        vr = unsafe_wrap(Array{fmi2ValueReference}, vr, nvr, own = false)
+    if isa(vr, Ptr{fmiValueReference})
+        vr = unsafe_wrap(Array{fmiValueReference}, vr, nvr, own = false)
     end
 
     valuesFMU, vrsFMU, idxFMU, valuesDER, vrsDER, idxDER, valuesANN, vrsANN, idxANN =
         sortVRs(fmu, vr, value)
 
-    ret_status = fmi2StatusOK
+    ret_status = fmiStatusOK
 
     if length(valuesANN) > 0
         value[idxANN] = getParameter(vrsANN)
@@ -238,24 +237,19 @@ function myGetReal!(
 
             if dind == 0
                 logError(
-                    _component,
+                    FMIExport.dereferenceInstance(_component),
                     "Can not find value reference in derivatives for `$(vr[idDER])`.",
                 )
-                return fmi2StatusError
+                return fmiStatusError
             end
 
             value[idDER] = DERIVATIVES[dind]
         end
     end
 
-    if length(valuesFMU) > 0
-        status = FMIExport.FMICore.fmi2GetReal!(
-            originalGetReal,
-            _component,
-            vrsFMU,
-            Csize_t(1),
-            valuesFMU,
-        )
+    len_valuesFMU = Csize_t(length(valuesFMU))
+    if len_valuesFMU > 0
+        status = fmiGetReal!(originalGetReal, _component, vrsFMU, len_valuesFMU, valuesFMU)
         ret_status = max(ret_status, status)
 
         value[idxFMU] = valuesFMU[:]
@@ -265,11 +259,13 @@ function myGetReal!(
     return ret_status
 end
 
+# custom function for fmi2SetReal / fmi3SetFloat64 (with the additional argument `nValues` in FMI 3)
 function mySetReal(
-    _component::fmi2Component,
-    vr::Union{AbstractArray{fmi2ValueReference},Ptr{fmi2ValueReference}},
+    _component::fmiComponent,
+    vr::Union{AbstractArray{fmiValueReference},Ptr{fmiValueReference}},
     nvr::Csize_t,
-    value::Union{AbstractArray{fmi2Real},Ptr{fmi2Real}},
+    value::Union{AbstractArray{fmiReal},Ptr{fmiReal}},
+    nValues::Csize_t...,
 )
     global originalSetReal
     global DERIVATIVES_VALID
@@ -277,22 +273,18 @@ function mySetReal(
     DERIVATIVES_VALID = false # invalidate derivatives
 
     # if we have a pointer to an array, we must interprete it as array to access elements
-    if isa(value, Ptr{fmi2Real})
-        value = unsafe_wrap(Array{fmi2Real}, value, nvr, own = false)
-    else
-        value = value
+    if isa(value, Ptr{fmiReal})
+        value = unsafe_wrap(Array{fmiReal}, value, nvr, own = false)
     end
 
-    if isa(vr, Ptr{fmi2ValueReference})
-        vr = unsafe_wrap(Array{fmi2ValueReference}, vr, nvr, own = false)
-    else
-        vr = vr
+    if isa(vr, Ptr{fmiValueReference})
+        vr = unsafe_wrap(Array{fmiValueReference}, vr, nvr, own = false)
     end
 
     valuesFMU, vrsFMU, idxFMU, valuesDER, vrsDER, idxDER, valuesANN, vrsANN, idxANN =
         sortVRs(fmu, vr, value)
 
-    ret_status = fmi2StatusOK
+    ret_status = fmiStatusOK
 
     if length(valuesANN) > 0
         setParameter(vrsANN, valuesANN)
@@ -300,13 +292,7 @@ function mySetReal(
 
     len_valuesFMU = Csize_t(length(valuesFMU))
     if len_valuesFMU > 0
-        status = FMIExport.FMICore.fmi2SetReal(
-            originalSetReal,
-            _component,
-            vrsFMU,
-            len_valuesFMU,
-            valuesFMU,
-        )
+        status = fmiSetReal(originalSetReal, _component, vrsFMU, len_valuesFMU, valuesFMU)
         ret_status = max(ret_status, status)
     end
 
@@ -314,17 +300,11 @@ function mySetReal(
     if len_valuesDER > 0
         # ToDo: Here, a reverse propagation (by optimization) through the ANN is necessary!
         logWarning(
-            _component,
-            "fmi2GetDerivatives trying to set derivatives, this is badly implemented currently.",
+            FMIExport.dereferenceInstance(_component),
+            "Trying to set derivatives, this is badly implemented currently.",
         )
 
-        status = FMIExport.FMICore.fmi2SetReal(
-            originalSetReal,
-            _component,
-            vrsDER,
-            len_valuesDER,
-            valuesDER,
-        )
+        status = fmiSetReal(originalSetReal, _component, vrsDER, len_valuesDER, valuesDER)
         ret_status = max(ret_status, status)
     end
 
@@ -332,54 +312,52 @@ function mySetReal(
     return ret_status
 end
 
-function mySetTime(_component::fmi2Component, time::fmi2Real)
+function mySetTime(_component::fmiComponent, time::fmiReal)
     global DERIVATIVES_VALID, originalSetTime
     DERIVATIVES_VALID = false
 
-    return FMIExport.FMICore.fmi2SetTime(originalSetTime, _component, time)
+    return fmiSetTime(originalSetTime, _component, time)
 end
 
 function mySetContinuousStates(
-    _component::fmi2Component,
-    value::Union{AbstractArray{fmi2Real},Ptr{fmi2Real}},
+    _component::fmiComponent,
+    value::Union{AbstractArray{fmiReal},Ptr{fmiReal}},
     nx::Csize_t,
 )
     global DERIVATIVES_VALID, originalSetContinuousStates
     DERIVATIVES_VALID = false
 
-    return FMIExport.FMICore.fmi2SetContinuousStates(
-        originalSetContinuousStates,
-        _component,
-        value,
-        nx,
-    )
+    return fmiSetContinuousStates(originalSetContinuousStates, _component, value, nx)
 end
 
-# this function is called, as soon as the DLL is loaded and Julia is initialized 
-# must return a FMU2-instance to work with
+# this function is called, as soon as the DLL is loaded and Julia is initialized
+# must return a FMU2- or FMU3-instance (depending on `FMI_VERSION`) to work with
 FMIBUILD_CONSTRUCTOR = function (resPath)
     global originalGetDerivatives, originalGetReal, originalSetReal, originalSetTime, originalSetContinuousStates
     global fmu, ANN_PARAMETERS
 
     # loads an existing FMU
-    fmu = loadFMU(joinpath(resPath, "SpringDamperPendulum1D.fmu"))
+    fmu = loadFMU(joinpath(resPath, "SpringPendulum1D.fmu"))
 
     # create a FMU that embedds the existing FMU
-    fmu = createFMU2Embedded(fmu)
+    fmu = createFMUEmbedded(fmu)
 
     fmu.modelDescription.modelName = "NeuralFMU"
     fmu.modelDescription.modelExchange.modelIdentifier = "NeuralFMU"
 
     # deactivate special features, because they are not implemented yet
-    fmu.modelDescription.modelExchange.canGetAndSetFMUstate = false
-    fmu.modelDescription.modelExchange.canSerializeFMUstate = false
-    fmu.modelDescription.modelExchange.providesDirectionalDerivative = false
+    setCapabilities!(
+        fmu.modelDescription.modelExchange;
+        canGetAndSetFMUState = false,
+        canSerializeFMUState = false,
+        providesDirectionalDerivatives = false,
+    )
     fmu.modelDescription.coSimulation = nothing
 
     # save, where the original functions were stored, so we can access them in our new functions
-    originalGetDerivatives = fmu.cGetDerivatives
-    originalGetReal = fmu.cGetReal
-    originalSetReal = fmu.cSetReal
+    originalGetDerivatives = cGetDerivatives(fmu)
+    originalGetReal = cGetReal(fmu)
+    originalSetReal = cSetReal(fmu)
     originalSetTime = fmu.cSetTime
     originalSetContinuousStates = fmu.cSetContinuousStates
 
@@ -390,10 +368,10 @@ FMIBUILD_CONSTRUCTOR = function (resPath)
     setFctSetTime(fmu, mySetTime)
     setFctSetContinuousStates(fmu, mySetContinuousStates)
 
-    # additional parameters 
-    ANN_PARAMETERS = Array{fmi2ValueReference,1}()
+    # additional parameters
+    ANN_PARAMETERS = Array{fmiValueReference,1}()
 
-    vr = fmi2ValueReference(1)
+    vr = fmiValueReference(1)
     for l = 1:length(model)
         if isa(model[l], Dense)
             for i = 1:size(model[l].W)[1]
@@ -404,12 +382,11 @@ FMIBUILD_CONSTRUCTOR = function (resPath)
                         description = "ANN parameter in layer $l for weight matrix entry [$i,$j]",
                         valueReference = vr,
                         start = model[l].W[i, j],
-                        causality = fmi2CausalityParameter,
-                        variability = fmi2VariabilityTunable,
-                        initial = fmi2InitialExact,
+                        variability = fmiVariabilityTunable,
+                        initial = fmiInitialExact,
                     )
                     push!(ANN_PARAMETERS, vr)
-                    vr += fmi2ValueReference(1)
+                    vr += fmiValueReference(1)
                 end
                 addRealParameter(
                     fmu,
@@ -417,12 +394,11 @@ FMIBUILD_CONSTRUCTOR = function (resPath)
                     description = "ANN parameter in layer $l for bias vector entry [$i]",
                     valueReference = vr,
                     start = model[l].b[i],
-                    causality = fmi2CausalityParameter,
-                    variability = fmi2VariabilityTunable,
-                    initial = fmi2InitialExact,
+                    variability = fmiVariabilityTunable,
+                    initial = fmiInitialExact,
                 )
                 push!(ANN_PARAMETERS, vr)
-                vr += fmi2ValueReference(1)
+                vr += fmiValueReference(1)
             end
         end
     end
@@ -434,11 +410,12 @@ end
 # The line above is a start-marker for excluded code for the FMU compilation process!
 
 import FMIZoo
-sourceFMU = FMIZoo.get_model_filename("SpringDamperPendulum1D", "Dymola", "2022x")
+sourceFMU =
+    FMIZoo.get_model_filename("SpringPendulum1D", "Dymola", "2023x", "$(FMI_VERSION).0")
 fmu = FMIBUILD_CONSTRUCTOR(dirname(sourceFMU))
 
 # first, we try to simulate the FMU before ExternalFMIExportTesting
-# this is not required for export but a good idea anyway: 
+# this is not required for export but a good idea anyway:
 # the export takes a long time and exporting a possibly broken FMU does not help anyone
 
 # using FMI, DifferentialEquations
@@ -448,16 +425,8 @@ fmu = FMIBUILD_CONSTRUCTOR(dirname(sourceFMU))
 #     (0.0, 5.0);
 #     dtmax = 0.1,
 #     saveat = 0.0:0.01:5.0,
-#     recordValues = [
-#         ANN_PARAMETERS...,
-#         fmi2ValueReference(16777219),
-#         fmi2ValueReference(335544320),
-#         fmi2ValueReference(335544321),
-#     ],
-#     parameters = Dict{fmi2ValueReference,Any}(
-#         fmi2ValueReference(1) => 2.0,
-#         fmi2ValueReference(335544321) => 1.23,
-#     ),
+#     recordValues = [ANN_PARAMETERS..., "mass.s", "mass.v"],
+#     parameters = Dict{fmiValueReference,Any}(fmiValueReference(1) => 2.0),
 # )
 
 # using Plots
@@ -474,7 +443,7 @@ saveFMU(
     fmu_save_path;
     compress = false,
     debug = true, # (debug=true allows debug messages, but is slow during execution!)
-    resources = Dict(sourceFMU => "SpringDamperPendulum1D.fmu"),
+    resources = Dict(sourceFMU => "SpringPendulum1D.fmu"),
 )
 unloadFMU(fmu)
 

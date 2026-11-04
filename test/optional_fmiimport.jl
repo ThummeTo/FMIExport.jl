@@ -18,6 +18,16 @@ end
 @test caught isa ArgumentError
 @test occursin("FMIImport required for CS FMU export", sprint(showerror, caught))
 
+caught = try
+    createFMU3Simple(type = FMIExport.FMICore.fmi3TypeCoSimulation)
+    nothing
+catch err
+    err
+end
+
+@test caught isa ArgumentError
+@test occursin("FMIImport required for CS FMU export", sprint(showerror, caught))
+
 using FMIImport
 
 @test Base.get_extension(FMIExport, :FMIImportExt) !== nothing

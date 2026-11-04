@@ -3,34 +3,6 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-fmu_save_path = nothing
-
-# export FMU script, currently only available on Windows and Linux
-if Sys.iswindows() || Sys.islinux()
-    include(
-        joinpath(
-            @__DIR__,
-            "..",
-            "..",
-            "examples",
-            "FMI2",
-            "BouncingBall",
-            "src",
-            "BouncingBall.jl",
-        ),
-    )
-    test_fmu_file(fmu_save_path, 300)
-else
-    # if not on windows or linux, use BouncingBall from FMIZoo
-    using FMIZoo
-    fmu_save_path = FMIZoo.get_model_filename("BouncingBall1D", "Dymola", "2023x")
-
-    test_fmu_file(fmu_save_path, 300; size_unit = :KiB)
-end
-
-t_start = 0.0
-t_stop = 3.0
-
 function check_bouncing_ball_reference(fmpy_simulation_results, t_start, t_stop)
     default_fmpy_result_check(fmpy_simulation_results, t_start, t_stop)
 
@@ -56,32 +28,39 @@ function check_bouncing_ball_reference(fmpy_simulation_results, t_start, t_stop)
     @test isapprox(vs[301], -1.97912; atol = atol)
 end
 
-@testset "Model Exchange" begin
-    run_fmpy_test(
-        "bouncing_ball",
-        "fmpy-bouncing_ball.py",
-        "fmpy-bouncing_ball_ME.config",
-        fmu_save_path;
-        t_start = t_start,
-        t_stop = t_stop,
-        cleanup_fmu = false,
-        config_lines = ["ModelExchange"],
-    ) do fmpy_simulation_results, t_start, t_stop
-        check_bouncing_ball_reference(fmpy_simulation_results, t_start, t_stop)
-    end
-end
+# exports the BouncingBall example of the given FMI version and simulates it with FMPy (ME and CS)
+function test_bouncing_ball(fmi_version::Integer)
+    fmu_save_path = export_example("BouncingBall", fmi_version)
+    test_fmu_file(fmu_save_path, 300)
 
-@testset "Co-Simulation" begin
-    run_fmpy_test(
-        "bouncing_ball",
-        "fmpy-bouncing_ball.py",
-        "fmpy-bouncing_ball_CS.config",
-        fmu_save_path;
-        t_start = t_start,
-        t_stop = t_stop,
-        cleanup_fmu = Sys.iswindows() || Sys.islinux(),
-        config_lines = ["CoSimulation", "0.001"],
-    ) do fmpy_simulation_results, t_start, t_stop
-        check_bouncing_ball_reference(fmpy_simulation_results, t_start, t_stop)
+    t_start = 0.0
+    t_stop = 3.0
+
+    @testset "Model Exchange" begin
+        run_fmpy_test(
+            check_bouncing_ball_reference,
+            "bouncing_ball",
+            "fmpy-bouncing_ball.py",
+            "fmpy-bouncing_ball_fmi$(fmi_version)_ME.config",
+            fmu_save_path;
+            t_start = t_start,
+            t_stop = t_stop,
+            cleanup_fmu = false,
+            config_lines = ["ModelExchange"],
+        )
+    end
+
+    @testset "Co-Simulation" begin
+        run_fmpy_test(
+            check_bouncing_ball_reference,
+            "bouncing_ball",
+            "fmpy-bouncing_ball.py",
+            "fmpy-bouncing_ball_fmi$(fmi_version)_CS.config",
+            fmu_save_path;
+            t_start = t_start,
+            t_stop = t_stop,
+            cleanup_fmu = true,
+            config_lines = ["CoSimulation", "0.001"],
+        )
     end
 end

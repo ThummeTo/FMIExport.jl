@@ -5,6 +5,7 @@ using FMIExport
 import FMIImport
 
 FMIExport._enable_cs_export(::FMIBase.FMU2) = nothing
+FMIExport._enable_cs_export(::FMIBase.FMU3) = nothing
 
 function FMIExport._prepare_cs_fmu(
     fmu::FMIBase.FMU2,

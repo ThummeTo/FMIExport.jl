@@ -6,22 +6,28 @@
 # equations are a modified version of the Modelica reference FMUs:
 # https://github.com/modelica/Reference-FMUs/blob/main/BouncingBall/model.c
 
+# the FMI version of the exported FMU (2 or 3)
+const FMI_VERSION = 3
+
 using FMIExport
 using FMIImport
-using FMIExport.FMIBase.FMICore: fmi2True, fmi2False, fmi2Integer
+
+# version-independent names (e.g. `fmiTrue` or `createFMUSimple`) for the FMI version
+const FMISymbols = FMI_VERSION == 2 ? FMIExport.FMI2Symbols : FMIExport.FMI3Symbols
+using .FMISymbols
 
 # a minimum height to reset the ball after event
 EPS = 1e-8
 
 # ball position, velocity (initial)
 DEFAULT_X0 = [1.0, 0.0]
-# ball mass, ball radius, ball collision damping, ball minimum velocity, gravity constant 
+# ball mass, ball radius, ball collision damping, ball minimum velocity, gravity constant
 DEFAULT_PARAMS = [1.0, 0.1, 0.9, 1e-3, 9.81]
 
 FMU_FCT_INIT = function ()
 
-    sticking = fmi2False
-    counter = fmi2Integer(0)
+    sticking = fmiFalse
+    counter = fmiInteger(0)
 
     s = DEFAULT_X0[1]         # ball position
     v = DEFAULT_X0[2]         # ball velocity
@@ -29,34 +35,34 @@ FMU_FCT_INIT = function ()
 
     t = 0.0
     x_c = [s, v]
-    ẋ_c = [v, a]
+    ẋ_c = [v, a]
     x_d = [sticking, counter]
     u = []
     p = DEFAULT_PARAMS
 
-    return (t, x_c, ẋ_c, x_d, u, p)
+    return (t, x_c, ẋ_c, x_d, u, p)
 end
 
-FMU_FCT_EVALUATE = function (t, x_c, ẋ_c, x_d, u, p, eventMode)
+FMU_FCT_EVALUATE = function (t, x_c, ẋ_c, x_d, u, p, eventMode)
     m, r, d, v_min, g = p
     s, v = x_c
     sticking, counter = x_d
-    _, a = ẋ_c
+    _, a = ẋ_c
 
-    if sticking == fmi2True
+    if sticking == fmiTrue
         a = 0.0
-    elseif sticking == fmi2False
+    elseif sticking == fmiFalse
 
         if eventMode
             h = s - r
             if h <= 0 && v < 0
                 s = r + EPS # so that indicator is not triggered again
                 v = -v * d
-                counter = fmi2Integer(counter + 1)
+                counter = fmiInteger(counter + 1)
 
                 # stop bouncing to prevent high frequency bouncing (and maybe tunneling the floor)
                 if abs(v) < v_min
-                    sticking = fmi2True
+                    sticking = fmiTrue
                     v = 0.0
                 end
             end
@@ -65,22 +71,22 @@ FMU_FCT_EVALUATE = function (t, x_c, ẋ_c, x_d, u, p, eventMode)
         a = (m * -g) / m     # the system's physical equation (a little longer than necessary)
     else
         @error "Unknown value for `sticking` == $(sticking)."
-        return (x_c, ẋ_c, x_d, p)
+        return (x_c, ẋ_c, x_d, p)
     end
 
     # Todo: Remove these allocations. Make it inplace.
     x_c = [s, v]
-    ẋ_c = [v, a]
+    ẋ_c = [v, a]
     x_d = [sticking, counter]
     p = [m, r, d, v_min, g]
 
-    return (x_c, ẋ_c, x_d, p)
+    return (x_c, ẋ_c, x_d, p)
 end
 
-FMU_FCT_OUTPUT = function (t, x_c, ẋ_c, x_d, u, p)
+FMU_FCT_OUTPUT = function (t, x_c, ẋ_c, x_d, u, p)
     m, r, d, v_min, g = p
     s, v = x_c
-    _, a = ẋ_c
+    _, a = ẋ_c
     sticking, counter = x_d
 
     y = [s, v]
@@ -88,17 +94,17 @@ FMU_FCT_OUTPUT = function (t, x_c, ẋ_c, x_d, u, p)
     return y
 end
 
-FMU_FCT_EVENT = function (t, x_c, ẋ_c, x_d, u, p)
+FMU_FCT_EVENT = function (t, x_c, ẋ_c, x_d, u, p)
     m, r, d, v_min, g = p
     s, v = x_c
-    _, a = ẋ_c
+    _, a = ẋ_c
     sticking, counter = x_d
 
     # helpers
     z1 = 0.0 # first event indicator
     h = s - r # ball height
 
-    if sticking == fmi2True
+    if sticking == fmiTrue
         z1 = 1.0            # event 1: ball stay-on-ground
     else
         if h > -EPS && h <= 0 && v > 0
@@ -119,10 +125,10 @@ FMU_FCT_SOLVER = function ()
     return Tsit5()
 end
 
-# this function is called, as soon as the DLL is loaded and Julia is initialized 
-# must return a FMU2-instance to work with
+# this function is called, as soon as the DLL is loaded and Julia is initialized
+# must return a FMU2- or FMU3-instance (depending on `FMI_VERSION`) to work with
 FMIBUILD_CONSTRUCTOR = function (resPath = "")
-    fmu = createFMU2Simple(
+    fmu = createFMUSimple(
         "BouncingBall";
         initializationFct = FMU_FCT_INIT,
         evaluationFct = FMU_FCT_EVALUATE,
@@ -131,7 +137,7 @@ FMIBUILD_CONSTRUCTOR = function (resPath = "")
         solverFct = FMU_FCT_SOLVER,
     )
 
-    # modes 
+    # modes
     addModelExchange(fmu)
     addCoSimulation(fmu)
 
@@ -203,7 +209,7 @@ end
 fmu = FMIBUILD_CONSTRUCTOR()
 
 # first, we try to simulate the FMU before external FMIExport testing
-# this is not required for export but a good idea anyway: 
+# this is not required for export but a good idea anyway:
 # the export takes a long time and exporting a possibly broken FMU does not help anyone
 
 # using FMI, DifferentialEquations

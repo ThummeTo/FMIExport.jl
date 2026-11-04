@@ -40,9 +40,14 @@ const DEFAULT_FMU_FCT_SOLVER = FMU_FCT_SOLVER
 
 ##############
 
+# FMU instances, which are called `components` in FMI 2
+fmuInstances(fmu::FMU2) = fmu.components
+fmuInstances(fmu::FMU3) = fmu.instances
+
+# [Note] `fmi2Component` and `fmi3Instance` are the same type, so this also dereferences FMI 3 instances
 function dereferenceInstance(address::fmi2Component)
     global FMIBUILD_FMU
-    for component in FMIBUILD_FMU.components
+    for component in fmuInstances(FMIBUILD_FMU)
         if component.addr == address
             return component
         end
@@ -319,7 +324,9 @@ function simple_fmi2SetupExperiment(
 )
     component = dereferenceInstance(_component)
 
-    # build CS problem 
+    component.t = startTime
+
+    # build CS problem
     t_stop = stopTimeDefined == fmi2True ? stopTime : typemax(fmi2Real)
     tspan = (Float64(startTime), Float64(t_stop))
     toleranceValue = toleranceDefined == fmi2True ? tolerance : nothing
@@ -337,7 +344,6 @@ function simple_fmi2SetupExperiment(
         reset = false,
         setup = false,
     )
-    #component.t = tspan[1]
 
     # todo handle t_stop, tspan and toleranceValue
 
@@ -372,8 +378,8 @@ function simple_fmi2ExitInitializationMode(_component::fmi2Component)
 
     component.state = fmi2ComponentStateEventMode
 
-    # get initialization values 
-    reset(_component)
+    # [Note] values set before or during initialization are kept, dependent values are updated
+    evaluate(_component)
 
     return fmi2StatusOK
 end
@@ -387,9 +393,9 @@ function simple_fmi2SetRealInputDerivatives(
 )
     component = dereferenceInstance(_component)
 
-    logWarning(component, "fmi2SetRealInputDerivatives: Not supported by this FMU.")
+    logError(component, "fmi2SetRealInputDerivatives: Not supported by this FMU.")
 
-    return fmi2StatusWarning
+    return fmi2StatusError
 end
 
 function simple_fmi2GetRealOutputDerivatives(
@@ -401,9 +407,9 @@ function simple_fmi2GetRealOutputDerivatives(
 )
     component = dereferenceInstance(_component)
 
-    logWarning(component, "fmi2GetRealOutputDerivatives: Not supported by this FMU.")
+    logError(component, "fmi2GetRealOutputDerivatives: Not supported by this FMU.")
 
-    return fmi2StatusWarning
+    return fmi2StatusError
 end
 
 function simple_fmi2DoStep(
@@ -445,7 +451,9 @@ function simple_fmi2DoStep(
         end
     end
 
-    x0 = component.x
+    # [Note] states may have been set by the importer (e.g. during initialization)
+    xc, _, _, _, _, _ = extractValues(_component)
+    x0 = fmi2Real.(xc)
     tspan = (currentCommunicationPoint, currentCommunicationPoint + communicationStepSize)
     solveKwargs = Dict{Symbol,Any}()
     tspan = FMIBase.setupSolver!(component.fmu, tspan, solveKwargs)
@@ -483,9 +491,9 @@ end
 function simple_fmi2CancelStep(_component::fmi2Component)
     component = dereferenceInstance(_component)
 
-    logWarning(component, "fmi2CancelStep: Asynchronous fmi2DoStep is not supported.")
+    logError(component, "fmi2CancelStep: Asynchronous fmi2DoStep is not supported.")
 
-    return fmi2StatusWarning
+    return fmi2StatusError
 end
 
 function simple_fmi2GetStatus(
@@ -512,8 +520,8 @@ function simple_fmi2GetRealStatus(
         return fmi2StatusOK
     end
 
-    logWarning(component, "fmi2GetRealStatus: Unsupported status kind $(statusKind).")
-    return fmi2StatusWarning
+    logError(component, "fmi2GetRealStatus: Unsupported status kind $(statusKind).")
+    return fmi2StatusError
 end
 
 function simple_fmi2GetIntegerStatus(
@@ -523,9 +531,9 @@ function simple_fmi2GetIntegerStatus(
 )
     component = dereferenceInstance(_component)
 
-    logWarning(component, "fmi2GetIntegerStatus: Unsupported status kind $(statusKind).")
+    logError(component, "fmi2GetIntegerStatus: Unsupported status kind $(statusKind).")
 
-    return fmi2StatusWarning
+    return fmi2StatusError
 end
 
 function simple_fmi2GetBooleanStatus(
@@ -535,9 +543,9 @@ function simple_fmi2GetBooleanStatus(
 )
     component = dereferenceInstance(_component)
 
-    logWarning(component, "fmi2GetBooleanStatus: Unsupported status kind $(statusKind).")
+    logError(component, "fmi2GetBooleanStatus: Unsupported status kind $(statusKind).")
 
-    return fmi2StatusWarning
+    return fmi2StatusError
 end
 
 function simple_fmi2GetStringStatus(
@@ -547,9 +555,9 @@ function simple_fmi2GetStringStatus(
 )
     component = dereferenceInstance(_component)
 
-    logWarning(component, "fmi2GetStringStatus: Unsupported status kind $(statusKind).")
+    logError(component, "fmi2GetStringStatus: Unsupported status kind $(statusKind).")
 
-    return fmi2StatusWarning
+    return fmi2StatusError
 end
 
 function simple_fmi2Terminate(_component::fmi2Component)
@@ -631,9 +639,9 @@ function simple_fmi2GetBoolean(
     component = dereferenceInstance(_component)
 
     # ToDo
-    logWarning(component, "fmi2GetBoolean: Not implemented yet, please open an issue.")
+    logError(component, "fmi2GetBoolean: Not implemented yet, please open an issue.")
 
-    return fmi2StatusWarning
+    return fmi2StatusError
 end
 
 function simple_fmi2GetString(
@@ -645,9 +653,9 @@ function simple_fmi2GetString(
     component = dereferenceInstance(_component)
 
     # ToDo
-    logWarning(component, "fmi2GetString: Not implemented yet, please open an issue.")
+    logError(component, "fmi2GetString: Not implemented yet, please open an issue.")
 
-    return fmi2StatusWarning
+    return fmi2StatusError
 end
 
 function simple_fmi2SetReal(
@@ -686,9 +694,9 @@ function simple_fmi2SetInteger(
     component = dereferenceInstance(_component)
 
     # ToDo
-    logWarning(component, "fmi2SetInteger: Not implemented yet, please open an issue.")
+    logError(component, "fmi2SetInteger: Not implemented yet, please open an issue.")
 
-    return fmi2StatusWarning
+    return fmi2StatusError
 end
 
 function simple_fmi2SetBoolean(
@@ -700,9 +708,9 @@ function simple_fmi2SetBoolean(
     component = dereferenceInstance(_component)
 
     # ToDo
-    logWarning(component, "fmi2SetBoolean: Not implemented yet, please open an issue.")
+    logError(component, "fmi2SetBoolean: Not implemented yet, please open an issue.")
 
-    return fmi2StatusWarning
+    return fmi2StatusError
 end
 
 function simple_fmi2SetString(
@@ -714,9 +722,9 @@ function simple_fmi2SetString(
     component = dereferenceInstance(_component)
 
     # ToDo
-    logWarning(component, "fmi2SetString: Not implemented yet, please open an issue.")
+    logError(component, "fmi2SetString: Not implemented yet, please open an issue.")
 
-    return fmi2StatusWarning
+    return fmi2StatusError
 end
 
 function simple_fmi2SetTime(_component::fmi2Component, time::fmi2Real)
